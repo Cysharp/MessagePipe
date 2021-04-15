@@ -1,5 +1,4 @@
 ﻿using ConsoleAppFramework;
-using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -39,7 +38,7 @@ namespace MessagePipe
 
 
 
-    public class Ping : IRequest<string>
+    public class Ping
     {
     }
 
