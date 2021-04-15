@@ -35,7 +35,13 @@ namespace MessagePipe
     }
 
 
-
+    public class MyFilter : MessageHandlerFilter
+    {
+        public override void Handle<T>(T message, Action<T> next)
+        {
+            next(message);
+        }
+    }
 
 
     public class Ping
@@ -50,7 +56,7 @@ namespace MessagePipe
     {
         static async Task Main(string[] args)
         {
-            args = new[] { "pingmany" };
+            args = new[] { "mydelegate" };
 
             await Host.CreateDefaultBuilder()
                 .ConfigureServices(x =>
@@ -132,6 +138,13 @@ namespace MessagePipe
                 Console.WriteLine("A:" + x.MyProperty);
             });
 
+            [MessagePipeFilter(typeof(MyFilter))]
+            static void Foo(MyMessage msg)
+            {
+                Console.WriteLine("Yeah");
+            }
+            this.subscriber.Subscribe("foo", Foo);
+
             var d = this.subscriber.Subscribe("foo", x =>
              {
                  Console.WriteLine("B:" + x.MyProperty);
@@ -208,6 +221,58 @@ namespace MessagePipe
             {
                 Console.WriteLine("pong");
             }
+        }
+
+        event Action myEventAction;
+
+        [Command("myevent")]
+        public void MyEvent()
+        {
+            myEventAction += () => Console.WriteLine("ev one");
+            myEventAction += () => Console.WriteLine("ev two");
+            myEventAction();
+
+            myEventAction += () =>
+            {
+                Console.WriteLine("eve three and exception");
+                throw new Exception("???");
+            };
+
+            myEventAction += () => Console.WriteLine("ev four");
+            myEventAction();
+        }
+
+        [Command("mydelegate")]
+        public void MyDelegate()
+        {
+            var d1 = new FooMore().GetDelegate();
+            var d2 = new BarMore().GetDelegate();
+        }
+    }
+
+    public class FooMore
+    {
+        public int Tako;
+        public int Nano;
+
+        public Action GetDelegate() => Ahokkusu;
+
+        public void Ahokkusu()
+        {
+            Console.WriteLine("nano");
+        }
+    }
+
+    public struct BarMore
+    {
+        public int Tako;
+        public int Nano;
+
+        public Action GetDelegate() => Ahokkusu;
+
+        public void Ahokkusu()
+        {
+            Console.WriteLine("nano");
         }
     }
 

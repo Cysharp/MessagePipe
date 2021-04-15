@@ -1,8 +1,7 @@
-﻿using MessageBroker.Internal;
-using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using MessagePipe.Internal;
 
 namespace MessagePipe
 {
@@ -30,16 +29,13 @@ namespace MessagePipe
         }
     }
 
-    internal sealed class ConcurrentDictionaryMessageBroker<TKey, TMessage> : IMessageBroker<TKey, TMessage>
+    public sealed class ConcurrentDictionaryMessageBroker<TKey, TMessage> : IMessageBroker<TKey, TMessage>
     {
-        // TODO: use logger?
-        readonly ILogger<ConcurrentDictionaryMessageBroker<TKey, TMessage>> logger;
         readonly Dictionary<TKey, SubscriptionHolder> subscriptions;
         readonly object gate;
 
-        public ConcurrentDictionaryMessageBroker(ILogger<ConcurrentDictionaryMessageBroker<TKey, TMessage>> logger)
+        public ConcurrentDictionaryMessageBroker()
         {
-            this.logger = logger;
             this.subscriptions = new Dictionary<TKey, SubscriptionHolder>();
             this.gate = new object();
         }
@@ -139,16 +135,14 @@ namespace MessagePipe
         }
     }
 
-    internal sealed class ImmutableArrayMessageBroker<TKey, TMessage> : IMessageBroker<TKey, TMessage>
+    public sealed class ImmutableArrayMessageBroker<TKey, TMessage> : IMessageBroker<TKey, TMessage>
     {
         // TODO: use logger?
-        readonly ILogger<ImmutableArrayMessageBroker<TKey, TMessage>> logger;
         readonly Dictionary<TKey, SubscriptionHolder> subscriptions;
         readonly object gate;
 
-        public ImmutableArrayMessageBroker(ILogger<ImmutableArrayMessageBroker<TKey, TMessage>> logger)
+        public ImmutableArrayMessageBroker()
         {
-            this.logger = logger;
             this.subscriptions = new Dictionary<TKey, SubscriptionHolder>();
             this.gate = new object();
         }

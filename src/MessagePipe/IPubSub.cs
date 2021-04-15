@@ -50,9 +50,11 @@ namespace MessagePipe
     {
         public IDisposable Subscribe(IMessageHandler<TMessage> handler);
     }
+    // TODO: void Publish
 
     public interface IAsyncPublisher<TMessage>
     {
+        void Publish(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
         ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
     }
 
@@ -66,6 +68,12 @@ namespace MessagePipe
     public static partial class MessageBrokerExtensions
     {
         public static IDisposable Subscribe<TKey, TMessage>(this ISubscriber<TKey, TMessage> subscriber, TKey key, Action<TMessage> handler)
+        {
+            return subscriber.Subscribe(key, new AnonymousMessageHandler<TMessage>(handler));
+        }
+
+        // TODO:filters?
+        public static IDisposable Subscribe<TKey, TMessage>(this ISubscriber<TKey, TMessage> subscriber, TKey key, Action<TMessage> handler, params MessagePipeFilterAttribute[] filters)
         {
             return subscriber.Subscribe(key, new AnonymousMessageHandler<TMessage>(handler));
         }

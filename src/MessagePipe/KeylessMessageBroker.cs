@@ -1,6 +1,7 @@
 ﻿using MessagePipe.Internal;
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 
 namespace MessagePipe
 {
@@ -24,11 +25,24 @@ namespace MessagePipe
 
         public IDisposable Subscribe(IMessageHandler<TMessage> handler)
         {
+            // TODO:filter?
+            
+
+            if (handler is IAttachedFilter attached)
+            {
+
+            }
+
             return core.Subscribe(handler);
+        }
+
+        static void RunCore(TMessage message)
+        {
+            
         }
     }
 
-    internal sealed class ConcurrentDictionaryMessageBroker<TMessage> : IMessageBroker<TMessage>
+    public sealed class ConcurrentDictionaryMessageBroker<TMessage> : IMessageBroker<TMessage>
     {
         readonly ConcurrentDictionary<IDisposable, IMessageHandler<TMessage>> handlers;
 
@@ -68,7 +82,7 @@ namespace MessagePipe
         }
     }
 
-    internal sealed class ImmutableArrayMessageBroker<TMessage> : IMessageBroker<TMessage>
+    public sealed class ImmutableArrayMessageBroker<TMessage> : IMessageBroker<TMessage>
     {
         (IDisposable, IMessageHandler<TMessage>)[] handlers;
         readonly object gate;

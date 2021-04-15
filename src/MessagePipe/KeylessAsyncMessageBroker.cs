@@ -1,4 +1,4 @@
-﻿using MessageBroker.Internal;
+﻿using MessagePipe.Internal;
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
@@ -19,6 +19,11 @@ namespace MessagePipe
             this.core = core;
         }
 
+        public void Publish(TMessage message, CancellationToken cancellationToken)
+        {
+            core.Publish(message, cancellationToken);
+        }
+
         public ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken)
         {
             return core.PublishAsync(message, cancellationToken);
@@ -30,13 +35,21 @@ namespace MessagePipe
         }
     }
 
-    internal sealed class ConcurrentDictionaryAsyncMessageBroker<TMessage> : IAsyncMessageBroker<TMessage>
+    public sealed class ConcurrentDictionaryAsyncMessageBroker<TMessage> : IAsyncMessageBroker<TMessage>
     {
         readonly ConcurrentDictionary<IDisposable, IAsyncMessageHandler<TMessage>> handlers;
 
         public ConcurrentDictionaryAsyncMessageBroker()
         {
             this.handlers = new ConcurrentDictionary<IDisposable, IAsyncMessageHandler<TMessage>>();
+        }
+
+        public void Publish(TMessage message, CancellationToken cancellationToken)
+        {
+            foreach (var item in handlers)
+            {
+                item.Value.HandleAsync(message, cancellationToken).Forget();
+            }
         }
 
         public async ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken)
@@ -71,7 +84,7 @@ namespace MessagePipe
         }
     }
 
-    internal sealed class ImmutableArrayAsyncMessageBroker<TMessage> : IAsyncMessageBroker<TMessage>
+    public sealed class ImmutableArrayAsyncMessageBroker<TMessage> : IAsyncMessageBroker<TMessage>
     {
         (IDisposable, IAsyncMessageHandler<TMessage>)[] handlers;
         readonly object gate;
@@ -82,12 +95,23 @@ namespace MessagePipe
             this.gate = new object();
         }
 
+        public void Publish(TMessage message, CancellationToken cancellationToken)
+        {
+            // require to get current field to local.
+            var array = Volatile.Read(ref handlers);
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i].Item2.HandleAsync(message, cancellationToken).Forget();
+            }
+        }
+
         public async ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken)
         {
-            for (int i = 0; i < handlers.Length; i++)
+            var array = Volatile.Read(ref handlers);
+            for (int i = 0; i < array.Length; i++)
             {
                 // TODO:await strategy
-                await handlers[i].Item2.HandleAsync(message, cancellationToken);
+                await array[i].Item2.HandleAsync(message, cancellationToken);
             }
         }
 
