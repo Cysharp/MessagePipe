@@ -1,0 +1,65 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+using System;
+
+namespace MessagePipe
+{
+    public static partial class DisposableBag
+    {
+<# for(var i = 1; i <= 7; i++) { #>
+        public static IDisposable Create(<#= string.Join(", ", Enumerable.Range(1, i).Select(x => "IDisposable disposable" + x)) #>)
+        {
+            return new Disposable<#= i #>(<#= string.Join(", ", Enumerable.Range(1, i).Select(x => "disposable" + x)) #>);
+        }
+
+        sealed class Disposable<#= i #> : IDisposable
+        {
+            bool disposed;
+<# for(var j = 1; j <= i; j++) { #>
+            readonly IDisposable disposable<#= j #>;
+<# } #>
+            
+            public Disposable<#= i #>(<#= string.Join(", ", Enumerable.Range(1, i).Select(x => "IDisposable disposable" + x)) #>)
+            {
+<# for(var j = 1; j <= i; j++) { #>
+                this.disposable<#= j #> = disposable<#= j #>;
+<# } #>
+            }
+
+            public void Dispose()
+            {
+                if (!disposed)
+                {
+                    disposed = true;
+<# for(var j = 1; j <= i; j++) { #>
+                    disposable<#= j #>.Dispose();
+<# } #>
+                }
+            }
+        }
+
+<# } #>
+    }
+
+    public partial class DisposableBagBuilder
+    {
+        public IDisposable Build()
+        {
+            switch (disposables.Count)
+            {
+                case 0:
+                    return NullDisposable.Instance;
+<# for(var i = 1; i <= 7; i++) { #>
+                case <#= i #>:
+                    return DisposableBag.Create(<#= string.Join(", ", Enumerable.Range(0, i).Select(x => "disposables[" + i + "]")) #>);
+<# } #>
+                default:
+                    return DisposableBag.Create(disposables.ToArray());
+            }
+        }
+    }
+}

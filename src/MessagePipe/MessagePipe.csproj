@@ -12,7 +12,34 @@
     </ItemGroup>
 
     <ItemGroup>
+      <None Include="Disposables.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>Disposables.tt</DependentUpon>
+      </None>
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="Disposables.tt">
+        <Generator>TextTemplatingFileGenerator</Generator>
+        <LastGenOutput>Disposables.cs</LastGenOutput>
+      </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Disposables.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>Disposables.tt</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>
