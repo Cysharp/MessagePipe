@@ -1,6 +1,8 @@
 ﻿using MessagePipe.Internal;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MessagePipe
@@ -12,10 +14,14 @@ namespace MessagePipe
     public sealed class MessageBroker<TMessage> : IPublisher<TMessage>, ISubscriber<TMessage>
     {
         readonly IMessageBroker<TMessage> core;
+        readonly MessagePipeOptions options;
+        readonly IServiceProvider provider;
 
-        public MessageBroker(IMessageBroker<TMessage> core)
+        public MessageBroker(IMessageBroker<TMessage> core, MessagePipeOptions options, IServiceProvider provider)
         {
             this.core = core;
+            this.options = options;
+            this.provider = provider;
         }
 
         public void Publish(TMessage message)
@@ -25,20 +31,55 @@ namespace MessagePipe
 
         public IDisposable Subscribe(IMessageHandler<TMessage> handler)
         {
-            // TODO:filter?
-            
+            List<(MessageHandlerFilter, int)>? list = null;
+
+            foreach (var item in options.GetRequestHandler(provider))
+            {
+                if (list == null) list = new List<(MessageHandlerFilter, int)>();
+                list.Add(item);
+            }
 
             if (handler is IAttachedFilter attached)
             {
+                foreach (var item in attached.Filters)
+                {
+                    var filterAttr = (MessagePipeFilterAttribute)item;
+                    if (!typeof(MessageHandlerFilter).IsAssignableFrom(filterAttr.Type))
+                    {
+                        // TODO:error msg;
+                        throw new Exception();
+                    }
 
+                    var t = (MessageHandlerFilter)provider.GetRequiredService(filterAttr.Type);
+
+                    if (list == null) list = new List<(MessageHandlerFilter, int)>();
+                    list.Add((t, filterAttr.Order));
+                }
+            }
+
+            // TODO:use filter cache
+            var filterAttributes = handler.GetType().GetCustomAttributes(typeof(MessagePipeFilterAttribute), true);
+            foreach (var item in filterAttributes)
+            {
+                var filterAttr = (MessagePipeFilterAttribute)item;
+                if (!typeof(MessageHandlerFilter).IsAssignableFrom(filterAttr.Type))
+                {
+                    // TODO:error msg;
+                    throw new Exception();
+                }
+
+                var t = (MessageHandlerFilter)provider.GetRequiredService(filterAttr.Type);
+
+                if (list == null) list = new List<(MessageHandlerFilter, int)>();
+                list.Add((t, filterAttr.Order));
+            }
+
+            if (list != null)
+            {
+                handler = new FilterAttachedMessageHandler<TMessage>(handler, list);
             }
 
             return core.Subscribe(handler);
-        }
-
-        static void RunCore(TMessage message)
-        {
-            
         }
     }
 

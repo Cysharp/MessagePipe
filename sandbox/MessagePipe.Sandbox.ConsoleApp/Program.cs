@@ -10,80 +10,22 @@ using ZLogger;
 
 namespace MessagePipe
 {
-    public class PingHandler : IRequestHandler<Ping, Pong>
-    {
-        public Pong Execute(Ping request)
-        {
-            Console.WriteLine("1 ping");
-            return new Pong();
-        }
-    }
-
-    public class PingHandler2 : IRequestHandler<Ping, Pong>
-    {
-        public Pong Execute(Ping request)
-        {
-            Console.WriteLine("2 ping");
-            return new Pong();
-        }
-    }
-
-
-    public class MyClass
-    {
-
-    }
-
-
-    public class MyFilter : MessageHandlerFilter
-    {
-        public override void Handle<T>(T message, Action<T> next)
-        {
-            next(message);
-        }
-    }
-
-
-    public class Ping
-    {
-    }
-
-    public class Pong
-    {
-    }
-
     class Program : ConsoleAppBase
     {
         static async Task Main(string[] args)
         {
-            args = new[] { "mydelegate" };
+            args = new[] { "filter" };
 
             await Host.CreateDefaultBuilder()
                 .ConfigureServices(x =>
                 {
-                    // keyed PubSub
-                    x.AddSingleton(typeof(IMessageBroker<,>), typeof(ImmutableArrayMessageBroker<,>));
-                    x.AddTransient(typeof(IPublisher<,>), typeof(MessageBroker<,>));
-                    x.AddTransient(typeof(ISubscriber<,>), typeof(MessageBroker<,>));
+                    x.AddMessagePipe();
 
-                    // keyless PubSub
-                    x.AddSingleton(typeof(IMessageBroker<>), typeof(ImmutableArrayMessageBroker<>));
-                    x.AddTransient(typeof(IPublisher<>), typeof(MessageBroker<>));
-                    x.AddTransient(typeof(ISubscriber<>), typeof(MessageBroker<>));
-
-                    // keyless PubSub async
-                    x.AddSingleton(typeof(IAsyncMessageBroker<>), typeof(ImmutableArrayAsyncMessageBroker<>));
-                    x.AddTransient(typeof(IAsyncPublisher<>), typeof(AsyncMessageBroker<>));
-                    x.AddTransient(typeof(IAsyncSubscriber<>), typeof(AsyncMessageBroker<>));
-
-                    // manual?
                     // todo:automatically register it.
                     x.AddTransient(typeof(IRequestHandler<Ping, Pong>), typeof(PingHandler));
                     x.AddTransient(typeof(IRequestHandler<Ping, Pong>), typeof(PingHandler2));
                     x.AddTransient(typeof(PingHandler));
-
-                    // RequestAll
-                    x.AddTransient(typeof(IRequestAllHandler<,>), typeof(RequestAllHandler<,>));
+                    x.AddSingleton(typeof(MyFilter));
 
                 })
                 .ConfigureLogging(x =>
@@ -248,6 +190,68 @@ namespace MessagePipe
             var d1 = new FooMore().GetDelegate();
             var d2 = new BarMore().GetDelegate();
         }
+
+        [Command("filter")]
+        public void Filter()
+        {
+            this.keylessS.Subscribe(new MyFirst());
+
+            keylessP.Publish(new MyMessage() { MyProperty = "tako" });
+            keylessP.Publish(new MyMessage() { MyProperty = "yaki" });
+        }
+    }
+
+    public class PingHandler : IRequestHandler<Ping, Pong>
+    {
+        public Pong Execute(Ping request)
+        {
+            Console.WriteLine("1 ping");
+            return new Pong();
+        }
+    }
+
+    public class PingHandler2 : IRequestHandler<Ping, Pong>
+    {
+        public Pong Execute(Ping request)
+        {
+            Console.WriteLine("2 ping");
+            return new Pong();
+        }
+    }
+
+
+    public class MyClass
+    {
+
+    }
+
+
+    public class MyFilter : MessageHandlerFilter
+    {
+        public override void Handle<T>(T message, Action<T> next)
+        {
+            Console.WriteLine("before");
+            next(message);
+            Console.WriteLine("after");
+        }
+    }
+
+    [MessagePipeFilter(typeof(MyFilter))]
+    public class MyFirst : IMessageHandler<MyMessage>
+    {
+        public void Handle(MyMessage message)
+        {
+            Console.WriteLine("YEAHHHH:" + message.MyProperty);
+        }
+    }
+
+
+    public class Ping
+    {
+    }
+
+    public class Pong
+    {
     }
 
     public class FooMore
@@ -286,11 +290,6 @@ namespace MessagePipe
 
     // DistributedAsyncPublisher
 
-    public enum AsyncPublishStrategy
-    {
-        Sequential,
-        Parallel
-    }
 
 
 

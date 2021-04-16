@@ -6,10 +6,12 @@ using MessagePipe.Internal;
 namespace MessagePipe
 {
     public interface IMessageBroker<TKey, TMessage> : IPublisher<TKey, TMessage>, ISubscriber<TKey, TMessage>
+        where TKey : notnull
     {
     }
 
     public sealed class MessageBroker<TKey, TMessage> : IPublisher<TKey, TMessage>, ISubscriber<TKey, TMessage>
+        where TKey : notnull
     {
         readonly IMessageBroker<TKey, TMessage> core;
 
@@ -30,6 +32,7 @@ namespace MessagePipe
     }
 
     public sealed class ConcurrentDictionaryMessageBroker<TKey, TMessage> : IMessageBroker<TKey, TMessage>
+        where TKey : notnull
     {
         readonly Dictionary<TKey, SubscriptionHolder> subscriptions;
         readonly object gate;
@@ -136,6 +139,7 @@ namespace MessagePipe
     }
 
     public sealed class ImmutableArrayMessageBroker<TKey, TMessage> : IMessageBroker<TKey, TMessage>
+        where TKey : notnull
     {
         // TODO: use logger?
         readonly Dictionary<TKey, SubscriptionHolder> subscriptions;

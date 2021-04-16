@@ -20,21 +20,25 @@ namespace MessagePipe
     // Keyed
 
     public interface IPublisher<TKey, TMessage>
+        where TKey : notnull
     {
         void Publish(TKey key, TMessage message);
     }
 
     public interface ISubscriber<TKey, TMessage>
+        where TKey : notnull
     {
         public IDisposable Subscribe(TKey key, IMessageHandler<TMessage> handler);
     }
 
     public interface IAsyncPublisher<TKey, TMessage>
+        where TKey : notnull
     {
         ValueTask PublishAsync(TKey key, TMessage message, CancellationToken cancellationToken = default(CancellationToken));
     }
 
     public interface IAsyncSubscriber<TKey, TMessage>
+        where TKey : notnull
     {
         public IDisposable Subscribe(TKey key, IAsyncMessageHandler<TMessage> asyncHandler);
     }
@@ -68,12 +72,14 @@ namespace MessagePipe
     public static partial class MessageBrokerExtensions
     {
         public static IDisposable Subscribe<TKey, TMessage>(this ISubscriber<TKey, TMessage> subscriber, TKey key, Action<TMessage> handler)
+            where TKey : notnull
         {
             return subscriber.Subscribe(key, new AnonymousMessageHandler<TMessage>(handler));
         }
 
         // TODO:filters?
         public static IDisposable Subscribe<TKey, TMessage>(this ISubscriber<TKey, TMessage> subscriber, TKey key, Action<TMessage> handler, params MessagePipeFilterAttribute[] filters)
+            where TKey : notnull
         {
             return subscriber.Subscribe(key, new AnonymousMessageHandler<TMessage>(handler));
         }
@@ -84,6 +90,7 @@ namespace MessagePipe
         }
 
         public static IObservable<TMessage> AsObservable<TKey, TMessage>(this ISubscriber<TKey, TMessage> subscriber, TKey key)
+            where TKey : notnull
         {
             return new ObservableSubscriber<TKey, TMessage>(key, subscriber);
         }
@@ -132,6 +139,7 @@ namespace MessagePipe
     }
 
     internal sealed class ObservableSubscriber<TKey, TMessage> : IObservable<TMessage>
+        where TKey : notnull
     {
         readonly TKey key;
         readonly ISubscriber<TKey, TMessage> subscriber;

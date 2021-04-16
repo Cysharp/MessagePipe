@@ -18,17 +18,15 @@ namespace MessagePipe
             this.Type = type;
         }
     }
+    // TODO:MessageHandlerFilter, RequestHandlerFilter, etc...?
 
     internal interface IAttachedFilter
     {
         internal MessagePipeFilterAttribute[] Filters { get; }
     }
 
-
-
     public abstract class RequestHandlerFilter
     {
-        public int Order { get; set; }
         public abstract TResponse Execute<TRequest, TResponse>(TRequest request, Func<TRequest, TResponse> next);
     }
 
@@ -36,7 +34,6 @@ namespace MessagePipe
 
     public abstract class MessageHandlerFilter
     {
-        public int Order { get; set; }
         public abstract void Handle<T>(T message, Action<T> next);
     }
 
@@ -44,12 +41,12 @@ namespace MessagePipe
     {
         Action<T> handler;
 
-        public FilterAttachedMessageHandler(IMessageHandler<T> body, IEnumerable<MessageHandlerFilter> filters)
+        public FilterAttachedMessageHandler(IMessageHandler<T> body, IEnumerable<(MessageHandlerFilter Filter, int Order)> filters)
         {
             Action<T> next = body.Handle;
             foreach (var f in filters.OrderByDescending(x => x.Order))
             {
-                next = new MessageHandlerFilterRunner<T>(f, next).GetDelegate();
+                next = new MessageHandlerFilterRunner<T>(f.Filter, next).GetDelegate();
             }
 
             this.handler = next;
