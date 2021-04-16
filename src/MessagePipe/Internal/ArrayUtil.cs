@@ -14,11 +14,20 @@ namespace MessagePipe.Internal
             return dest;
         }
 
-        public static T[] ImmutableRemove<T>(T[] source, Predicate<T> match)
+        public static T[] ImmutableRemove<T, TState>(T[] source, Func<T, TState, bool> match, TState state)
         {
             if (source.Length == 0) return source;
 
-            var index = Array.FindIndex(source, match);
+            int index = -1;
+            for (int i = 0; i < source.Length; i++)
+            {
+                if (match(source[i], state))
+                {
+                    index = i;
+                    break;
+                }
+            }
+
             if (index == -1)
             {
                 return source;
@@ -34,18 +43,18 @@ namespace MessagePipe.Internal
             if (index == 0)
             {
                 // copy [1, last]
-                Array.Copy(source, 1, dest, 0, source.Length);
+                Array.Copy(source, 1, dest, 0, dest.Length);
             }
             else if (index == source.Length - 1)
             {
                 // copy [0, last-1]
-                Array.Copy(source, 0, dest, 0, source.Length - 1);
+                Array.Copy(source, 0, dest, 0, dest.Length);
             }
             else
             {
-                // copy [0, index-1], [index+1-last]
-                Array.Copy(source, 0, dest, 0, index - 1);
-                Array.Copy(source, index, dest, index, source.Length - index);
+                // copy [0, index -1], [index+1-last]
+                Array.Copy(source, 0, dest, 0, index);
+                Array.Copy(source, index + 1, dest, index, source.Length - index - 1);
             }
 
             return dest;

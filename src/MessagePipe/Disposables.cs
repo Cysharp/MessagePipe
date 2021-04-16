@@ -253,19 +253,19 @@ namespace MessagePipe
                 case 0:
                     return NullDisposable.Instance;
                 case 1:
-                    return DisposableBag.Create(disposables[1]);
+                    return DisposableBag.Create(disposables[0]);
                 case 2:
-                    return DisposableBag.Create(disposables[2], disposables[2]);
+                    return DisposableBag.Create(disposables[0], disposables[1]);
                 case 3:
-                    return DisposableBag.Create(disposables[3], disposables[3], disposables[3]);
+                    return DisposableBag.Create(disposables[0], disposables[1], disposables[2]);
                 case 4:
-                    return DisposableBag.Create(disposables[4], disposables[4], disposables[4], disposables[4]);
+                    return DisposableBag.Create(disposables[0], disposables[1], disposables[2], disposables[3]);
                 case 5:
-                    return DisposableBag.Create(disposables[5], disposables[5], disposables[5], disposables[5], disposables[5]);
+                    return DisposableBag.Create(disposables[0], disposables[1], disposables[2], disposables[3], disposables[4]);
                 case 6:
-                    return DisposableBag.Create(disposables[6], disposables[6], disposables[6], disposables[6], disposables[6], disposables[6]);
+                    return DisposableBag.Create(disposables[0], disposables[1], disposables[2], disposables[3], disposables[4], disposables[5]);
                 case 7:
-                    return DisposableBag.Create(disposables[7], disposables[7], disposables[7], disposables[7], disposables[7], disposables[7], disposables[7]);
+                    return DisposableBag.Create(disposables[0], disposables[1], disposables[2], disposables[3], disposables[4], disposables[5], disposables[6]);
                 default:
                     return DisposableBag.Create(disposables.ToArray());
             }

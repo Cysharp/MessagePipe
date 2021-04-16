@@ -139,7 +139,7 @@ namespace MessagePipe
             {
                 lock (core.gate)
                 {
-                    core.handlers = ArrayUtil.ImmutableRemove(core.handlers, x => x.Item1 == this);
+                    core.handlers = ArrayUtil.ImmutableRemove(core.handlers, (x, state) => x.Item1 == state, this);
                 }
             }
         }

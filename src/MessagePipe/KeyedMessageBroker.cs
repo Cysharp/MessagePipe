@@ -229,8 +229,7 @@ namespace MessagePipe
                 {
                     lock (core.gate)
                     {
-                        // TODO:remove lambda this capture.
-                        holder.handlers = ArrayUtil.ImmutableRemove(holder.handlers, x => x.Item1 == this);
+                        holder.handlers = ArrayUtil.ImmutableRemove(holder.handlers, (x, state) => x.Item1 == state, this);
                         if (holder.handlers.Length == 0)
                         {
                             core.subscriptions.Remove(id);

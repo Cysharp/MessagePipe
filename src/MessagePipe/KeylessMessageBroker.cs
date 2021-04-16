@@ -145,7 +145,6 @@ namespace MessagePipe
         public IDisposable Subscribe(IMessageHandler<TMessage> handler)
         {
             var subscription = new Subscription(this);
-            // TODO:ImmutableInterlocked.
             lock (gate)
             {
                 handlers = ArrayUtil.ImmutableAdd(handlers, (subscription, handler));
@@ -166,7 +165,7 @@ namespace MessagePipe
             {
                 lock (core.gate)
                 {
-                    core.handlers = ArrayUtil.ImmutableRemove(core.handlers, x => x.Item1 == this);
+                    core.handlers = ArrayUtil.ImmutableRemove(core.handlers, (x, state) => x.Item1 == state, this);
                 }
             }
         }
