@@ -77,13 +77,6 @@ namespace MessagePipe
             return subscriber.Subscribe(key, new AnonymousMessageHandler<TMessage>(handler));
         }
 
-        // TODO:filters?
-        public static IDisposable Subscribe<TKey, TMessage>(this ISubscriber<TKey, TMessage> subscriber, TKey key, Action<TMessage> handler, params MessagePipeFilterAttribute[] filters)
-            where TKey : notnull
-        {
-            return subscriber.Subscribe(key, new AnonymousMessageHandler<TMessage>(handler));
-        }
-
         public static IDisposable Subscribe<TMessage>(this ISubscriber<TMessage> subscriber, Action<TMessage> handler)
         {
             return subscriber.Subscribe(new AnonymousMessageHandler<TMessage>(handler));

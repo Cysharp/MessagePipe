@@ -8,12 +8,12 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class ServiceCollectionExtensions
     {
-        public static void AddMessagePipe(this IServiceCollection services)
+        public static IServiceCollection AddMessagePipe(this IServiceCollection services)
         {
-            AddMessagePipe(services, _ => { });
+            return AddMessagePipe(services, _ => { });
         }
 
-        public static void AddMessagePipe(this IServiceCollection services, Action<MessagePipeOptions> configure)
+        public static IServiceCollection AddMessagePipe(this IServiceCollection services, Action<MessagePipeOptions> configure)
         {
             var options = new MessagePipeOptions();
             configure(options);
@@ -25,7 +25,9 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton(typeof(ISubscriber<,>), typeof(MessageBroker<,>));
 
             // keyless PubSub
-            services.AddSingleton(typeof(IMessageBroker<>), typeof(ImmutableArrayMessageBroker<>));
+            services.AddSingleton(typeof(IMessageBroker<>), (options.DefaultHandlerRepository == DefaultHandlerRepository.ConcurrentDictionary)
+                ? typeof(ConcurrentDictionaryMessageBroker<>)
+                : typeof(ImmutableArrayMessageBroker<>));
             services.AddSingleton(typeof(IPublisher<>), typeof(MessageBroker<>));
             services.AddSingleton(typeof(ISubscriber<>), typeof(MessageBroker<>));
 
@@ -40,13 +42,13 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton(typeof(IRequestAllHandler<,>), typeof(RequestAllHandler<,>));
 
             // filters
-            foreach (var filterAttr in options.GlobalMessagePipeFilters)
-            {
-                // filterAttr.Type
-                services.AddSingleton(filterAttr.Type);
-            }
+            options.AddGlobalFilter(services);
 
             // TODO:search handler's filter?
+
+            services.AddSingleton(typeof(MessagePipeDiagnosticsInfo));
+
+            return services;
         }
     }
 }

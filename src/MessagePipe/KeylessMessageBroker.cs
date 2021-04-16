@@ -1,8 +1,6 @@
 ﻿using MessagePipe.Internal;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace MessagePipe
@@ -11,7 +9,7 @@ namespace MessagePipe
     {
     }
 
-    public sealed class MessageBroker<TMessage> : IPublisher<TMessage>, ISubscriber<TMessage>
+    public sealed class MessageBroker<TMessage> : IMessageBroker<TMessage>
     {
         readonly IMessageBroker<TMessage> core;
         readonly MessagePipeOptions options;
@@ -31,52 +29,12 @@ namespace MessagePipe
 
         public IDisposable Subscribe(IMessageHandler<TMessage> handler)
         {
-            List<(MessageHandlerFilter, int)>? list = null;
+            var handlerFilters = FilterCache<MessageHandlerFilterAttribute, MessageHandlerFilter>.GetOrAddFilters(handler.GetType(), provider);
+            var globalFilters = options.GetGlobalMessageHandlerFilters(provider);
 
-            foreach (var item in options.GetRequestHandler(provider))
+            if (handlerFilters.Length != 0 || globalFilters.Length != 0)
             {
-                if (list == null) list = new List<(MessageHandlerFilter, int)>();
-                list.Add(item);
-            }
-
-            if (handler is IAttachedFilter attached)
-            {
-                foreach (var item in attached.Filters)
-                {
-                    var filterAttr = (MessagePipeFilterAttribute)item;
-                    if (!typeof(MessageHandlerFilter).IsAssignableFrom(filterAttr.Type))
-                    {
-                        // TODO:error msg;
-                        throw new Exception();
-                    }
-
-                    var t = (MessageHandlerFilter)provider.GetRequiredService(filterAttr.Type);
-
-                    if (list == null) list = new List<(MessageHandlerFilter, int)>();
-                    list.Add((t, filterAttr.Order));
-                }
-            }
-
-            // TODO:use filter cache
-            var filterAttributes = handler.GetType().GetCustomAttributes(typeof(MessagePipeFilterAttribute), true);
-            foreach (var item in filterAttributes)
-            {
-                var filterAttr = (MessagePipeFilterAttribute)item;
-                if (!typeof(MessageHandlerFilter).IsAssignableFrom(filterAttr.Type))
-                {
-                    // TODO:error msg;
-                    throw new Exception();
-                }
-
-                var t = (MessageHandlerFilter)provider.GetRequiredService(filterAttr.Type);
-
-                if (list == null) list = new List<(MessageHandlerFilter, int)>();
-                list.Add((t, filterAttr.Order));
-            }
-
-            if (list != null)
-            {
-                handler = new FilterAttachedMessageHandler<TMessage>(handler, list);
+                handler = new FilterAttachedMessageHandler<TMessage>(handler, handlerFilters.Concat(globalFilters));
             }
 
             return core.Subscribe(handler);
@@ -86,10 +44,12 @@ namespace MessagePipe
     public sealed class ConcurrentDictionaryMessageBroker<TMessage> : IMessageBroker<TMessage>
     {
         readonly ConcurrentDictionary<IDisposable, IMessageHandler<TMessage>> handlers;
+        readonly MessagePipeDiagnosticsInfo diagnotics;
 
-        public ConcurrentDictionaryMessageBroker()
+        public ConcurrentDictionaryMessageBroker(MessagePipeDiagnosticsInfo diagnotics)
         {
             this.handlers = new ConcurrentDictionary<IDisposable, IMessageHandler<TMessage>>();
+            this.diagnotics = diagnotics;
         }
 
         public void Publish(TMessage message)
@@ -104,11 +64,13 @@ namespace MessagePipe
         {
             var subscription = new Subscription(this);
             handlers.TryAdd(subscription, handler);
+            diagnotics.IncrementSubscribe(subscription);
             return subscription;
         }
 
         sealed class Subscription : IDisposable
         {
+            bool isDisposed;
             readonly ConcurrentDictionaryMessageBroker<TMessage> core;
 
             public Subscription(ConcurrentDictionaryMessageBroker<TMessage> core)
@@ -118,7 +80,12 @@ namespace MessagePipe
 
             public void Dispose()
             {
-                core.handlers.TryRemove(this, out _);
+                if (!isDisposed)
+                {
+                    isDisposed = true;
+                    core.handlers.TryRemove(this, out _);
+                    core.diagnotics.DecrementSubscribe(this);
+                }
             }
         }
     }
@@ -126,12 +93,14 @@ namespace MessagePipe
     public sealed class ImmutableArrayMessageBroker<TMessage> : IMessageBroker<TMessage>
     {
         (IDisposable, IMessageHandler<TMessage>)[] handlers;
+        readonly MessagePipeDiagnosticsInfo diagnotics;
         readonly object gate;
 
-        public ImmutableArrayMessageBroker()
+        public ImmutableArrayMessageBroker(MessagePipeDiagnosticsInfo diagnotics)
         {
             this.handlers = Array.Empty<(IDisposable, IMessageHandler<TMessage>)>();
             this.gate = new object();
+            this.diagnotics = diagnotics;
         }
 
         public void Publish(TMessage message)
@@ -148,12 +117,14 @@ namespace MessagePipe
             lock (gate)
             {
                 handlers = ArrayUtil.ImmutableAdd(handlers, (subscription, handler));
+                diagnotics.IncrementSubscribe(subscription);
             }
             return subscription;
         }
 
         sealed class Subscription : IDisposable
         {
+            bool isDisposed;
             readonly ImmutableArrayMessageBroker<TMessage> core;
 
             public Subscription(ImmutableArrayMessageBroker<TMessage> core)
@@ -163,9 +134,14 @@ namespace MessagePipe
 
             public void Dispose()
             {
-                lock (core.gate)
+                if (!isDisposed)
                 {
-                    core.handlers = ArrayUtil.ImmutableRemove(core.handlers, (x, state) => x.Item1 == state, this);
+                    isDisposed = true;
+                    lock (core.gate)
+                    {
+                        core.handlers = ArrayUtil.ImmutableRemove(core.handlers, (x, state) => x.Item1 == state, this);
+                        core.diagnotics.DecrementSubscribe(this);
+                    }
                 }
             }
         }

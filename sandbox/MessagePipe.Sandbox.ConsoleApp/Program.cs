@@ -80,13 +80,6 @@ namespace MessagePipe
                 Console.WriteLine("A:" + x.MyProperty);
             });
 
-            [MessagePipeFilter(typeof(MyFilter))]
-            static void Foo(MyMessage msg)
-            {
-                Console.WriteLine("Yeah");
-            }
-            this.subscriber.Subscribe("foo", Foo);
-
             var d = this.subscriber.Subscribe("foo", x =>
              {
                  Console.WriteLine("B:" + x.MyProperty);
@@ -236,7 +229,9 @@ namespace MessagePipe
         }
     }
 
-    [MessagePipeFilter(typeof(MyFilter))]
+    [MessageHandlerFilter(typeof(MyFilter))]
+    [MessageHandlerFilter(typeof(MyFilter))]
+    [MessageHandlerFilter(typeof(MyFilter))]
     public class MyFirst : IMessageHandler<MyMessage>
     {
         public void Handle(MyMessage message)

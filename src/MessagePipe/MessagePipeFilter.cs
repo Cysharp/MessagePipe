@@ -7,23 +7,61 @@ using System.Threading.Tasks;
 
 namespace MessagePipe
 {
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
-    public class MessagePipeFilterAttribute : Attribute
+    // TODO:MessageHandlerFilter, RequestHandlerFilter, etc...?
+
+    internal interface IMessagePipeAttribute
+    {
+        public Type Type { get; }
+        public int Order { get; }
+    }
+
+    internal interface IMessagePipeFilter
+    {
+
+    }
+
+    internal readonly struct FilterTypeAndOrder
+    {
+        public readonly Type FilterType;
+        public readonly int Order;
+
+        public FilterTypeAndOrder(Type filterType, int order)
+        {
+            FilterType = filterType;
+            Order = order;
+        }
+    }
+
+    internal readonly struct FilterAndOrder<T>
+        where T : IMessagePipeFilter
+    {
+        public readonly T Filter;
+        public readonly int Order;
+
+        public FilterAndOrder(T filter, int order)
+        {
+            Filter = filter;
+            Order = order;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+    public class MessageHandlerFilterAttribute : Attribute, IMessagePipeAttribute
     {
         public Type Type { get; }
         public int Order { get; set; }
 
-        public MessagePipeFilterAttribute(Type type)
+        public MessageHandlerFilterAttribute(Type type)
         {
+            if (!typeof(MessageHandlerFilter).IsAssignableFrom(type))
+            {
+                throw new ArgumentException($"{type.FullName} is not MessageHandlerFilter.");
+            }
             this.Type = type;
         }
     }
-    // TODO:MessageHandlerFilter, RequestHandlerFilter, etc...?
 
-    internal interface IAttachedFilter
-    {
-        internal MessagePipeFilterAttribute[] Filters { get; }
-    }
+
 
     public abstract class RequestHandlerFilter
     {
@@ -32,7 +70,7 @@ namespace MessagePipe
 
     // TODO:AsyncHandler?
 
-    public abstract class MessageHandlerFilter
+    public abstract class MessageHandlerFilter : IMessagePipeFilter
     {
         public abstract void Handle<T>(T message, Action<T> next);
     }
@@ -41,7 +79,7 @@ namespace MessagePipe
     {
         Action<T> handler;
 
-        public FilterAttachedMessageHandler(IMessageHandler<T> body, IEnumerable<(MessageHandlerFilter Filter, int Order)> filters)
+        public FilterAttachedMessageHandler(IMessageHandler<T> body, IEnumerable<FilterAndOrder<MessageHandlerFilter>> filters)
         {
             Action<T> next = body.Handle;
             foreach (var f in filters.OrderByDescending(x => x.Order))
