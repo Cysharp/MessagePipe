@@ -26,7 +26,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             // keyless PubSub
             services.AddSingleton(typeof(IMessageBroker<>), (options.DefaultHandlerRepository == DefaultHandlerRepository.ConcurrentDictionary)
-                ? typeof(ConcurrentDictionaryMessageBroker<>)
+                ? typeof(FreeListMessageBroker<>) // typeof(ConcurrentDictionaryMessageBroker<>)
                 : typeof(ImmutableArrayMessageBroker<>));
             services.AddSingleton(typeof(IPublisher<>), typeof(MessageBroker<>));
             services.AddSingleton(typeof(ISubscriber<>), typeof(MessageBroker<>));

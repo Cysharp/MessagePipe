@@ -1,6 +1,7 @@
 ﻿using MessagePipe.Internal;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MessagePipe
@@ -89,6 +90,68 @@ namespace MessagePipe
             }
         }
     }
+
+
+
+
+    public sealed class FreeListMessageBroker<TMessage> : IMessageBroker<TMessage>
+    {
+        readonly FreeList<IDisposable, IMessageHandler<TMessage>> handlers;
+        readonly MessagePipeDiagnosticsInfo diagnotics;
+        readonly object gate;
+
+        public FreeListMessageBroker(MessagePipeDiagnosticsInfo diagnotics)
+        {
+            this.handlers = new FreeList<IDisposable, IMessageHandler<TMessage>>();
+            this.diagnotics = diagnotics;
+            this.gate = new object();
+        }
+
+        public void Publish(TMessage message)
+        {
+            var array = handlers.GetUnsafeRawItems();
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i]?.Handle(message);
+            }
+        }
+
+        public IDisposable Subscribe(IMessageHandler<TMessage> handler)
+        {
+            var subscription = new Subscription(this);
+            lock (gate)
+            {
+                handlers.Add(subscription, handler);
+            }
+            diagnotics.IncrementSubscribe(subscription);
+            return subscription;
+        }
+
+        sealed class Subscription : IDisposable
+        {
+            bool isDisposed;
+            readonly FreeListMessageBroker<TMessage> core;
+
+            public Subscription(FreeListMessageBroker<TMessage> core)
+            {
+                this.core = core;
+            }
+
+            public void Dispose()
+            {
+                if (!isDisposed)
+                {
+                    isDisposed = true;
+                    lock (core.gate)
+                    {
+                        core.handlers.Remove(this);
+                    }
+                    core.diagnotics.DecrementSubscribe(this);
+                }
+            }
+        }
+    }
+
 
     public sealed class ImmutableArrayMessageBroker<TMessage> : IMessageBroker<TMessage>
     {
