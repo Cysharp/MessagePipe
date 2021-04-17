@@ -17,11 +17,6 @@ namespace Microsoft.Extensions.DependencyInjection
             configure(options);
             services.AddSingleton(options);
 
-            // keyed PubSub
-            services.AddSingleton(typeof(IMessageBroker<,>), typeof(ImmutableArrayMessageBroker<,>));
-            services.AddSingleton(typeof(IPublisher<,>), typeof(MessageBroker<,>));
-            services.AddSingleton(typeof(ISubscriber<,>), typeof(MessageBroker<,>));
-
             // keyless PubSub
             services.AddSingleton(typeof(MessageBrokerCore<>));
             services.AddSingleton(typeof(IPublisher<>), typeof(MessageBroker<>));
@@ -31,6 +26,11 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton(typeof(AsyncMessageBrokerCore<>));
             services.AddSingleton(typeof(IAsyncPublisher<>), typeof(AsyncMessageBroker<>));
             services.AddSingleton(typeof(IAsyncSubscriber<>), typeof(AsyncMessageBroker<>));
+
+            // keyed PubSub
+            services.AddSingleton(typeof(MessageBrokerCore<,>));
+            services.AddSingleton(typeof(IPublisher<,>), typeof(MessageBroker<,>));
+            services.AddSingleton(typeof(ISubscriber<,>), typeof(MessageBroker<,>));
 
             // todo:automatically register IRequestHandler<T,T> => Handler
 

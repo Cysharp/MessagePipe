@@ -31,6 +31,8 @@ namespace MessagePipe.Benchmark
         Messenger mvvmLightStrong;
         IPublisher<Message> filter1;
         IPublisher<Message> filter2;
+        IPublisher<Guid, Message> keyed;
+        Guid key = Guid.NewGuid();
 
         public PublishOps()
         {
@@ -45,7 +47,13 @@ namespace MessagePipe.Benchmark
 
             p = provider.GetRequiredService<IPublisher<Message>>();
             var s = provider.GetRequiredService<ISubscriber<Message>>();
+
+            keyed = provider.GetRequiredService<IPublisher<Guid, Message>>();
+            var keyedS = provider.GetRequiredService<ISubscriber<Guid, Message>>();
+
             hub = Hub.Default;
+
+
 
             var px = new ServiceCollection().AddMessagePipe().BuildServiceProvider();
             filter1 = px.GetRequiredService<IPublisher<Message>>();
@@ -75,6 +83,7 @@ namespace MessagePipe.Benchmark
                 mvvmLight.Register<Message>(this, _ => { }, false);
                 // mvvmLightStrong.Register<Message>(this, _ => { }, true);
 
+                keyedS.Subscribe(key, _ => { });
 
                 filter1Sub.Subscribe(new EmptyMessageHandler(), new EmptyMessageHandlerFilter());
                 filter2Sub.Subscribe(new EmptyMessageHandler(), new EmptyMessageHandlerFilter(), new EmptyMessageHandlerFilter());
@@ -124,6 +133,7 @@ namespace MessagePipe.Benchmark
                 
                     //Measure("MessagePipe(f1)", () => filter1.Publish(m)),
                     //Measure("MessagePipe(f2)", () => filter2.Publish(m)),
+                    Measure("MessagePipe(key)", () => keyed.Publish(key, m)),
                 };
             }
 

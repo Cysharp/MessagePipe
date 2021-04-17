@@ -1,23 +1,23 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using MessagePipe.Internal;
+using System;
 using System.Collections.Generic;
-using MessagePipe.Internal;
 
 namespace MessagePipe
 {
-    public interface IMessageBroker<TKey, TMessage> : IPublisher<TKey, TMessage>, ISubscriber<TKey, TMessage>
-        where TKey : notnull
-    {
-    }
-
     public sealed class MessageBroker<TKey, TMessage> : IPublisher<TKey, TMessage>, ISubscriber<TKey, TMessage>
         where TKey : notnull
     {
-        readonly IMessageBroker<TKey, TMessage> core;
+        readonly MessageBrokerCore<TKey, TMessage> core;
+        readonly MessagePipeOptions options;
+        readonly FilterCache<MessageHandlerFilterAttribute, MessageHandlerFilter> filterCache;
+        readonly IServiceProvider provider;
 
-        public MessageBroker(IMessageBroker<TKey, TMessage> core)
+        public MessageBroker(MessageBrokerCore<TKey, TMessage> core, MessagePipeOptions options, FilterCache<MessageHandlerFilterAttribute, MessageHandlerFilter> filterCache, IServiceProvider provider)
         {
             this.core = core;
+            this.options = options;
+            this.filterCache = filterCache;
+            this.provider = provider;
         }
 
         public void Publish(TKey key, TMessage message)
@@ -25,43 +25,49 @@ namespace MessagePipe
             core.Publish(key, message);
         }
 
-        public IDisposable Subscribe(TKey key, IMessageHandler<TMessage> handler)
+        public IDisposable Subscribe(TKey key, IMessageHandler<TMessage> handler, params MessageHandlerFilter[] filters)
         {
+            var handlerFilters = filterCache.GetOrAddFilters(handler.GetType(), provider);
+            var globalFilters = options.GetGlobalMessageHandlerFilters(provider);
+
+            if (filters.Length != 0 || handlerFilters.Length != 0 || globalFilters.Length != 0)
+            {
+                handler = new FilterAttachedMessageHandler<TMessage>(handler, ArrayUtil.Concat(filters, handlerFilters, globalFilters));
+            }
+
             return core.Subscribe(key, handler);
         }
     }
 
-    public sealed class ConcurrentDictionaryMessageBroker<TKey, TMessage> : IMessageBroker<TKey, TMessage>
+    public sealed class MessageBrokerCore<TKey, TMessage>
         where TKey : notnull
     {
-        readonly Dictionary<TKey, SubscriptionHolder> subscriptions;
+        readonly Dictionary<TKey, HandlerHolder> handlerGroup;
+        readonly MessagePipeDiagnosticsInfo diagnotics;
         readonly object gate;
 
-        public ConcurrentDictionaryMessageBroker()
+        public MessageBrokerCore(MessagePipeDiagnosticsInfo diagnotics)
         {
-            this.subscriptions = new Dictionary<TKey, SubscriptionHolder>();
+            this.handlerGroup = new Dictionary<TKey, HandlerHolder>();
+            this.diagnotics = diagnotics;
             this.gate = new object();
         }
 
         public void Publish(TKey id, TMessage message)
         {
-            SubscriptionHolder holder;
+            IMessageHandler<TMessage>?[] handlers;
             lock (gate)
             {
-                if (!subscriptions.TryGetValue(id, out holder!))
+                if (!handlerGroup.TryGetValue(id, out var holder))
                 {
                     return;
                 }
+                handlers = holder.GetHandlers();
             }
 
-            // outside from lock.
-            using (var e = holder.GetHandlers())
+            for (int i = 0; i < handlers.Length; i++)
             {
-                while (e.MoveNext())
-                {
-                    // TODO: error handle strategy?
-                    e.Current.Value.Handle(message);
-                }
+                handlers[i]?.Handle(message);
             }
         }
 
@@ -69,51 +75,43 @@ namespace MessagePipe
         {
             lock (gate)
             {
-                if (!subscriptions.TryGetValue(id, out var holder))
+                if (!handlerGroup.TryGetValue(id, out var holder))
                 {
-                    subscriptions[id] = holder = new SubscriptionHolder();
+                    handlerGroup[id] = holder = new HandlerHolder();
                 }
 
-                return holder.RegisterHandler(this, id, handler);
+                return holder.Subscribe(this, id, handler);
             }
         }
 
-        sealed class SubscriptionHolder
+        // similar as Keyless-MessageBrokerCore but require to remove when key is empty on Dispose
+        sealed class HandlerHolder
         {
-            // ConcurrentDictionary.Count is slow, should not use.
-            int handlerCount;
-            readonly ConcurrentDictionary<IDisposable, IMessageHandler<TMessage>> handlers;
+            readonly FreeList<IDisposable, IMessageHandler<TMessage>> handlers;
 
-            public SubscriptionHolder()
+            public HandlerHolder()
             {
-                handlerCount = 0;
-                handlers = new ConcurrentDictionary<IDisposable, IMessageHandler<TMessage>>();
+                this.handlers = new FreeList<IDisposable, IMessageHandler<TMessage>>();
             }
 
-            public IEnumerator<KeyValuePair<IDisposable, IMessageHandler<TMessage>>> GetHandlers()
-            {
-                // .Values allocate ICollection<> so should avoid it.
-                return handlers.GetEnumerator();
-            }
+            public IMessageHandler<TMessage>?[] GetHandlers() => handlers.GetUnsafeRawItems();
 
-            public IDisposable RegisterHandler(ConcurrentDictionaryMessageBroker<TKey, TMessage> core, TKey TKey, IMessageHandler<TMessage> handler)
+            public IDisposable Subscribe(MessageBrokerCore<TKey, TMessage> core, TKey key, IMessageHandler<TMessage> handler)
             {
-                lock (core.gate)
-                {
-                    var subscription = new Subscription(core, TKey, this);
-                    handlers.TryAdd(subscription, handler);
-                    handlerCount += 1;
-                    return subscription;
-                }
+                var subscription = new Subscription(core, key, this);
+                handlers.Add(subscription, handler);
+                core.diagnotics.IncrementSubscribe(subscription);
+                return subscription;
             }
 
             sealed class Subscription : IDisposable
             {
-                readonly ConcurrentDictionaryMessageBroker<TKey, TMessage> core;
+                bool isDisposed;
+                readonly MessageBrokerCore<TKey, TMessage> core;
                 readonly TKey id;
-                readonly SubscriptionHolder holder;
+                readonly HandlerHolder holder;
 
-                public Subscription(ConcurrentDictionaryMessageBroker<TKey, TMessage> core, TKey id, SubscriptionHolder holder)
+                public Subscription(MessageBrokerCore<TKey, TMessage> core, TKey id, HandlerHolder holder)
                 {
                     this.core = core;
                     this.id = id;
@@ -122,117 +120,18 @@ namespace MessagePipe
 
                 public void Dispose()
                 {
-                    lock (core.gate)
+                    if (!isDisposed)
                     {
-                        holder.handlers.TryRemove(this, out _);
-                        holder.handlerCount -= 1;
-
-                        // remove from root when parent is empty.
-                        if (holder.handlerCount == 0)
+                        isDisposed = true;
+                        lock (core.gate)
                         {
-                            core.subscriptions.Remove(id);
-                        }
-                    }
-                }
-            }
-        }
-    }
+                            holder.handlers.Remove(this);
+                            core.diagnotics.DecrementSubscribe(this);
 
-    public sealed class ImmutableArrayMessageBroker<TKey, TMessage> : IMessageBroker<TKey, TMessage>
-        where TKey : notnull
-    {
-        // TODO: use logger?
-        readonly Dictionary<TKey, SubscriptionHolder> subscriptions;
-        readonly object gate;
-
-        public ImmutableArrayMessageBroker()
-        {
-            this.subscriptions = new Dictionary<TKey, SubscriptionHolder>();
-            this.gate = new object();
-        }
-
-        public void Publish(TKey id, TMessage message)
-        {
-            SubscriptionHolder holder;
-            lock (gate)
-            {
-                if (!subscriptions.TryGetValue(id, out holder!))
-                {
-                    return;
-                }
-            }
-
-            // outside from lock.
-            var array = holder.GetHandlers();
-            for (int i = 0; i < array.Length; i++)
-            {
-                array[i].Item2.Handle(message);
-            }
-        }
-
-        public IDisposable Subscribe(TKey id, IMessageHandler<TMessage> handler)
-        {
-            lock (gate)
-            {
-                if (!subscriptions.TryGetValue(id, out var holder))
-                {
-                    subscriptions[id] = holder = new SubscriptionHolder();
-                }
-
-                return holder.RegisterHandler(this, id, handler);
-            }
-        }
-
-        sealed class SubscriptionHolder
-        {
-            (IDisposable, IMessageHandler<TMessage>)[] handlers;
-
-            public SubscriptionHolder()
-            {
-                handlers = Array.Empty<(IDisposable, IMessageHandler<TMessage>)>();
-            }
-
-            public (IDisposable, IMessageHandler<TMessage>)[] GetHandlers()
-            {
-                return handlers;
-            }
-
-            public IDisposable RegisterHandler(ImmutableArrayMessageBroker<TKey, TMessage> core, TKey TKey, IMessageHandler<TMessage> handler)
-            {
-                lock (core.gate)
-                {
-                    var subscription = new Subscription(core, TKey, this);
-
-                    var newArray = new (IDisposable, IMessageHandler<TMessage>)[handlers.Length + 1];
-                    Array.Copy(handlers, 0, newArray, 0, handlers.Length);
-                    newArray[newArray.Length - 1] = (subscription, handler);
-                    handlers = newArray; // replace new.
-
-                    return subscription;
-                }
-            }
-
-            sealed class Subscription : IDisposable
-            {
-                readonly ImmutableArrayMessageBroker<TKey, TMessage> core;
-                readonly TKey id;
-                readonly SubscriptionHolder holder;
-
-                public Subscription(ImmutableArrayMessageBroker<TKey, TMessage> core, TKey id, SubscriptionHolder holder)
-                {
-                    this.core = core;
-                    this.id = id;
-                    this.holder = holder;
-                }
-
-                public void Dispose()
-                {
-                    lock (core.gate)
-                    {
-                        holder.handlers = ArrayUtil.ImmutableRemove(holder.handlers, (x, state) => x.Item1 == state, this);
-                        if (holder.handlers.Length == 0)
-                        {
-                            core.subscriptions.Remove(id);
+                            if (holder.handlers.Count == 0)
+                            {
+                                core.handlerGroup.Remove(id);
+                            }
                         }
                     }
                 }
