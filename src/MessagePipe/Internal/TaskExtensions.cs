@@ -4,7 +4,7 @@ namespace MessagePipe.Internal
 {
     internal static class TaskExtensions
     {
-        internal static async void Forget(this Task task)
+        internal static async void Forget(this ValueTask task)
         {
             await task;
         }

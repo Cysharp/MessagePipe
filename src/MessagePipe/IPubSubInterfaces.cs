@@ -1,11 +1,16 @@
-﻿using System;
+﻿using MessagePipe.Internal;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Sources;
 
 namespace MessagePipe
 {
+    // handler
+
     public interface IMessageHandler<T>
     {
         void Handle(T message);
@@ -13,8 +18,7 @@ namespace MessagePipe
 
     public interface IAsyncMessageHandler<T>
     {
-        // use Task for WhenAll
-        Task HandleAsync(T message, CancellationToken cancellationToken);
+        ValueTask HandleAsync(T message, CancellationToken cancellationToken);
     }
 
     // Keyed
@@ -52,34 +56,71 @@ namespace MessagePipe
 
     public interface ISubscriber<TMessage>
     {
-        public IDisposable Subscribe(IMessageHandler<TMessage> handler);
+        public IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter[] filters);
     }
-    // TODO: void Publish
 
     public interface IAsyncPublisher<TMessage>
     {
         void Publish(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
         ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
     }
 
     public interface IAsyncSubscriber<TMessage>
     {
-        public IDisposable Subscribe(IAsyncMessageHandler<TMessage> asyncHandler);
+        public IDisposable Subscribe(IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter[] filters);
     }
 
     // Extensions
 
     public static partial class MessageBrokerExtensions
     {
+        // pubsub-keyless-sync
+
+        public static IDisposable Subscribe<TMessage>(this ISubscriber<TMessage> subscriber, Action<TMessage> handler, params MessageHandlerFilter[] filters)
+        {
+            return subscriber.Subscribe(new AnonymousMessageHandler<TMessage>(handler), filters);
+        }
+
+        public static IDisposable Subscribe<TMessage>(this ISubscriber<TMessage> subscribe, Action<TMessage> handler, Func<TMessage, bool> predicate, params MessageHandlerFilter[] filters)
+        {
+            var predicateFilter = new PredicateFilter<TMessage>(predicate);
+            filters = (filters.Length == 0)
+                ? new[] { predicateFilter }
+                : ArrayUtil.ImmutableAdd(filters, predicateFilter);
+
+            return subscribe.Subscribe(new AnonymousMessageHandler<TMessage>(handler), filters);
+        }
+
+        public static IObservable<TMessage> AsObservable<TMessage>(this ISubscriber<TMessage> subscriber, params MessageHandlerFilter[] filters)
+        {
+            return new ObservableSubscriber<TMessage>(subscriber, filters);
+        }
+
+        // pubsub-keyless-async
+
+        public static IDisposable Subscribe<TMessage>(this IAsyncSubscriber<TMessage> subscriber, Func<TMessage, CancellationToken, ValueTask> handler, params AsyncMessageHandlerFilter[] filters)
+        {
+            return subscriber.Subscribe(new AnonymousAsyncMessageHandler<TMessage>(handler), filters);
+        }
+
+        public static IDisposable Subscribe<TMessage>(this IAsyncSubscriber<TMessage> subscribe, Func<TMessage, CancellationToken, ValueTask> handler, Func<TMessage, bool> predicate, params AsyncMessageHandlerFilter[] filters)
+        {
+            var predicateFilter = new AsyncPredicateFilter<TMessage>(predicate);
+            filters = (filters.Length == 0)
+                ? new[] { predicateFilter }
+                : ArrayUtil.ImmutableAdd(filters, predicateFilter);
+
+            return subscribe.Subscribe(new AnonymousAsyncMessageHandler<TMessage>(handler), filters);
+        }
+
+        // TODO:key...
+
+
         public static IDisposable Subscribe<TKey, TMessage>(this ISubscriber<TKey, TMessage> subscriber, TKey key, Action<TMessage> handler)
             where TKey : notnull
         {
             return subscriber.Subscribe(key, new AnonymousMessageHandler<TMessage>(handler));
-        }
-
-        public static IDisposable Subscribe<TMessage>(this ISubscriber<TMessage> subscriber, Action<TMessage> handler)
-        {
-            return subscriber.Subscribe(new AnonymousMessageHandler<TMessage>(handler));
         }
 
         public static IObservable<TMessage> AsObservable<TKey, TMessage>(this ISubscriber<TKey, TMessage> subscriber, TKey key)
@@ -88,14 +129,10 @@ namespace MessagePipe
             return new ObservableSubscriber<TKey, TMessage>(key, subscriber);
         }
 
-        public static IObservable<TMessage> AsObservable<TMessage>(this ISubscriber<TMessage> subscriber)
-        {
-            return new ObservableSubscriber<TMessage>(subscriber);
-        }
 
         // TODO:keyed async Subscribe
 
-        public static IDisposable Subscribe<TMessage>(this IAsyncSubscriber<TMessage> subscriber, Func<TMessage, CancellationToken, Task> handler)
+        public static IDisposable Subscribe<TMessage>(this IAsyncSubscriber<TMessage> subscriber, Func<TMessage, CancellationToken, ValueTask> handler)
         {
             return subscriber.Subscribe(new AnonymousAsyncMessageHandler<TMessage>(handler));
         }
@@ -117,14 +154,14 @@ namespace MessagePipe
 
         sealed class AnonymousAsyncMessageHandler<TMessage> : IAsyncMessageHandler<TMessage>
         {
-            readonly Func<TMessage, CancellationToken, Task> handler;
+            readonly Func<TMessage, CancellationToken, ValueTask> handler;
 
-            public AnonymousAsyncMessageHandler(Func<TMessage, CancellationToken, Task> handler)
+            public AnonymousAsyncMessageHandler(Func<TMessage, CancellationToken, ValueTask> handler)
             {
                 this.handler = handler;
             }
 
-            public Task HandleAsync(TMessage message, CancellationToken cancellationToken)
+            public ValueTask HandleAsync(TMessage message, CancellationToken cancellationToken)
             {
                 return handler.Invoke(message, cancellationToken);
             }
@@ -152,15 +189,17 @@ namespace MessagePipe
     internal sealed class ObservableSubscriber<TMessage> : IObservable<TMessage>
     {
         readonly ISubscriber<TMessage> subscriber;
+        readonly MessageHandlerFilter[] filters;
 
-        public ObservableSubscriber(ISubscriber<TMessage> subscriber)
+        public ObservableSubscriber(ISubscriber<TMessage> subscriber, MessageHandlerFilter[] filters)
         {
             this.subscriber = subscriber;
+            this.filters = filters;
         }
 
         public IDisposable Subscribe(IObserver<TMessage> observer)
         {
-            return subscriber.Subscribe(new ObserverMessageHandler<TMessage>(observer));
+            return subscriber.Subscribe(new ObserverMessageHandler<TMessage>(observer), filters);
         }
     }
 

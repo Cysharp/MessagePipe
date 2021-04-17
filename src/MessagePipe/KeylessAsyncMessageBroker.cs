@@ -1,22 +1,25 @@
 ﻿using MessagePipe.Internal;
 using System;
-using System.Collections.Concurrent;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace MessagePipe
 {
-    public interface IAsyncMessageBroker<TMessage> : IAsyncPublisher<TMessage>, IAsyncSubscriber<TMessage>
-    {
-    }
-
     public sealed class AsyncMessageBroker<TMessage> : IAsyncPublisher<TMessage>, IAsyncSubscriber<TMessage>
     {
-        readonly IAsyncMessageBroker<TMessage> core;
+        readonly AsyncMessageBrokerCore<TMessage> core;
+        readonly MessagePipeOptions options;
+        readonly FilterCache<AsyncMessageHandlerFilterAttribute, AsyncMessageHandlerFilter> filterCache;
+        readonly IServiceProvider provider;
 
-        public AsyncMessageBroker(IAsyncMessageBroker<TMessage> core)
+        public AsyncMessageBroker(AsyncMessageBrokerCore<TMessage> core, MessagePipeOptions options, FilterCache<AsyncMessageHandlerFilterAttribute, AsyncMessageHandlerFilter> filterCache, IServiceProvider provider)
         {
             this.core = core;
+            this.options = options;
+            this.filterCache = filterCache;
+            this.provider = provider;
         }
 
         public void Publish(TMessage message, CancellationToken cancellationToken)
@@ -26,120 +29,102 @@ namespace MessagePipe
 
         public ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken)
         {
-            return core.PublishAsync(message, cancellationToken);
+            return core.PublishAsync(message, options.DefaultAsyncPublishStrategy, cancellationToken);
         }
 
-        public IDisposable Subscribe(IAsyncMessageHandler<TMessage> handler)
+        public ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken)
         {
+            return core.PublishAsync(message, publishStrategy, cancellationToken);
+        }
+
+        public IDisposable Subscribe(IAsyncMessageHandler<TMessage> handler, AsyncMessageHandlerFilter[] filters)
+        {
+            var handlerFilters = filterCache.GetOrAddFilters(handler.GetType(), provider);
+            var globalFilters = options.GetGlobalAsyncMessageHandlerFilters(provider);
+
+            if (filters.Length != 0 || handlerFilters.Length != 0 || globalFilters.Length != 0)
+            {
+                handler = new FilterAttachedAsyncMessageHandler<TMessage>(handler, ArrayUtil.Concat(filters, handlerFilters, globalFilters));
+            }
+
             return core.Subscribe(handler);
         }
     }
 
-    public sealed class ConcurrentDictionaryAsyncMessageBroker<TMessage> : IAsyncMessageBroker<TMessage>
+    public sealed class AsyncMessageBrokerCore<TMessage>
     {
-        readonly ConcurrentDictionary<IDisposable, IAsyncMessageHandler<TMessage>> handlers;
-
-        public ConcurrentDictionaryAsyncMessageBroker()
-        {
-            this.handlers = new ConcurrentDictionary<IDisposable, IAsyncMessageHandler<TMessage>>();
-        }
-
-        public void Publish(TMessage message, CancellationToken cancellationToken)
-        {
-            foreach (var item in handlers)
-            {
-                item.Value.HandleAsync(message, cancellationToken).Forget();
-            }
-        }
-
-        public async ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken)
-        {
-            foreach (var item in handlers)
-            {
-                // TODO:await mode(parallel? sequential?)
-                await item.Value.HandleAsync(message, cancellationToken);
-            }
-        }
-
-        public IDisposable Subscribe(IAsyncMessageHandler<TMessage> handler)
-        {
-            var subscription = new Subscription(this);
-            handlers.TryAdd(subscription, handler);
-            return subscription;
-        }
-
-        sealed class Subscription : IDisposable
-        {
-            readonly ConcurrentDictionaryAsyncMessageBroker<TMessage> core;
-
-            public Subscription(ConcurrentDictionaryAsyncMessageBroker<TMessage> core)
-            {
-                this.core = core;
-            }
-
-            public void Dispose()
-            {
-                core.handlers.TryRemove(this, out _);
-            }
-        }
-    }
-
-    public sealed class ImmutableArrayAsyncMessageBroker<TMessage> : IAsyncMessageBroker<TMessage>
-    {
-        (IDisposable, IAsyncMessageHandler<TMessage>)[] handlers;
+        FreeList<IDisposable, IAsyncMessageHandler<TMessage>> handlers;
+        readonly MessagePipeDiagnosticsInfo diagnotics;
         readonly object gate;
 
-        public ImmutableArrayAsyncMessageBroker()
+        public AsyncMessageBrokerCore(MessagePipeDiagnosticsInfo diagnotics)
         {
-            this.handlers = Array.Empty<(IDisposable, IAsyncMessageHandler<TMessage>)>();
+            this.handlers = new FreeList<IDisposable, IAsyncMessageHandler<TMessage>>();
+            this.diagnotics = diagnotics;
             this.gate = new object();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Publish(TMessage message, CancellationToken cancellationToken)
         {
-            // require to get current field to local.
-            var array = Volatile.Read(ref handlers);
+            var array = handlers.GetUnsafeRawItems();
             for (int i = 0; i < array.Length; i++)
             {
-                array[i].Item2.HandleAsync(message, cancellationToken).Forget();
+                array[i]?.HandleAsync(message, cancellationToken).Forget();
             }
         }
 
-        public async ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public async ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default)
         {
-            var array = Volatile.Read(ref handlers);
-            for (int i = 0; i < array.Length; i++)
+            var array = handlers.GetUnsafeRawItems();
+            if (publishStrategy == AsyncPublishStrategy.Sequential)
             {
-                // TODO:await strategy
-                await array[i].Item2.HandleAsync(message, cancellationToken);
+                foreach (var item in array)
+                {
+                    if (item != null)
+                    {
+                        await item.HandleAsync(message, cancellationToken);
+                    }
+                }
+            }
+            else
+            {
+                await new AsyncHandlerWhenAll<TMessage>(array, message, cancellationToken);
             }
         }
 
         public IDisposable Subscribe(IAsyncMessageHandler<TMessage> handler)
         {
             var subscription = new Subscription(this);
-            // TODO:ImmutableInterlocked.
             lock (gate)
             {
-                handlers = ArrayUtil.ImmutableAdd(handlers, (subscription, handler));
+                handlers.Add(subscription, handler);
             }
+            diagnotics.IncrementSubscribe(subscription);
             return subscription;
         }
 
         sealed class Subscription : IDisposable
         {
-            readonly ImmutableArrayAsyncMessageBroker<TMessage> core;
+            bool isDisposed;
+            readonly AsyncMessageBrokerCore<TMessage> core;
 
-            public Subscription(ImmutableArrayAsyncMessageBroker<TMessage> core)
+            public Subscription(AsyncMessageBrokerCore<TMessage> core)
             {
                 this.core = core;
             }
 
             public void Dispose()
             {
-                lock (core.gate)
+                if (!isDisposed)
                 {
-                    core.handlers = ArrayUtil.ImmutableRemove(core.handlers, (x, state) => x.Item1 == state, this);
+                    isDisposed = true;
+                    lock (core.gate)
+                    {
+                        core.handlers.Remove(this);
+                    }
+                    core.diagnotics.DecrementSubscribe(this);
                 }
             }
         }

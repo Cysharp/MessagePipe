@@ -1,8 +1,6 @@
 ﻿using MessagePipe;
-using Microsoft.Extensions.DependencyInjection;
+using MessagePipe.Internal;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -25,14 +23,12 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton(typeof(ISubscriber<,>), typeof(MessageBroker<,>));
 
             // keyless PubSub
-            services.AddSingleton(typeof(IMessageBroker<>), (options.DefaultHandlerRepository == DefaultHandlerRepository.ConcurrentDictionary)
-                ? typeof(FreeListMessageBroker<>) // typeof(ConcurrentDictionaryMessageBroker<>)
-                : typeof(ImmutableArrayMessageBroker<>));
+            services.AddSingleton(typeof(MessageBrokerCore<>));
             services.AddSingleton(typeof(IPublisher<>), typeof(MessageBroker<>));
             services.AddSingleton(typeof(ISubscriber<>), typeof(MessageBroker<>));
 
             // keyless PubSub async
-            services.AddSingleton(typeof(IAsyncMessageBroker<>), typeof(ImmutableArrayAsyncMessageBroker<>));
+            services.AddSingleton(typeof(AsyncMessageBrokerCore<>));
             services.AddSingleton(typeof(IAsyncPublisher<>), typeof(AsyncMessageBroker<>));
             services.AddSingleton(typeof(IAsyncSubscriber<>), typeof(AsyncMessageBroker<>));
 
@@ -43,9 +39,13 @@ namespace Microsoft.Extensions.DependencyInjection
 
             // filters
             options.AddGlobalFilter(services);
+            services.AddSingleton(typeof(FilterCache<,>));
 
             // TODO:search handler's filter?
 
+
+
+            // others.
             services.AddSingleton(typeof(MessagePipeDiagnosticsInfo));
 
             return services;

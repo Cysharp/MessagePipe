@@ -1,25 +1,22 @@
 ﻿using MessagePipe.Internal;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace MessagePipe
 {
-    public interface IMessageBroker<TMessage> : IPublisher<TMessage>, ISubscriber<TMessage>
+    public sealed class MessageBroker<TMessage> : IPublisher<TMessage>, ISubscriber<TMessage>
     {
-    }
-
-    public sealed class MessageBroker<TMessage> : IMessageBroker<TMessage>
-    {
-        readonly IMessageBroker<TMessage> core;
+        readonly MessageBrokerCore<TMessage> core;
         readonly MessagePipeOptions options;
+        readonly FilterCache<MessageHandlerFilterAttribute, MessageHandlerFilter> filterCache;
         readonly IServiceProvider provider;
 
-        public MessageBroker(IMessageBroker<TMessage> core, MessagePipeOptions options, IServiceProvider provider)
+        public MessageBroker(MessageBrokerCore<TMessage> core, MessagePipeOptions options, FilterCache<MessageHandlerFilterAttribute, MessageHandlerFilter> filterCache, IServiceProvider provider)
         {
             this.core = core;
             this.options = options;
+            this.filterCache = filterCache;
             this.provider = provider;
         }
 
@@ -28,85 +25,34 @@ namespace MessagePipe
             core.Publish(message);
         }
 
-        public IDisposable Subscribe(IMessageHandler<TMessage> handler)
+        public IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter[] filters)
         {
-            var handlerFilters = FilterCache<MessageHandlerFilterAttribute, MessageHandlerFilter>.GetOrAddFilters(handler.GetType(), provider);
+            var handlerFilters = filterCache.GetOrAddFilters(handler.GetType(), provider);
             var globalFilters = options.GetGlobalMessageHandlerFilters(provider);
 
-            if (handlerFilters.Length != 0 || globalFilters.Length != 0)
+            if (filters.Length != 0 || handlerFilters.Length != 0 || globalFilters.Length != 0)
             {
-                handler = new FilterAttachedMessageHandler<TMessage>(handler, handlerFilters.Concat(globalFilters));
+                handler = new FilterAttachedMessageHandler<TMessage>(handler, ArrayUtil.Concat(filters, handlerFilters, globalFilters));
             }
 
             return core.Subscribe(handler);
         }
     }
 
-    public sealed class ConcurrentDictionaryMessageBroker<TMessage> : IMessageBroker<TMessage>
-    {
-        readonly ConcurrentDictionary<IDisposable, IMessageHandler<TMessage>> handlers;
-        readonly MessagePipeDiagnosticsInfo diagnotics;
-
-        public ConcurrentDictionaryMessageBroker(MessagePipeDiagnosticsInfo diagnotics)
-        {
-            this.handlers = new ConcurrentDictionary<IDisposable, IMessageHandler<TMessage>>();
-            this.diagnotics = diagnotics;
-        }
-
-        public void Publish(TMessage message)
-        {
-            foreach (var item in handlers)
-            {
-                item.Value.Handle(message);
-            }
-        }
-
-        public IDisposable Subscribe(IMessageHandler<TMessage> handler)
-        {
-            var subscription = new Subscription(this);
-            handlers.TryAdd(subscription, handler);
-            diagnotics.IncrementSubscribe(subscription);
-            return subscription;
-        }
-
-        sealed class Subscription : IDisposable
-        {
-            bool isDisposed;
-            readonly ConcurrentDictionaryMessageBroker<TMessage> core;
-
-            public Subscription(ConcurrentDictionaryMessageBroker<TMessage> core)
-            {
-                this.core = core;
-            }
-
-            public void Dispose()
-            {
-                if (!isDisposed)
-                {
-                    isDisposed = true;
-                    core.handlers.TryRemove(this, out _);
-                    core.diagnotics.DecrementSubscribe(this);
-                }
-            }
-        }
-    }
-
-
-
-
-    public sealed class FreeListMessageBroker<TMessage> : IMessageBroker<TMessage>
+    public sealed class MessageBrokerCore<TMessage>
     {
         readonly FreeList<IDisposable, IMessageHandler<TMessage>> handlers;
         readonly MessagePipeDiagnosticsInfo diagnotics;
         readonly object gate;
 
-        public FreeListMessageBroker(MessagePipeDiagnosticsInfo diagnotics)
+        public MessageBrokerCore(MessagePipeDiagnosticsInfo diagnotics)
         {
             this.handlers = new FreeList<IDisposable, IMessageHandler<TMessage>>();
             this.diagnotics = diagnotics;
             this.gate = new object();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Publish(TMessage message)
         {
             var array = handlers.GetUnsafeRawItems();
@@ -130,9 +76,9 @@ namespace MessagePipe
         sealed class Subscription : IDisposable
         {
             bool isDisposed;
-            readonly FreeListMessageBroker<TMessage> core;
+            readonly MessageBrokerCore<TMessage> core;
 
-            public Subscription(FreeListMessageBroker<TMessage> core)
+            public Subscription(MessageBrokerCore<TMessage> core)
             {
                 this.core = core;
             }
@@ -147,64 +93,6 @@ namespace MessagePipe
                         core.handlers.Remove(this);
                     }
                     core.diagnotics.DecrementSubscribe(this);
-                }
-            }
-        }
-    }
-
-
-    public sealed class ImmutableArrayMessageBroker<TMessage> : IMessageBroker<TMessage>
-    {
-        (IDisposable, IMessageHandler<TMessage>)[] handlers;
-        readonly MessagePipeDiagnosticsInfo diagnotics;
-        readonly object gate;
-
-        public ImmutableArrayMessageBroker(MessagePipeDiagnosticsInfo diagnotics)
-        {
-            this.handlers = Array.Empty<(IDisposable, IMessageHandler<TMessage>)>();
-            this.gate = new object();
-            this.diagnotics = diagnotics;
-        }
-
-        public void Publish(TMessage message)
-        {
-            for (int i = 0; i < handlers.Length; i++)
-            {
-                handlers[i].Item2.Handle(message);
-            }
-        }
-
-        public IDisposable Subscribe(IMessageHandler<TMessage> handler)
-        {
-            var subscription = new Subscription(this);
-            lock (gate)
-            {
-                handlers = ArrayUtil.ImmutableAdd(handlers, (subscription, handler));
-                diagnotics.IncrementSubscribe(subscription);
-            }
-            return subscription;
-        }
-
-        sealed class Subscription : IDisposable
-        {
-            bool isDisposed;
-            readonly ImmutableArrayMessageBroker<TMessage> core;
-
-            public Subscription(ImmutableArrayMessageBroker<TMessage> core)
-            {
-                this.core = core;
-            }
-
-            public void Dispose()
-            {
-                if (!isDisposed)
-                {
-                    isDisposed = true;
-                    lock (core.gate)
-                    {
-                        core.handlers = ArrayUtil.ImmutableRemove(core.handlers, (x, state) => x.Item1 == state, this);
-                        core.diagnotics.DecrementSubscribe(this);
-                    }
                 }
             }
         }

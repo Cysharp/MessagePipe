@@ -5,13 +5,14 @@ using System.Linq;
 
 namespace MessagePipe.Internal
 {
-    internal static class FilterCache<TAttribute, TFilter>
-        where TAttribute : IMessagePipeAttribute
+    // public but almostly internal use
+    public sealed class FilterCache<TAttribute, TFilter>
+        where TAttribute : IMessagePipeFilterAttribute
         where TFilter : IMessagePipeFilter
     {
-        static readonly ConcurrentDictionary<Type, FilterAndOrder<TFilter>[]> cache = new ConcurrentDictionary<Type, FilterAndOrder<TFilter>[]>();
+        readonly ConcurrentDictionary<Type, TFilter[]> cache = new ConcurrentDictionary<Type, TFilter[]>();
 
-        public static FilterAndOrder<TFilter>[] GetOrAddFilters(Type handlerType, IServiceProvider provider)
+        public TFilter[] GetOrAddFilters(Type handlerType, IServiceProvider provider)
         {
             if (cache.TryGetValue(handlerType, out var value))
             {
@@ -22,12 +23,17 @@ namespace MessagePipe.Internal
 
             if (filterAttributes.Length == 0)
             {
-                return cache.GetOrAdd(handlerType, Array.Empty<FilterAndOrder<TFilter>>());
+                return cache.GetOrAdd(handlerType, Array.Empty<TFilter>());
             }
             else
             {
                 var array = filterAttributes.Cast<TAttribute>()
-                    .Select(x => new FilterAndOrder<TFilter>((TFilter)provider.GetRequiredService(x.Type), x.Order))
+                    .Select(x =>
+                    {
+                        var f = (TFilter)provider.GetRequiredService(x.Type);
+                        f.Order = x.Order;
+                        return f;
+                    })
                     .ToArray();
 
                 return cache.GetOrAdd(handlerType, array);

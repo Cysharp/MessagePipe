@@ -14,7 +14,7 @@ namespace MessagePipe
     {
         static async Task Main(string[] args)
         {
-            args = new[] { "filter" };
+            args = new[] { "predicate" };
 
             await Host.CreateDefaultBuilder()
                 .ConfigureServices(x =>
@@ -49,6 +49,10 @@ namespace MessagePipe
         IRequestAllHandler<Ping, Pong> pingallhandler;
         PingHandler pingpingHandler;
 
+
+        IPublisher<int> intPublisher;
+        ISubscriber<int> intSubscriber;
+
         public Program(IPublisher<string, MyMessage> publisher, ISubscriber<string, MyMessage> subscriber,
             IPublisher<MyMessage> keyless1,
             ISubscriber<MyMessage> keyless2,
@@ -58,7 +62,10 @@ namespace MessagePipe
 
             IRequestHandler<Ping, Pong> pingponghandler,
             PingHandler pingpingHandler,
-            IRequestAllHandler<Ping, Pong> pingallhandler
+            IRequestAllHandler<Ping, Pong> pingallhandler,
+
+            IPublisher<int> intP,
+            ISubscriber<int> intS
             )
         {
             this.publisher = publisher;
@@ -70,6 +77,8 @@ namespace MessagePipe
             this.pingponghandler = pingponghandler;
             this.pingpingHandler = pingpingHandler;
             this.pingallhandler = pingallhandler;
+            this.intPublisher = intP;
+            this.intSubscriber = intS;
         }
 
         [Command("keyed")]
@@ -106,8 +115,11 @@ namespace MessagePipe
                 Console.WriteLine("B:" + x.MyProperty);
             });
 
+
             keylessP.Publish(new MyMessage() { MyProperty = "tako" });
             keylessP.Publish(new MyMessage() { MyProperty = "yaki" });
+
+
 
             d.Dispose();
 
@@ -191,6 +203,30 @@ namespace MessagePipe
 
             keylessP.Publish(new MyMessage() { MyProperty = "tako" });
             keylessP.Publish(new MyMessage() { MyProperty = "yaki" });
+        }
+
+        [Command("predicate")]
+        public void Pred()
+        {
+            this.keylessS.Subscribe(x =>
+            {
+                Console.WriteLine("FilteredA:" + x.MyProperty);
+            }, x => x.MyProperty == "foo" || x.MyProperty == "hoge");
+
+
+            this.keylessS.Subscribe(x =>
+            {
+                Console.WriteLine("FilteredB:" + x.MyProperty);
+            }, x => x.MyProperty == "foo" || x.MyProperty == "hage");
+
+            this.keylessP.Publish(new MyMessage { MyProperty = "nano" });
+            this.keylessP.Publish(new MyMessage { MyProperty = "foo" });
+            this.keylessP.Publish(new MyMessage { MyProperty = "hage" });
+            this.keylessP.Publish(new MyMessage { MyProperty = "hoge" });
+
+            this.intSubscriber.Subscribe(x => Console.WriteLine(x), x => x < 10);
+            this.intPublisher.Publish(999);
+            this.intPublisher.Publish(5);
         }
     }
 

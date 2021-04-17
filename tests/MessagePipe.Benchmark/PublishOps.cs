@@ -18,24 +18,23 @@ namespace MessagePipe.Benchmark
     public class PublishOps
     {
         IPublisher<Message> p;
-        IPublisher<Message> p2;
         Message m;
         Subject<Message> subject;
         PubSubEvent<Message> prism;
         PubSubEvent<Message> prismStrong;
         IMediator medi;
-        ImmutableArrayMessageBroker<Message> direct;
         public event Action<Message> ev;
         Hub hub;
         SignalBus signalBus;
 
         Messenger mvvmLight;
         Messenger mvvmLightStrong;
+        IPublisher<Message> filter1;
+        IPublisher<Message> filter2;
 
         public PublishOps()
         {
             var provider = new ServiceCollection().AddMessagePipe().BuildServiceProvider();
-            var provider2 = new ServiceCollection().AddMessagePipe(x => { x.DefaultHandlerRepository = DefaultHandlerRepository.ConcurrentDictionary; }).BuildServiceProvider();
 
             prism = new Prism.Events.EventAggregator().GetEvent<Message>();
             prismStrong = new Prism.Events.EventAggregator().GetEvent<Message>();
@@ -43,13 +42,18 @@ namespace MessagePipe.Benchmark
             var mdiatr = new ServiceCollection().AddMediatR(typeof(PublishOps).Assembly).BuildServiceProvider();
             medi = mdiatr.GetRequiredService<IMediator>();
 
-            direct = new ImmutableArrayMessageBroker<Message>(provider.GetRequiredService<MessagePipeDiagnosticsInfo>());
 
             p = provider.GetRequiredService<IPublisher<Message>>();
-            p2 = provider2.GetRequiredService<IPublisher<Message>>();
             var s = provider.GetRequiredService<ISubscriber<Message>>();
-            var s2 = provider2.GetRequiredService<ISubscriber<Message>>();
             hub = Hub.Default;
+
+            var px = new ServiceCollection().AddMessagePipe().BuildServiceProvider();
+            filter1 = px.GetRequiredService<IPublisher<Message>>();
+            var filter1Sub = px.GetRequiredService<ISubscriber<Message>>();
+
+            var px2 = new ServiceCollection().AddMessagePipe().BuildServiceProvider();
+            filter2 = px2.GetRequiredService<IPublisher<Message>>();
+            var filter2Sub = px2.GetRequiredService<ISubscriber<Message>>();
 
             m = new Message();
             subject = new Subject<Message>();
@@ -62,8 +66,6 @@ namespace MessagePipe.Benchmark
             for (int i = 0; i < 8; i++)
             {
                 s.Subscribe(new EmptyMessageHandler());
-                s2.Subscribe(new EmptyMessageHandler());
-                direct.Subscribe(new EmptyMessageHandler());
                 prism.Subscribe(_ => { });
                 prismStrong.Subscribe(_ => { }, true);
                 ev += _ => { };
@@ -71,7 +73,11 @@ namespace MessagePipe.Benchmark
                 hub.Subscribe<Message>(_ => { });
                 UniRx.MessageBroker.Default.Receive<Message>().Subscribe(new NopObserver());
                 mvvmLight.Register<Message>(this, _ => { }, false);
-                mvvmLight.Register<Message>(this, _ => { }, true);
+                // mvvmLightStrong.Register<Message>(this, _ => { }, true);
+
+
+                filter1Sub.Subscribe(new EmptyMessageHandler(), new EmptyMessageHandlerFilter());
+                filter2Sub.Subscribe(new EmptyMessageHandler(), new EmptyMessageHandlerFilter(), new EmptyMessageHandlerFilter());
             }
 
             signalBus.Subscribe<Message>(m => { });
@@ -96,29 +102,40 @@ namespace MessagePipe.Benchmark
 
         public async Task MeasureAllAsync()
         {
-            var result = new (string, int)[]
+            (string, int)[] result = new (string, int)[0];
+            for (int i = 0; i < 2; i++)
             {
-                Measure("MessagePipe", () => p.Publish(m)),
-                Measure("MessagePipe(Slow)", () => p2.Publish(m)),
-                Measure("event", () => ev(m)),
-                Measure("Rx.Subject", () => subject.OnNext(m)),
-                Measure("Prism", () => prism.Publish(m)),
-                Measure("Prism(keepRef )", () => prismStrong.Publish(m)),
-                await MeasureAsync("MediatR", () => medi.Publish(m)),
-                Measure("MessagePipe(Direct)", () => direct.Publish(m)),
-                Measure("upta/PubSub", () => hub.Publish(m)),
-                Measure("UniRx.MessageBroker", () => UniRx.MessageBroker.Default.Publish(m)),
-                Measure("Zenject.Signals", () => signalBus.Fire<Message>(m)),
-                Measure("MvvmLight", () => mvvmLight.Send(m)),
-                Measure("MvvmLight(keepRef)", () => mvvmLight.Send(m))
-            };
+                if (i == 0) Console.WriteLine("WARM:");
+                if (i == 1) Console.WriteLine("RUN:");
+
+                result = new (string, int)[]
+                {
+                    Measure("MessagePipe", () => p.Publish(m)),
+                    Measure("event", () => ev(m)),
+                    Measure("Rx.Subject", () => subject.OnNext(m)),
+                    Measure("Prism", () => prism.Publish(m)),
+                    Measure("Prism(keepRef)", () => prismStrong.Publish(m)),
+                    await MeasureAsync("MediatR", () => medi.Publish(m)),
+                    Measure("upta/PubSub", () => hub.Publish(m)),
+                    Measure("UniRx.MessageBroker", () => UniRx.MessageBroker.Default.Publish(m)),
+                    Measure("Zenject.Signals", () => signalBus.Fire<Message>(m)),
+                    Measure("MvvmLight", () => mvvmLight.Send(m)),
+                    // Measure("MvvmLight(keepRef)", () => mvvmLightStrong.Send(m))
+                
+                    //Measure("MessagePipe(f1)", () => filter1.Publish(m)),
+                    //Measure("MessagePipe(f2)", () => filter2.Publish(m)),
+                };
+            }
 
             Console.WriteLine("----");
+            Console.WriteLine();
 
             foreach (var item in result.OrderByDescending(x => x.Item2))
             {
-                Console.WriteLine(string.Format("{0,-20} {1,10} op/sec", item.Item1, item.Item2));
+                Console.WriteLine(string.Format("  {0,-20} {1,10} op/sec", item.Item1, item.Item2));
             }
+
+            Console.WriteLine();
         }
 
         static (string, int) Measure(string label, Action action)
@@ -239,6 +256,14 @@ namespace MessagePipe.Benchmark
     {
         public void Handle(Message message)
         {
+        }
+    }
+
+    public class EmptyMessageHandlerFilter : MessageHandlerFilter
+    {
+        public override void Handle<T>(T message, Action<T> next)
+        {
+            next(message);
         }
     }
 }

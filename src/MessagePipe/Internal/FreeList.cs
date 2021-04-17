@@ -8,7 +8,7 @@ namespace MessagePipe.Internal
         where TKey : notnull
         where TValue : class
     {
-        const int InitialCapacity = 8;
+        const int InitialCapacity = 4;
         const int LowerTrimExcess = 32;
 
         Dictionary<TKey, int> valueIndex;
