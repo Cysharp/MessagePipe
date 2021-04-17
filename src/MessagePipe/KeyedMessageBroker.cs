@@ -53,12 +53,12 @@ namespace MessagePipe
             this.gate = new object();
         }
 
-        public void Publish(TKey id, TMessage message)
+        public void Publish(TKey key, TMessage message)
         {
             IMessageHandler<TMessage>?[] handlers;
             lock (gate)
             {
-                if (!handlerGroup.TryGetValue(id, out var holder))
+                if (!handlerGroup.TryGetValue(key, out var holder))
                 {
                     return;
                 }
@@ -71,16 +71,16 @@ namespace MessagePipe
             }
         }
 
-        public IDisposable Subscribe(TKey id, IMessageHandler<TMessage> handler)
+        public IDisposable Subscribe(TKey key, IMessageHandler<TMessage> handler)
         {
             lock (gate)
             {
-                if (!handlerGroup.TryGetValue(id, out var holder))
+                if (!handlerGroup.TryGetValue(key, out var holder))
                 {
-                    handlerGroup[id] = holder = new HandlerHolder();
+                    handlerGroup[key] = holder = new HandlerHolder();
                 }
 
-                return holder.Subscribe(this, id, handler);
+                return holder.Subscribe(this, key, handler);
             }
         }
 
@@ -108,13 +108,13 @@ namespace MessagePipe
             {
                 bool isDisposed;
                 readonly MessageBrokerCore<TKey, TMessage> core;
-                readonly TKey id;
+                readonly TKey key;
                 readonly HandlerHolder holder;
 
-                public Subscription(MessageBrokerCore<TKey, TMessage> core, TKey id, HandlerHolder holder)
+                public Subscription(MessageBrokerCore<TKey, TMessage> core, TKey key, HandlerHolder holder)
                 {
                     this.core = core;
-                    this.id = id;
+                    this.key = key;
                     this.holder = holder;
                 }
 
@@ -130,7 +130,7 @@ namespace MessagePipe
 
                             if (holder.handlers.Count == 0)
                             {
-                                core.handlerGroup.Remove(id);
+                                core.handlerGroup.Remove(key);
                             }
                         }
                     }

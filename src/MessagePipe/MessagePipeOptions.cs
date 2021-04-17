@@ -58,7 +58,19 @@ namespace MessagePipe
             {
                 services.AddSingleton(item.FilterType);
             }
+
+            foreach (var item in requestHandlerFilters)
+            {
+                services.AddSingleton(item.FilterType);
+            }
+
+            foreach (var item in asyncRequestHandlerFilters)
+            {
+                services.AddSingleton(item.FilterType);
+            }
         }
+
+        // MessageHandlerFilter
 
         List<FilterTypeAndOrder> messageHandlerFilters = new List<FilterTypeAndOrder>();
         MessageHandlerFilter[]? messageHandlerFilterCache;
@@ -74,6 +86,8 @@ namespace MessagePipe
             return GetOrCreateHandlerCache(ref messageHandlerFilters, ref messageHandlerFilterCache, provider);
         }
 
+        // AsyncMessageHandlerFilter
+
         List<FilterTypeAndOrder> asyncMessageHandlerFilters = new List<FilterTypeAndOrder>();
         AsyncMessageHandlerFilter[]? asyncMessageHandlerFilterCache;
 
@@ -86,6 +100,38 @@ namespace MessagePipe
         internal AsyncMessageHandlerFilter[] GetGlobalAsyncMessageHandlerFilters(IServiceProvider provider)
         {
             return GetOrCreateHandlerCache(ref asyncMessageHandlerFilters, ref asyncMessageHandlerFilterCache, provider);
+        }
+
+        // RequestHandlerFilter
+
+        List<FilterTypeAndOrder> requestHandlerFilters = new List<FilterTypeAndOrder>();
+        RequestHandlerFilter[]? requestHandlerFilterCache;
+
+        public void AddGlobalRequestHandlerFilter<T>(int order = 0)
+            where T : RequestHandlerFilter
+        {
+            requestHandlerFilters.Add(new FilterTypeAndOrder(typeof(T), order));
+        }
+
+        internal RequestHandlerFilter[] GetGlobalRequestHandlerFilters(IServiceProvider provider)
+        {
+            return GetOrCreateHandlerCache(ref requestHandlerFilters, ref requestHandlerFilterCache, provider);
+        }
+
+        //  AsyncRequestHandlerFilter
+
+        List<FilterTypeAndOrder> asyncRequestHandlerFilters = new List<FilterTypeAndOrder>();
+        AsyncRequestHandlerFilter[]? asyncRequestHandlerFilterCache;
+
+        public void AddGlobalAsyncRequestHandlerFilter<T>(int order = 0)
+            where T : RequestHandlerFilter
+        {
+            asyncRequestHandlerFilters.Add(new FilterTypeAndOrder(typeof(T), order));
+        }
+
+        internal AsyncRequestHandlerFilter[] GetGlobalAsyncRequestHandlerFilters(IServiceProvider provider)
+        {
+            return GetOrCreateHandlerCache(ref asyncRequestHandlerFilters, ref asyncRequestHandlerFilterCache, provider);
         }
 
         static T[] GetOrCreateHandlerCache<T>(ref List<FilterTypeAndOrder> filterDefinitions, ref T[]? filterCache, IServiceProvider provider)
@@ -112,6 +158,4 @@ namespace MessagePipe
             return filterCache;
         }
     }
-
-
 }

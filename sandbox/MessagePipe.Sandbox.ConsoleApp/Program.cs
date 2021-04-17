@@ -14,7 +14,7 @@ namespace MessagePipe
     {
         static async Task Main(string[] args)
         {
-            args = new[] { "predicate" };
+            args = new[] { "ping" };
 
             await Host.CreateDefaultBuilder()
                 .ConfigureServices(x =>
@@ -22,9 +22,12 @@ namespace MessagePipe
                     x.AddMessagePipe();
 
                     // todo:automatically register it.
-                    x.AddTransient(typeof(IRequestHandler<Ping, Pong>), typeof(PingHandler));
-                    x.AddTransient(typeof(IRequestHandler<Ping, Pong>), typeof(PingHandler2));
-                    x.AddTransient(typeof(PingHandler));
+                    //x.AddTransient(typeof(IRequestHandler<Ping, Pong>), typeof(PingHandler));
+                    //x.AddTransient(typeof(IRequestHandler<Ping, Pong>), typeof(PingHandler2));
+                    //x.AddTransient(typeof(PingHandler));
+
+                    x.AddRequestHandler<PingHandler>();
+
                     x.AddSingleton(typeof(MyFilter));
 
                 })
@@ -47,7 +50,7 @@ namespace MessagePipe
 
         IRequestHandler<Ping, Pong> pingponghandler;
         IRequestAllHandler<Ping, Pong> pingallhandler;
-        PingHandler pingpingHandler;
+        // PingHandler pingpingHandler;
 
 
         IPublisher<int> intPublisher;
@@ -61,7 +64,7 @@ namespace MessagePipe
             IAsyncSubscriber<MyMessage> asyncKeylessS,
 
             IRequestHandler<Ping, Pong> pingponghandler,
-            PingHandler pingpingHandler,
+            //PingHandler pingpingHandler,
             IRequestAllHandler<Ping, Pong> pingallhandler,
 
             IPublisher<int> intP,
@@ -75,7 +78,7 @@ namespace MessagePipe
             this.asyncKeylessP = asyncKeylessP;
             this.asyncKeylessS = asyncKeylessS;
             this.pingponghandler = pingponghandler;
-            this.pingpingHandler = pingpingHandler;
+            //this.pingpingHandler = pingpingHandler;
             this.pingallhandler = pingallhandler;
             this.intPublisher = intP;
             this.intSubscriber = intS;
@@ -155,7 +158,7 @@ namespace MessagePipe
         public void Ping()
         {
             Console.WriteLine("ping");
-            var pong = pingponghandler.Execute(new Ping());
+            var pong = pingponghandler.Invoke(new Ping());
             Console.WriteLine("pong");
         }
 
@@ -163,7 +166,7 @@ namespace MessagePipe
         public void PingMany()
         {
             Console.WriteLine("ping");
-            var pong = pingallhandler.ExecuteAll(new Ping());
+            var pong = pingallhandler.InvokeAll(new Ping());
             foreach (var item in pong)
             {
                 Console.WriteLine("pong");
@@ -232,7 +235,7 @@ namespace MessagePipe
 
     public class PingHandler : IRequestHandler<Ping, Pong>
     {
-        public Pong Execute(Ping request)
+        public Pong Invoke(Ping request)
         {
             Console.WriteLine("1 ping");
             return new Pong();
@@ -241,7 +244,7 @@ namespace MessagePipe
 
     public class PingHandler2 : IRequestHandler<Ping, Pong>
     {
-        public Pong Execute(Ping request)
+        public Pong Invoke(Ping request)
         {
             Console.WriteLine("2 ping");
             return new Pong();

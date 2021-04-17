@@ -1,4 +1,5 @@
-﻿using GalaSoft.MvvmLight.Messaging;
+﻿using Easy.MessageHub;
+using GalaSoft.MvvmLight.Messaging;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Prism.Events;
@@ -33,6 +34,8 @@ namespace MessagePipe.Benchmark
         IPublisher<Message> filter2;
         IPublisher<Guid, Message> keyed;
         Guid key = Guid.NewGuid();
+
+        MessageHub easyMsgHub;
 
         public PublishOps()
         {
@@ -71,6 +74,12 @@ namespace MessagePipe.Benchmark
             mvvmLight = new Messenger();
             mvvmLightStrong = new Messenger();
 
+
+             easyMsgHub = new MessageHub();
+
+
+
+
             for (int i = 0; i < 8; i++)
             {
                 s.Subscribe(new EmptyMessageHandler());
@@ -87,6 +96,8 @@ namespace MessagePipe.Benchmark
 
                 filter1Sub.Subscribe(new EmptyMessageHandler(), new EmptyMessageHandlerFilter());
                 filter2Sub.Subscribe(new EmptyMessageHandler(), new EmptyMessageHandlerFilter(), new EmptyMessageHandlerFilter());
+
+                easyMsgHub.Subscribe<Message>(_ => { });
             }
 
             signalBus.Subscribe<Message>(m => { });
@@ -119,7 +130,7 @@ namespace MessagePipe.Benchmark
 
                 result = new (string, int)[]
                 {
-                    Measure("MessagePipe", () => p.Publish(m)),
+                    Measure("Cysharp.NewLib(WIP)", () => p.Publish(m)),
                     Measure("event", () => ev(m)),
                     Measure("Rx.Subject", () => subject.OnNext(m)),
                     Measure("Prism", () => prism.Publish(m)),
@@ -130,10 +141,13 @@ namespace MessagePipe.Benchmark
                     Measure("Zenject.Signals", () => signalBus.Fire<Message>(m)),
                     Measure("MvvmLight", () => mvvmLight.Send(m)),
                     // Measure("MvvmLight(keepRef)", () => mvvmLightStrong.Send(m))
+                    Measure("Easy.MessageHub", () => easyMsgHub.Publish(m)),
                 
+
+
                     //Measure("MessagePipe(f1)", () => filter1.Publish(m)),
                     //Measure("MessagePipe(f2)", () => filter2.Publish(m)),
-                    Measure("MessagePipe(key)", () => keyed.Publish(key, m)),
+                    //Measure("MessagePipe(key)", () => keyed.Publish(key, m)),
                 };
             }
 

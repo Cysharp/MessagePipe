@@ -6,54 +6,41 @@ using System.Threading.Tasks;
 
 namespace MessagePipe.Internal
 {
-    internal static class ContinuationSentinel
+    internal class AsyncRequestHandlerWhenAll<TRequest, TResponse> : ICriticalNotifyCompletion
     {
-        public static readonly Action AvailableContinuation = () => { };
-        public static readonly Action CompletedContinuation = () => { };
-    }
-
-    internal class AsyncHandlerWhenAll<T> : ICriticalNotifyCompletion
-    {
-        readonly int taskCount = 0;
-
         int completedCount = 0;
         ExceptionDispatchInfo? exception;
         Action continuation = ContinuationSentinel.AvailableContinuation;
 
-        public AsyncHandlerWhenAll(IAsyncMessageHandler<T>?[] handlers, T message, CancellationToken cancellationtoken)
+        readonly TResponse[] result;
+
+        public AsyncRequestHandlerWhenAll(IAsyncRequestHandler<TRequest, TResponse>[] handlers, TRequest request, CancellationToken cancellationtoken)
         {
-            taskCount = handlers.Length;
+            result = new TResponse[handlers.Length];
 
-            foreach (var item in handlers)
+            for (int i = 0; i < handlers.Length; i++)
             {
-                if (item == null)
+                ValueTask<TResponse> task;
+                try
                 {
-                    IncrementSuccessfully();
+                    task = handlers[i].InvokeAsync(request, cancellationtoken);
                 }
-                else
+                catch (Exception ex)
                 {
-                    ValueTask task;
-                    try
-                    {
-                        task = item.HandleAsync(message, cancellationtoken);
-                    }
-                    catch (Exception ex)
-                    {
-                        exception = ExceptionDispatchInfo.Capture(ex);
-                        TryInvokeContinuation();
-                        return;
-                    }
-
-                    HandleTask(task);
+                    exception = ExceptionDispatchInfo.Capture(ex);
+                    TryInvokeContinuation();
+                    return;
                 }
+                HandleTask(task, i);
             }
         }
 
-        async void HandleTask(ValueTask task)
+        async void HandleTask(ValueTask<TResponse> task, int index)
         {
+            TResponse response;
             try
             {
-                await task.ConfigureAwait(false);
+                response = await task.ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -61,13 +48,13 @@ namespace MessagePipe.Internal
                 TryInvokeContinuation();
                 return;
             }
-
+            result[index] = response;
             IncrementSuccessfully();
         }
 
         void IncrementSuccessfully()
         {
-            if (Interlocked.Increment(ref completedCount) == taskCount)
+            if (Interlocked.Increment(ref completedCount) == result.Length)
             {
                 TryInvokeContinuation();
             }
@@ -84,20 +71,21 @@ namespace MessagePipe.Internal
 
         // Awaiter
 
-        public AsyncHandlerWhenAll<T> GetAwaiter()
+        public AsyncRequestHandlerWhenAll<TRequest, TResponse> GetAwaiter()
         {
             return this;
         }
 
-        public bool IsCompleted => exception != null || completedCount == taskCount;
+        public bool IsCompleted => exception != null || completedCount == result.Length;
 
-        public void GetResult()
+        public TResponse[] GetResult()
         {
             if (exception != null)
             {
                 exception.Throw();
             }
             // Complete, OK.
+            return result;
         }
 
         public void OnCompleted(Action continuation)

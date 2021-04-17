@@ -1,11 +1,7 @@
 ﻿using MessagePipe.Internal;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Sources;
 
 namespace MessagePipe
 {
@@ -38,13 +34,15 @@ namespace MessagePipe
     public interface IAsyncPublisher<TKey, TMessage>
         where TKey : notnull
     {
+        void Publish(TKey key, TMessage message, CancellationToken cancellationToken = default(CancellationToken));
         ValueTask PublishAsync(TKey key, TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        ValueTask PublishAsync(TKey key, TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
     }
 
     public interface IAsyncSubscriber<TKey, TMessage>
         where TKey : notnull
     {
-        public IDisposable Subscribe(TKey key, IAsyncMessageHandler<TMessage> asyncHandler);
+        public IDisposable Subscribe(TKey key, IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter[] filters);
     }
 
     // Keyless
@@ -139,42 +137,53 @@ namespace MessagePipe
             return new ObservableSubscriber<TKey, TMessage>(key, subscriber, filters);
         }
 
+        // pubsub-key-async
 
-        // TODO:keyed async Subscribe
-
-        public static IDisposable Subscribe<TMessage>(this IAsyncSubscriber<TMessage> subscriber, Func<TMessage, CancellationToken, ValueTask> handler)
+        public static IDisposable Subscribe<TKey, TMessage>(this IAsyncSubscriber<TKey, TMessage> subscriber, TKey key, Func<TMessage, CancellationToken, ValueTask> handler, params AsyncMessageHandlerFilter[] filters)
+            where TKey : notnull
         {
-            return subscriber.Subscribe(new AnonymousAsyncMessageHandler<TMessage>(handler));
+            return subscriber.Subscribe(key, new AnonymousAsyncMessageHandler<TMessage>(handler), filters);
         }
 
-        sealed class AnonymousMessageHandler<TMessage> : IMessageHandler<TMessage>
+        public static IDisposable Subscribe<TKey, TMessage>(this IAsyncSubscriber<TKey, TMessage> subscriber, TKey key, Func<TMessage, CancellationToken, ValueTask> handler, Func<TMessage, bool> predicate, params AsyncMessageHandlerFilter[] filters)
+            where TKey : notnull
         {
-            readonly Action<TMessage> handler;
+            var predicateFilter = new AsyncPredicateFilter<TMessage>(predicate);
+            filters = (filters.Length == 0)
+                ? new[] { predicateFilter }
+                : ArrayUtil.ImmutableAdd(filters, predicateFilter);
 
-            public AnonymousMessageHandler(Action<TMessage> handler)
-            {
-                this.handler = handler;
-            }
+            return subscriber.Subscribe(key, new AnonymousAsyncMessageHandler<TMessage>(handler), filters);
+        }
+    }
 
-            public void Handle(TMessage message)
-            {
-                handler.Invoke(message);
-            }
+    internal sealed class AnonymousMessageHandler<TMessage> : IMessageHandler<TMessage>
+    {
+        readonly Action<TMessage> handler;
+
+        public AnonymousMessageHandler(Action<TMessage> handler)
+        {
+            this.handler = handler;
         }
 
-        sealed class AnonymousAsyncMessageHandler<TMessage> : IAsyncMessageHandler<TMessage>
+        public void Handle(TMessage message)
         {
-            readonly Func<TMessage, CancellationToken, ValueTask> handler;
+            handler.Invoke(message);
+        }
+    }
 
-            public AnonymousAsyncMessageHandler(Func<TMessage, CancellationToken, ValueTask> handler)
-            {
-                this.handler = handler;
-            }
+    internal sealed class AnonymousAsyncMessageHandler<TMessage> : IAsyncMessageHandler<TMessage>
+    {
+        readonly Func<TMessage, CancellationToken, ValueTask> handler;
 
-            public ValueTask HandleAsync(TMessage message, CancellationToken cancellationToken)
-            {
-                return handler.Invoke(message, cancellationToken);
-            }
+        public AnonymousAsyncMessageHandler(Func<TMessage, CancellationToken, ValueTask> handler)
+        {
+            this.handler = handler;
+        }
+
+        public ValueTask HandleAsync(TMessage message, CancellationToken cancellationToken)
+        {
+            return handler.Invoke(message, cancellationToken);
         }
     }
 

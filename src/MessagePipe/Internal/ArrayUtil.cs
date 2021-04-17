@@ -60,6 +60,25 @@ namespace MessagePipe.Internal
             return dest;
         }
 
+        public static IEnumerable<T> Concat<T>(T[] source1, T[] source2)
+        {
+            if (source1.Length != 0)
+            {
+                foreach (var item in source1)
+                {
+                    yield return item;
+                }
+            }
+
+            if (source2.Length != 0)
+            {
+                foreach (var item in source2)
+                {
+                    yield return item;
+                }
+            }
+        }
+
         public static IEnumerable<T> Concat<T>(T[] source1, T[] source2, T[] source3)
         {
             if (source1.Length != 0)

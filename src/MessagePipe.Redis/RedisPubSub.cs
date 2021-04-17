@@ -21,7 +21,7 @@ namespace MessagePipe.Redis
             this.serializer = serializer;
         }
 
-        public async Task PublishAsync(TKey key, TMessage message)
+        public async ValueTask PublishAsync(TKey key, TMessage message)
         {
             var channel = CreateChannel(key);
             var value = serializer.Serialize(message);
@@ -47,7 +47,7 @@ namespace MessagePipe.Redis
             this.serializer = serializer;
         }
 
-        public async Task<IAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler)
+        public async ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler)
         {
             var channel = CreateChannel(key);
 
