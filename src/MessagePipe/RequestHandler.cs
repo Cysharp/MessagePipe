@@ -12,7 +12,6 @@ namespace MessagePipe
 
     public interface IRequestHandler
     {
-
     }
 
     public interface IRequestHandlerCore<in TRequest, out TResponse> : IRequestHandler
@@ -89,9 +88,17 @@ namespace MessagePipe
 
     // Async
 
-    public interface IAsyncRequestHandler<in TRequest, TResponse>
+    public interface IAsyncRequestHandler
+    {
+    }
+
+    public interface IAsyncRequestHandlerCore<in TRequest, TResponse> : IAsyncRequestHandler
     {
         ValueTask<TResponse> InvokeAsync(TRequest request, CancellationToken cancellationToken = default);
+    }
+
+    public interface IAsyncRequestHandler<in TRequest, TResponse> : IAsyncRequestHandlerCore<TRequest, TResponse>
+    {
     }
 
     public interface IAsyncRequestAllHandler<in TRequest, TResponse>
@@ -105,7 +112,7 @@ namespace MessagePipe
     {
         Func<TRequest, CancellationToken, ValueTask<TResponse>> handler;
 
-        public AsyncRequestHandler(IAsyncRequestHandler<TRequest, TResponse> handler, MessagePipeOptions options, FilterCache<AsyncRequestHandlerFilterAttribute, AsyncRequestHandlerFilter> filterCache, IServiceProvider provider)
+        public AsyncRequestHandler(IAsyncRequestHandlerCore<TRequest, TResponse> handler, MessagePipeOptions options, FilterCache<AsyncRequestHandlerFilterAttribute, AsyncRequestHandlerFilter> filterCache, IServiceProvider provider)
         {
             var handlerFilters = filterCache.GetOrAddFilters(handler.GetType(), provider);
             var globalFilters = options.GetGlobalAsyncRequestHandlerFilters(provider);

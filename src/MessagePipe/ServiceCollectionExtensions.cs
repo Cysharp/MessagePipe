@@ -33,11 +33,14 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton(typeof(IPublisher<,>), typeof(MessageBroker<,>));
             services.AddSingleton(typeof(ISubscriber<,>), typeof(MessageBroker<,>));
 
+            // keyed PubSub async
+            services.AddSingleton(typeof(AsyncMessageBrokerCore<,>));
+            services.AddSingleton(typeof(IAsyncPublisher<,>), typeof(AsyncMessageBroker<,>));
+            services.AddSingleton(typeof(IAsyncSubscriber<,>), typeof(AsyncMessageBroker<,>));
 
             // RequestHandler
             services.AddSingleton(typeof(IRequestHandler<,>), typeof(RequestHandler<,>));
-            // todo:automatically register IRequestHandler<T,T> => Handler
-
+            services.AddSingleton(typeof(IAsyncRequestHandler<,>), typeof(AsyncRequestHandler<,>));
 
             // RequestAll
             services.AddSingleton(typeof(IRequestAllHandler<,>), typeof(RequestAllHandler<,>));
@@ -47,12 +50,13 @@ namespace Microsoft.Extensions.DependencyInjection
             options.AddGlobalFilter(services);
             services.AddSingleton(typeof(FilterCache<,>));
 
-            // TODO:search handler's filter?
-
-
-
             // others.
             services.AddSingleton(typeof(MessagePipeDiagnosticsInfo));
+
+            // TODO:search handler's filter?
+            // todo:automatically register IRequestHandler<T,T> => Handler
+
+
 
             return services;
         }
@@ -64,6 +68,19 @@ namespace Microsoft.Extensions.DependencyInjection
             if (type == null)
             {
                 throw new ArgumentException($"{typeof(T).FullName} does not implement IRequestHandler<TRequest, TResponse>.");
+            }
+
+            services.AddSingleton(type, typeof(T));
+            return services;
+        }
+
+        public static IServiceCollection AddAsyncRequestHandler<T>(this IServiceCollection services)
+            where T : IAsyncRequestHandler
+        {
+            var type = typeof(T).GetInterfaces().FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IAsyncRequestHandlerCore<,>));
+            if (type == null)
+            {
+                throw new ArgumentException($"{typeof(T).FullName} does not implement IAsyncRequestHandler<TRequest, TResponse>.");
             }
 
             services.AddSingleton(type, typeof(T));
