@@ -39,23 +39,23 @@ namespace MessagePipe
         }
     }
 
-    public sealed class MessageBrokerCore<TMessage>
+    public sealed class MessageBrokerCore<TMessage> : IDisposable, IHandlerHolderMarker
     {
-        readonly FreeList<IDisposable, IMessageHandler<TMessage>> handlers;
+        readonly FreeList<IMessageHandler<TMessage>> handlers;
         readonly MessagePipeDiagnosticsInfo diagnotics;
-        readonly object gate;
+        readonly object gate = new object();
+        bool isDisposed;
 
         public MessageBrokerCore(MessagePipeDiagnosticsInfo diagnotics)
         {
-            this.handlers = new FreeList<IDisposable, IMessageHandler<TMessage>>();
+            this.handlers = new FreeList<IMessageHandler<TMessage>>();
             this.diagnotics = diagnotics;
-            this.gate = new object();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Publish(TMessage message)
         {
-            var array = handlers.GetUnsafeRawItems();
+            var array = handlers.GetValues();
             for (int i = 0; i < array.Length; i++)
             {
                 array[i]?.Handle(message);
@@ -64,23 +64,40 @@ namespace MessagePipe
 
         public IDisposable Subscribe(IMessageHandler<TMessage> handler)
         {
-            var subscription = new Subscription(this);
             lock (gate)
             {
-                handlers.Add(subscription, handler);
+                if (isDisposed) return DisposableBag.Empty;
+
+                var subscriptionKey = handlers.Add(handler);
+                var subscription = new Subscription(this, subscriptionKey);
+                diagnotics.IncrementSubscribe(this, subscription);
+                return subscription;
             }
-            diagnotics.IncrementSubscribe(subscription);
-            return subscription;
+        }
+
+        public void Dispose()
+        {
+            lock (gate)
+            {
+                // Dispose is called when scope is finished.
+                if (!isDisposed && handlers.TryDispose(out var count))
+                {
+                    isDisposed = true;
+                    diagnotics.RemoveTargetDiagnostics(this, count);
+                }
+            }
         }
 
         sealed class Subscription : IDisposable
         {
             bool isDisposed;
             readonly MessageBrokerCore<TMessage> core;
+            readonly int subscriptionKey;
 
-            public Subscription(MessageBrokerCore<TMessage> core)
+            public Subscription(MessageBrokerCore<TMessage> core, int subscriptionKey)
             {
                 this.core = core;
+                this.subscriptionKey = subscriptionKey;
             }
 
             public void Dispose()
@@ -90,9 +107,12 @@ namespace MessagePipe
                     isDisposed = true;
                     lock (core.gate)
                     {
-                        core.handlers.Remove(this);
+                        if (!core.isDisposed)
+                        {
+                            core.handlers.Remove(subscriptionKey, true);
+                            core.diagnotics.DecrementSubscribe(core, this);
+                        }
                     }
-                    core.diagnotics.DecrementSubscribe(this);
                 }
             }
         }

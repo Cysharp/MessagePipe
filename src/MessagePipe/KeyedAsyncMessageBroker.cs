@@ -51,12 +51,13 @@ namespace MessagePipe
         }
     }
 
-    public sealed class AsyncMessageBrokerCore<TKey, TMessage>
+    public sealed class AsyncMessageBrokerCore<TKey, TMessage> : IDisposable
         where TKey : notnull
     {
         readonly Dictionary<TKey, HandlerHolder> handlerGroup;
         readonly MessagePipeDiagnosticsInfo diagnotics;
         readonly object gate;
+        bool isDisposed;
 
         public AsyncMessageBrokerCore(MessagePipeDiagnosticsInfo diagnotics)
         {
@@ -117,44 +118,72 @@ namespace MessagePipe
             {
                 if (!handlerGroup.TryGetValue(key, out var holder))
                 {
-                    handlerGroup[key] = holder = new HandlerHolder();
+                    handlerGroup[key] = holder = new HandlerHolder(this);
                 }
 
-                return holder.Subscribe(this, key, handler);
+                return holder.Subscribe(key, handler);
+            }
+        }
+
+        public void Dispose()
+        {
+            lock (gate)
+            {
+                if (!isDisposed)
+                {
+                    isDisposed = true;
+                    foreach (var handlers in handlerGroup.Values)
+                    {
+                        handlers.Dispose();
+                    }
+                }
             }
         }
 
         // similar as Keyless-MessageBrokerCore but require to remove when key is empty on Dispose
-        sealed class HandlerHolder
+        sealed class HandlerHolder : IDisposable, IHandlerHolderMarker
         {
-            readonly FreeList<IDisposable, IAsyncMessageHandler<TMessage>> handlers;
+            readonly FreeList<IAsyncMessageHandler<TMessage>> handlers;
+            readonly AsyncMessageBrokerCore<TKey, TMessage> core;
 
-            public HandlerHolder()
+            public HandlerHolder(AsyncMessageBrokerCore<TKey, TMessage> core)
             {
-                this.handlers = new FreeList<IDisposable, IAsyncMessageHandler<TMessage>>();
+                this.handlers = new FreeList<IAsyncMessageHandler<TMessage>>();
+                this.core = core;
             }
 
-            public IAsyncMessageHandler<TMessage>?[] GetHandlers() => handlers.GetUnsafeRawItems();
+            public IAsyncMessageHandler<TMessage>?[] GetHandlers() => handlers.GetValues();
 
-            public IDisposable Subscribe(AsyncMessageBrokerCore<TKey, TMessage> core, TKey key, IAsyncMessageHandler<TMessage> handler)
+            public IDisposable Subscribe(TKey key, IAsyncMessageHandler<TMessage> handler)
             {
-                var subscription = new Subscription(core, key, this);
-                handlers.Add(subscription, handler);
-                core.diagnotics.IncrementSubscribe(subscription);
+                var subscriptionKey = handlers.Add(handler);
+                var subscription = new Subscription(key, subscriptionKey, this);
+                core.diagnotics.IncrementSubscribe(this, subscription);
                 return subscription;
+            }
+
+            public void Dispose()
+            {
+                lock (core.gate)
+                {
+                    if (handlers.TryDispose(out var count))
+                    {
+                        core.diagnotics.RemoveTargetDiagnostics(this, count);
+                    }
+                }
             }
 
             sealed class Subscription : IDisposable
             {
                 bool isDisposed;
-                readonly AsyncMessageBrokerCore<TKey, TMessage> core;
                 readonly TKey key;
+                readonly int subscriptionKey;
                 readonly HandlerHolder holder;
 
-                public Subscription(AsyncMessageBrokerCore<TKey, TMessage> core, TKey key, HandlerHolder holder)
+                public Subscription(TKey key, int subscriptionKey, HandlerHolder holder)
                 {
-                    this.core = core;
                     this.key = key;
+                    this.subscriptionKey = subscriptionKey;
                     this.holder = holder;
                 }
 
@@ -163,14 +192,16 @@ namespace MessagePipe
                     if (!isDisposed)
                     {
                         isDisposed = true;
-                        lock (core.gate)
+                        lock (holder.core.gate)
                         {
-                            holder.handlers.Remove(this);
-                            core.diagnotics.DecrementSubscribe(this);
-
-                            if (holder.handlers.Count == 0)
+                            if (!holder.core.isDisposed)
                             {
-                                core.handlerGroup.Remove(key);
+                                holder.handlers.Remove(subscriptionKey, false);
+                                holder.core.diagnotics.DecrementSubscribe(holder, this);
+                                if (holder.handlers.GetCount() == 0)
+                                {
+                                    holder.core.handlerGroup.Remove(key);
+                                }
                             }
                         }
                     }

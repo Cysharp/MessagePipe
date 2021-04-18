@@ -15,6 +15,11 @@ namespace MessagePipe
         Parallel
     }
 
+    public enum InstanceScope
+    {
+        Singleton, Scoped
+    }
+
     internal readonly struct FilterTypeAndOrder
     {
         public readonly Type FilterType;
@@ -29,17 +34,22 @@ namespace MessagePipe
 
     public sealed class MessagePipeOptions
     {
+        /// <summary>PublishAsync</summary>
         public AsyncPublishStrategy DefaultAsyncPublishStrategy { get; set; }
 
-        // TODO:Assembly?
-        public bool AutowireRequestHandler { get; set; }
+        public bool EnableAutowire { get; set; }
 
         /// <summary>For diagnostics usage, enable MessagePipeDiagnosticsInfo.CapturedStacktraces.</summary>
         public bool EnableCaptureStackTrace { get; set; }
 
+        public InstanceScope InstanceScope { get; set; }
+
         public MessagePipeOptions()
         {
             this.DefaultAsyncPublishStrategy = AsyncPublishStrategy.Parallel;
+            this.InstanceScope = InstanceScope.Singleton;
+            this.EnableAutowire = true;
+            this.EnableCaptureStackTrace = false;
         }
 
 

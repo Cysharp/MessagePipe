@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -8,18 +7,32 @@ using System.Threading;
 
 namespace MessagePipe
 {
+    internal interface IHandlerHolderMarker
+    {
+    }
+
     public class MessagePipeDiagnosticsInfo
     {
         int subscribeCount;
         bool enableCaptureStackTrace;
-        ConcurrentDictionary<IDisposable, string> capturedStackTraces = new ConcurrentDictionary<IDisposable, string>();
 
+        object gate = new object();
+        Dictionary<IHandlerHolderMarker, Dictionary<IDisposable, string>> capturedStackTraces = new Dictionary<IHandlerHolderMarker, Dictionary<IDisposable, string>>();
+
+        /// <summary>Get current subscribed count.</summary>
         public int SubscribeCount => subscribeCount;
 
         /// <summary>
         /// When MessagePipeOptions.EnableCaptureStackTrace is enabled, list all stacktrace on subscribe.
         /// </summary>
-        public IEnumerable<string> CapturedStackTraces => capturedStackTraces.Select(x => x.Value);
+        public string[] GetCapturedStackTraces()
+        {
+            if (!enableCaptureStackTrace) return Array.Empty<string>();
+            lock (gate)
+            {
+                return capturedStackTraces.SelectMany(x => x.Value.Values).ToArray();
+            }
+        }
 
         /// <summary>
         /// When MessagePipeOptions.EnableCaptureStackTrace is enabled, groped by caller of subscribe.
@@ -28,11 +41,13 @@ namespace MessagePipe
         {
             get
             {
-                return CapturedStackTraces
+                if (!enableCaptureStackTrace) return Array.Empty<string>().ToLookup(x => x);
+                return capturedStackTraces
+                    .SelectMany(x => x.Value.Values)
                     .ToLookup(x =>
                     {
                         var split = x.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-                        var skips = split.SkipWhile(x => x.TrimStart().StartsWith("at MessagePipe"));
+                        var skips = split.SkipWhile(x => x.TrimStart().Contains(" MessagePipe."));
                         return skips.First().TrimStart().Substring(3); // remove "at ".
                     });
             }
@@ -47,22 +62,63 @@ namespace MessagePipe
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void IncrementSubscribe(IDisposable subscription)
+        internal void IncrementSubscribe(IHandlerHolderMarker handlerHolder, IDisposable subscription)
         {
             Interlocked.Increment(ref subscribeCount);
             if (enableCaptureStackTrace)
             {
-                capturedStackTraces.TryAdd(subscription, new StackTrace().ToString());
+                AddStackTrace(handlerHolder, subscription);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        void AddStackTrace(IHandlerHolderMarker handlerHolder, IDisposable subscription)
+        {
+            lock (gate)
+            {
+                if (!capturedStackTraces.TryGetValue(handlerHolder, out var dict))
+                {
+                    dict = new Dictionary<IDisposable, string>();
+                    capturedStackTraces[handlerHolder] = dict;
+                }
+
+                dict.Add(subscription, new StackTrace().ToString());
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void DecrementSubscribe(IDisposable subscription)
+        internal void DecrementSubscribe(IHandlerHolderMarker handlerHolder, IDisposable subscription)
         {
             Interlocked.Decrement(ref subscribeCount);
             if (enableCaptureStackTrace)
             {
-                capturedStackTraces.TryRemove(subscription, out _);
+                RemoveStackTrace(handlerHolder, subscription);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        void RemoveStackTrace(IHandlerHolderMarker handlerHolder, IDisposable subscription)
+        {
+            lock (gate)
+            {
+                if (!capturedStackTraces.TryGetValue(handlerHolder, out var dict))
+                {
+                    return;
+                }
+
+                dict.Remove(subscription);
+            }
+        }
+
+        internal void RemoveTargetDiagnostics(IHandlerHolderMarker targetHolder, int removeCount)
+        {
+            Interlocked.Add(ref subscribeCount, -removeCount);
+            if (enableCaptureStackTrace)
+            {
+                lock (gate)
+                {
+                    capturedStackTraces.Remove(targetHolder);
+                }
             }
         }
     }

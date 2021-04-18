@@ -42,6 +42,26 @@ namespace MessagePipe
         {
             return new DisposableBagBuilder(initialCapacity);
         }
+
+        public static IDisposable Empty => EmptyDisposable.Instance;
+
+        public static void AddTo(this IDisposable disposable, DisposableBagBuilder disposableBag)
+        {
+            disposableBag.Add(disposable);
+        }
+    }
+
+    internal class EmptyDisposable : IDisposable
+    {
+        internal static readonly IDisposable Instance = new EmptyDisposable();
+
+        EmptyDisposable()
+        {
+        }
+
+        public void Dispose()
+        {
+        }
     }
 
     public partial class DisposableBagBuilder
@@ -63,20 +83,11 @@ namespace MessagePipe
             disposables.Add(disposable);
         }
 
-        //public IDisposable Build() in Disposables.tt(Disposables.cs)
-
-        class NullDisposable : IDisposable
+        public void Clear()
         {
-            public static IDisposable Instance = new NullDisposable();
-
-            NullDisposable()
-            {
-
-            }
-
-            public void Dispose()
-            {
-            }
+            disposables.Clear();
         }
+
+        //public IDisposable Build() in Disposables.tt(Disposables.cs)
     }
 }

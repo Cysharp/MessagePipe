@@ -1,175 +1,134 @@
-﻿using System;
+﻿#pragma warning disable CS8618
+
+using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace MessagePipe.Internal
 {
-    internal sealed class FreeList<TKey, TValue>
-        where TKey : notnull
-        where TValue : class
+    internal sealed class FreeList<T> : IDisposable
+        where T : class
     {
         const int InitialCapacity = 4;
-        const int LowerTrimExcess = 32;
 
-        Dictionary<TKey, int> valueIndex;
-        FixedSizeIntQueue freeIndex;
-        TValue?[] values;
+        T?[] values;
         int count;
-
-        public TValue?[] GetUnsafeRawItems() => values;
-
-        public int Count => count;
+        FastQueue<int> freeIndex;
+        bool isDisposed;
+        readonly object gate = new object();
 
         public FreeList()
         {
-            valueIndex = new Dictionary<TKey, int>(InitialCapacity);
-            freeIndex = new FixedSizeIntQueue(InitialCapacity, 0, InitialCapacity);
-            values = new TValue[InitialCapacity];
-            count = 0;
+            Initialize();
         }
 
-        public void Add(TKey key, TValue value)
-        {
-            if (freeIndex.Count != 0)
-            {
-                AddCore(freeIndex.Dequeue(), key, value);
-            }
-            else
-            {
-                var nextIndex = values.Length;
-                Array.Resize(ref values, (int)(values.Length * 2));
-                AddCore(nextIndex, key, value);
+        public T?[] GetValues() => values; // no lock, safe for iterate
 
-                freeIndex.EnsureNewCapacity(values.Length);
-                for (int i = (nextIndex + 1); i < values.Length; i++)
+        public int GetCount()
+        {
+            lock (gate)
+            {
+                return count;
+            }
+        }
+
+        public int Add(T value)
+        {
+            lock (gate)
+            {
+                if (isDisposed) throw new ObjectDisposedException("");
+
+                if (freeIndex.Count != 0)
                 {
-                    freeIndex.Enqueue(i);
-                }
-            }
-        }
-
-        void AddCore(int index, TKey key, TValue value)
-        {
-            valueIndex[key] = index;
-            values[index] = value;
-            count++;
-        }
-
-        public void Remove(TKey key)
-        {
-            // .NET 5 supports Remove(key, out var) but netstandard2.0 not.
-            if (!valueIndex.TryGetValue(key, out var index)) return;
-
-            values[index] = null;
-            freeIndex.Enqueue(index);
-            valueIndex.Remove(key);
-            count--;
-
-            if (values.Length >= LowerTrimExcess && count <= values.Length / 4)
-            {
-                TrimExcess();
-            }
-        }
-
-        void TrimExcess()
-        {
-            var newValue = new TValue?[(int)(count * 2)];
-            var newValueIndexes = new Dictionary<TKey, int>(newValue.Length);
-
-            var i = 0;
-            foreach (var item in valueIndex)
-            {
-                newValue[i] = values[item.Value];
-                newValueIndexes.Add(item.Key, i);
-                i++;
-            }
-
-            // set news.
-            count = i;
-            freeIndex = new FixedSizeIntQueue(newValue.Length, i, newValue.Length - i);
-            values = newValue;
-            valueIndex = newValueIndexes;
-        }
-    }
-
-    internal sealed class FixedSizeIntQueue
-    {
-        int[] array;
-        int head;
-        int tail;
-        int size;
-
-        public FixedSizeIntQueue(int capacity, int start, int count)
-        {
-            array = new int[capacity];
-            for (int tail = 0; tail < count; tail++)
-            {
-                array[tail] = start++;
-            }
-
-            if (tail == array.Length)
-            {
-                tail = 0;
-            }
-            size = count;
-        }
-
-        public int Count
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return size; }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Enqueue(int item)
-        {
-            array[tail] = item;
-            MoveNext(ref tail);
-            size++;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int Dequeue()
-        {
-            int head = this.head;
-            int[] array = this.array;
-            int removed = array[head];
-            array[head] = default(int);
-            MoveNext(ref this.head);
-            size--;
-            return removed;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void MoveNext(ref int index)
-        {
-            int tmp = index + 1;
-            if (tmp == array.Length)
-            {
-                tmp = 0;
-            }
-            index = tmp;
-        }
-
-        public void EnsureNewCapacity(int capacity)
-        {
-            var newarray = new int[capacity];
-            if (size > 0)
-            {
-                if (head < tail)
-                {
-                    Array.Copy(array, head, newarray, 0, size);
+                    var index = freeIndex.Dequeue();
+                    values[index] = value;
+                    count++;
+                    return index;
                 }
                 else
                 {
-                    Array.Copy(array, head, newarray, 0, array.Length - head);
-                    Array.Copy(array, 0, newarray, array.Length - head, tail);
+                    // resize
+                    var newValues = new T[(int)(values.Length * 2)];
+                    Array.Copy(values, 0, newValues, 0, values.Length);
+                    freeIndex.EnsureNewCapacity(newValues.Length);
+                    for (int i = values.Length; i < newValues.Length; i++)
+                    {
+                        freeIndex.Enqueue(i);
+                    }
+
+                    var index = freeIndex.Dequeue();
+                    newValues[values.Length] = value;
+                    count++;
+                    Volatile.Write(ref values, newValues);
+                    return index;
                 }
             }
+        }
 
-            array = newarray;
-            head = 0;
-            tail = (size == capacity) ? 0 : size;
+        public void Remove(int index, bool shrinkWhenEmpty)
+        {
+            lock (gate)
+            {
+                if (isDisposed) return; // do nothing
+
+                ref var v = ref values[index];
+                if (v == null) throw new KeyNotFoundException($"key index {index} is not found.");
+
+                v = null;
+                freeIndex.Enqueue(index);
+                count--;
+
+                if (shrinkWhenEmpty && count == 0)
+                {
+                    Initialize(); // re-init.
+                }
+            }
+        }
+
+        /// <summary>
+        /// Dispose and get cleared count.
+        /// </summary>
+        public bool TryDispose(out int clearedCount)
+        {
+            lock (gate)
+            {
+                if (isDisposed)
+                {
+                    clearedCount = 0;
+                    return false;
+                }
+
+                clearedCount = count;
+                Dispose();
+                return true;
+            }
+        }
+
+        public void Dispose()
+        {
+            lock (gate)
+            {
+                if (isDisposed) return;
+                isDisposed = true;
+
+                freeIndex = null!;
+                values = Array.Empty<T?>();
+                count = 0;
+            }
+        }
+
+        // [MemberNotNull(nameof(freeIndex), nameof(values))]
+        void Initialize()
+        {
+            freeIndex = new FastQueue<int>(InitialCapacity);
+            for (int i = 0; i < InitialCapacity; i++)
+            {
+                freeIndex.Enqueue(i);
+            }
+            count = 0;
+
+            var v = new T?[InitialCapacity];
+            Volatile.Write(ref values, v);
         }
     }
 }

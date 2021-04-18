@@ -1,4 +1,5 @@
 ﻿using ConsoleAppFramework;
+using MessagePipe.Sandbox.ConsoleApp;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -14,7 +15,7 @@ namespace MessagePipe
     {
         static async Task Main(string[] args)
         {
-            args = new[] { "ping" };
+            args = new[] { "predicate" };
 
             await Host.CreateDefaultBuilder()
                 .ConfigureServices(x =>
@@ -211,25 +212,43 @@ namespace MessagePipe
         [Command("predicate")]
         public void Pred()
         {
+            var d = DisposableBag.CreateBuilder();
             this.keylessS.Subscribe(x =>
             {
                 Console.WriteLine("FilteredA:" + x.MyProperty);
-            }, x => x.MyProperty == "foo" || x.MyProperty == "hoge");
+            }, x => x.MyProperty == "foo" || x.MyProperty == "hoge")
+                .AddTo(d);
 
 
             this.keylessS.Subscribe(x =>
             {
                 Console.WriteLine("FilteredB:" + x.MyProperty);
-            }, x => x.MyProperty == "foo" || x.MyProperty == "hage");
+            }, x => x.MyProperty == "foo" || x.MyProperty == "hage").AddTo(d);
 
             this.keylessP.Publish(new MyMessage { MyProperty = "nano" });
             this.keylessP.Publish(new MyMessage { MyProperty = "foo" });
             this.keylessP.Publish(new MyMessage { MyProperty = "hage" });
             this.keylessP.Publish(new MyMessage { MyProperty = "hoge" });
 
-            this.intSubscriber.Subscribe(x => Console.WriteLine(x), x => x < 10);
+            this.intSubscriber.Subscribe(x => Console.WriteLine(x), x => x < 10).AddTo(d);
             this.intPublisher.Publish(999);
             this.intPublisher.Publish(5);
+
+            d.Build().Dispose();
+            d.Clear();
+            Console.WriteLine("----");
+
+            intSubscriber.Subscribe(x =>
+            {
+                Console.WriteLine("int one:" + x);
+            }, new ChangedValueFilter<int>());
+
+            intPublisher.Publish(100);
+            intPublisher.Publish(200);
+            intPublisher.Publish(200);
+            intPublisher.Publish(299);
+
+
         }
     }
 

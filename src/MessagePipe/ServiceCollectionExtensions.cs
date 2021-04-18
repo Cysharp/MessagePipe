@@ -18,33 +18,37 @@ namespace Microsoft.Extensions.DependencyInjection
             configure(options);
             services.AddSingleton(options);
 
+            var lifetime = (options.InstanceScope == InstanceScope.Scoped)
+                ? ServiceLifetime.Scoped
+                : ServiceLifetime.Singleton;
+
             // keyless PubSub
-            services.AddSingleton(typeof(MessageBrokerCore<>));
-            services.AddSingleton(typeof(IPublisher<>), typeof(MessageBroker<>));
-            services.AddSingleton(typeof(ISubscriber<>), typeof(MessageBroker<>));
+            Add(services, typeof(MessageBrokerCore<>), lifetime);
+            Add(services, typeof(IPublisher<>), typeof(MessageBroker<>), lifetime);
+            Add(services, typeof(ISubscriber<>), typeof(MessageBroker<>), lifetime);
 
             // keyless PubSub async
-            services.AddSingleton(typeof(AsyncMessageBrokerCore<>));
-            services.AddSingleton(typeof(IAsyncPublisher<>), typeof(AsyncMessageBroker<>));
-            services.AddSingleton(typeof(IAsyncSubscriber<>), typeof(AsyncMessageBroker<>));
+            Add(services, typeof(AsyncMessageBrokerCore<>), lifetime);
+            Add(services, typeof(IAsyncPublisher<>), typeof(AsyncMessageBroker<>), lifetime);
+            Add(services, typeof(IAsyncSubscriber<>), typeof(AsyncMessageBroker<>), lifetime);
 
             // keyed PubSub
-            services.AddSingleton(typeof(MessageBrokerCore<,>));
-            services.AddSingleton(typeof(IPublisher<,>), typeof(MessageBroker<,>));
-            services.AddSingleton(typeof(ISubscriber<,>), typeof(MessageBroker<,>));
+            Add(services, typeof(MessageBrokerCore<,>), lifetime);
+            Add(services, typeof(IPublisher<,>), typeof(MessageBroker<,>), lifetime);
+            Add(services, typeof(ISubscriber<,>), typeof(MessageBroker<,>), lifetime);
 
             // keyed PubSub async
-            services.AddSingleton(typeof(AsyncMessageBrokerCore<,>));
-            services.AddSingleton(typeof(IAsyncPublisher<,>), typeof(AsyncMessageBroker<,>));
-            services.AddSingleton(typeof(IAsyncSubscriber<,>), typeof(AsyncMessageBroker<,>));
+            Add(services, typeof(AsyncMessageBrokerCore<,>), lifetime);
+            Add(services, typeof(IAsyncPublisher<,>), typeof(AsyncMessageBroker<,>), lifetime);
+            Add(services, typeof(IAsyncSubscriber<,>), typeof(AsyncMessageBroker<,>), lifetime);
 
             // RequestHandler
-            services.AddSingleton(typeof(IRequestHandler<,>), typeof(RequestHandler<,>));
-            services.AddSingleton(typeof(IAsyncRequestHandler<,>), typeof(AsyncRequestHandler<,>));
+            Add(services, typeof(IRequestHandler<,>), typeof(RequestHandler<,>), lifetime);
+            Add(services, typeof(IAsyncRequestHandler<,>), typeof(AsyncRequestHandler<,>), lifetime);
 
             // RequestAll
-            services.AddSingleton(typeof(IRequestAllHandler<,>), typeof(RequestAllHandler<,>));
-            services.AddSingleton(typeof(IAsyncRequestAllHandler<,>), typeof(AsyncRequestAllHandler<,>));
+            Add(services, typeof(IRequestAllHandler<,>), typeof(RequestAllHandler<,>), lifetime);
+            Add(services, typeof(IAsyncRequestAllHandler<,>), typeof(AsyncRequestAllHandler<,>), lifetime);
 
             // filters
             options.AddGlobalFilter(services);
@@ -59,6 +63,16 @@ namespace Microsoft.Extensions.DependencyInjection
 
 
             return services;
+        }
+
+        static void Add(IServiceCollection services, Type serviceType, ServiceLifetime lifetime)
+        {
+            services.Add(new ServiceDescriptor(serviceType, serviceType, lifetime));
+        }
+
+        static void Add(IServiceCollection services, Type serviceType, Type implementationType, ServiceLifetime lifetime)
+        {
+            services.Add(new ServiceDescriptor(serviceType, implementationType, lifetime));
         }
 
         public static IServiceCollection AddRequestHandler<T>(this IServiceCollection services)
