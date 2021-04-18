@@ -1,5 +1,6 @@
 ﻿using StackExchange.Redis;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MessagePipe.Redis
@@ -10,22 +11,29 @@ namespace MessagePipe.Redis
         T Deserialize<T>(byte[] value);
     }
 
+    public interface IConnectionMultiplexerFactory
+    {
+        public IConnectionMultiplexer GetConnectionMultiplexer();
+    }
+
     public sealed class RedisPublisher<TKey, TMessage> : IDistributedPublisher<TKey, TMessage>
     {
-        IRedisSerializer serializer;
-        ISubscriber subscriber;
+        readonly IRedisSerializer serializer;
+        readonly IConnectionMultiplexerFactory connectionFactory;
 
-        public RedisPublisher(IConnectionMultiplexer connection, IRedisSerializer serializer)
+        public RedisPublisher(IConnectionMultiplexerFactory connectionFactory, IRedisSerializer serializer)
         {
-            this.subscriber = connection.GetSubscriber();
+            this.connectionFactory = connectionFactory;
             this.serializer = serializer;
         }
 
-        public async ValueTask PublishAsync(TKey key, TMessage message)
+        public async ValueTask PublishAsync(TKey key, TMessage message, CancellationToken cancellationToken)
         {
             var channel = CreateChannel(key);
             var value = serializer.Serialize(message);
-            await subscriber.PublishAsync(channel, value);
+
+            // Redis.PublishAsync has no cancellationToken overload.
+            await connectionFactory.GetConnectionMultiplexer().GetSubscriber().PublishAsync(channel, value).ConfigureAwait(false);
         }
 
         RedisChannel CreateChannel(TKey key)
@@ -39,19 +47,19 @@ namespace MessagePipe.Redis
     public sealed class RedisSubscriber<TKey, TMessage> : IDistributedSubscriber<TKey, TMessage>
     {
         IRedisSerializer serializer;
-        ISubscriber subscriber;
+        readonly IConnectionMultiplexerFactory connectionFactory;
 
-        public RedisSubscriber(IConnectionMultiplexer connection, IRedisSerializer serializer)
+        public RedisSubscriber(IConnectionMultiplexerFactory connectionFactory, IRedisSerializer serializer)
         {
-            this.subscriber = connection.GetSubscriber();
+            this.connectionFactory = connectionFactory;
             this.serializer = serializer;
         }
 
-        public async ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler)
+        public async ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler, CancellationToken cancellationToken)
         {
             var channel = CreateChannel(key);
 
-            var mq = await subscriber.SubscribeAsync(channel).ConfigureAwait(false);
+            var mq = await connectionFactory.GetConnectionMultiplexer().GetSubscriber().SubscribeAsync(channel).ConfigureAwait(false);
             mq.OnMessage(message =>
             {
                 var v = serializer.Deserialize<TMessage>((byte[])message.Message);

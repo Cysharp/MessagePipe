@@ -11,16 +11,60 @@ using ZLogger;
 
 namespace MessagePipe
 {
+    public class MyOption
+    {
+        public int MyProperty { get; set; }
+    }
+
     class Program : ConsoleAppBase
     {
         static async Task Main(string[] args)
         {
-            args = new[] { "predicate" };
+            args = new[] { "checkscope" };
 
             await Host.CreateDefaultBuilder()
                 .ConfigureServices(x =>
                 {
-                    x.AddMessagePipe();
+
+
+
+
+
+
+                    x.AddMessagePipe(options =>
+                    {
+                        options.InstanceScope = InstanceScope.Scoped;
+
+                        //options.InstanceScope = InstanceScope.Singleton;
+
+                    });
+
+                    x.AddOptions<MyOption>("mysection")
+                    .Configure<MessagePipeOptions>((option, o) =>
+                    {
+                        Console.WriteLine("foo?");
+                    });
+
+
+                    x.Configure<MessagePipeOptions>(y =>
+                    {
+                        Console.WriteLine("call?");
+                    });
+
+
+                    /*
+                    .Configure<IServiceProvider>((option, provider) =>
+                    {
+                        
+
+                    });
+                    */
+
+                    //.Configure< ((x, service) =>
+                    //{
+                    //});
+
+
 
                     // todo:automatically register it.
                     //x.AddTransient(typeof(IRequestHandler<Ping, Pong>), typeof(PingHandler));
@@ -57,6 +101,8 @@ namespace MessagePipe
         IPublisher<int> intPublisher;
         ISubscriber<int> intSubscriber;
 
+        IServiceScopeFactory scopeF;
+
         public Program(IPublisher<string, MyMessage> publisher, ISubscriber<string, MyMessage> subscriber,
             IPublisher<MyMessage> keyless1,
             ISubscriber<MyMessage> keyless2,
@@ -69,9 +115,11 @@ namespace MessagePipe
             IRequestAllHandler<Ping, Pong> pingallhandler,
 
             IPublisher<int> intP,
-            ISubscriber<int> intS
+            ISubscriber<int> intS,
+            IServiceScopeFactory scopeF
             )
         {
+            this.scopeF = scopeF;
             this.publisher = publisher;
             this.subscriber = subscriber;
             this.keylessP = keyless1;
@@ -249,6 +297,39 @@ namespace MessagePipe
             intPublisher.Publish(299);
 
 
+        }
+
+        [Command("checkscope")]
+        public void CheckScope()
+        {
+
+            var scope = scopeF.CreateScope();
+
+            var scope2 = scopeF.CreateScope();
+
+            var p = scope.ServiceProvider.GetRequiredService<IPublisher<long>>();
+            var s = scope.ServiceProvider.GetRequiredService<ISubscriber<long>>();
+
+            var p2 = scope2.ServiceProvider.GetRequiredService<IPublisher<long>>();
+            var s2 = scope2.ServiceProvider.GetRequiredService<ISubscriber<long>>();
+
+            var d = s.Subscribe(x => Console.WriteLine("foo:" + x));
+            var d2 = s2.Subscribe(x => Console.WriteLine("bar:" + x));
+
+
+
+            p.Publish(100);
+            p.Publish(200);
+            p.Publish(300);
+            p2.Publish(999);
+
+
+            scope.Dispose();
+
+            p.Publish(129);
+            s.Subscribe(x => Console.WriteLine("s2???"));
+
+            p2.Publish(1999);
         }
     }
 

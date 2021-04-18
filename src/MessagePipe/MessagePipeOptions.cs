@@ -39,7 +39,7 @@ namespace MessagePipe
 
         public bool EnableAutowire { get; set; }
 
-        /// <summary>For diagnostics usage, enable MessagePipeDiagnosticsInfo.CapturedStacktraces.</summary>
+        /// <summary>For diagnostics usage, enable MessagePipeDiagnosticsInfo.CapturedStacktraces; default is false.</summary>
         public bool EnableCaptureStackTrace { get; set; }
 
         public InstanceScope InstanceScope { get; set; }
