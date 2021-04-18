@@ -86,28 +86,28 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddMessageHandlerFilter<T>(this IServiceCollection services)
             where T : MessageHandlerFilter
         {
-            services.TryAddSingleton<T>();
+            services.TryAddTransient<T>();
             return services;
         }
 
         public static IServiceCollection AddAsyncMessageHandlerFilter<T>(this IServiceCollection services)
             where T : AsyncMessageHandlerFilter
         {
-            services.TryAddSingleton<T>();
+            services.TryAddTransient<T>();
             return services;
         }
 
         public static IServiceCollection AddRequestHandlerFilter<T>(this IServiceCollection services)
             where T : RequestHandlerFilter
         {
-            services.TryAddSingleton<T>();
+            services.TryAddTransient<T>();
             return services;
         }
 
         public static IServiceCollection AddAsyncRequestHandlerFilter<T>(this IServiceCollection services)
             where T : AsyncRequestHandlerFilter
         {
-            services.TryAddSingleton<T>();
+            services.TryAddTransient<T>();
             return services;
         }
 

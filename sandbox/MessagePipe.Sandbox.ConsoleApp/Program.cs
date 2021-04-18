@@ -20,66 +20,16 @@ namespace MessagePipe
     {
         static async Task Main(string[] args)
         {
-            args = new[] { "checkscope" };
+            args = new[] { "filter" };
 
             await Host.CreateDefaultBuilder()
-                .ConfigureServices((ctx,x) =>
+                .ConfigureServices((ctx, x) =>
                 {
-                    
-                    
-
-                    // var nano = x.Configuration;
-                    //var tako = x.Configuration.GetSection("Foo").Get<Hoge>();
-
-
-
-
-
-
                     x.AddMessagePipe(options =>
                     {
-                        options.InstanceScope = InstanceScope.Scoped;
-
-                        //options.InstanceScope = InstanceScope.Singleton;
-
+                        options.InstanceScope = InstanceScope.Singleton;
+                        options.EnableCaptureStackTrace = true;
                     });
-
-                    x.AddOptions<MyOption>("mysection")
-                    .Configure<MessagePipeOptions>((option, o) =>
-                    {
-                        Console.WriteLine("foo?");
-                    });
-
-
-                    x.Configure<MessagePipeOptions>(y =>
-                    {
-                        Console.WriteLine("call?");
-                    });
-
-
-                    /*
-                    .Configure<IServiceProvider>((option, provider) =>
-                    {
-                        
-
-                    });
-                    */
-
-                    //.Configure< ((x, service) =>
-                    //{
-                    //});
-
-
-
-                    // todo:automatically register it.
-                    //x.AddTransient(typeof(IRequestHandler<Ping, Pong>), typeof(PingHandler));
-                    //x.AddTransient(typeof(IRequestHandler<Ping, Pong>), typeof(PingHandler2));
-                    //x.AddTransient(typeof(PingHandler));
-
-                    x.AddRequestHandler<PingHandler>();
-
-                    x.AddSingleton(typeof(MyFilter));
-
                 })
                 .ConfigureLogging(x =>
                 {
@@ -107,6 +57,7 @@ namespace MessagePipe
         ISubscriber<int> intSubscriber;
 
         IServiceScopeFactory scopeF;
+        MessagePipeDiagnosticsInfo diagnosticsInfo;
 
         public Program(IPublisher<string, MyMessage> publisher, ISubscriber<string, MyMessage> subscriber,
             IPublisher<MyMessage> keyless1,
@@ -121,7 +72,8 @@ namespace MessagePipe
 
             IPublisher<int> intP,
             ISubscriber<int> intS,
-            IServiceScopeFactory scopeF
+            IServiceScopeFactory scopeF,
+            MessagePipeDiagnosticsInfo diagnosticsInfo
             )
         {
             this.scopeF = scopeF;
@@ -136,6 +88,7 @@ namespace MessagePipe
             this.pingallhandler = pingallhandler;
             this.intPublisher = intP;
             this.intSubscriber = intS;
+            this.diagnosticsInfo = diagnosticsInfo;
         }
 
         [Command("keyed")]
@@ -367,15 +320,15 @@ namespace MessagePipe
     {
         public override void Handle<T>(T message, Action<T> next)
         {
-            Console.WriteLine("before");
+            Console.WriteLine("before:" + Order);
             next(message);
-            Console.WriteLine("after");
+            Console.WriteLine("after:" + Order);
         }
     }
 
-    [MessageHandlerFilter(typeof(MyFilter))]
-    [MessageHandlerFilter(typeof(MyFilter))]
-    [MessageHandlerFilter(typeof(MyFilter))]
+    [MessageHandlerFilter(typeof(MyFilter), Order = 30)]
+    [MessageHandlerFilter(typeof(MyFilter), Order = -99)]
+    [MessageHandlerFilter(typeof(MyFilter), Order = 1000)]
     public class MyFirst : IMessageHandler<MyMessage>
     {
         public void Handle(MyMessage message)

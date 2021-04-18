@@ -89,22 +89,22 @@ namespace MessagePipe
         {
             foreach (var item in messageHandlerFilters)
             {
-                services.TryAddSingleton(item.FilterType);
+                services.TryAddTransient(item.FilterType);
             }
 
             foreach (var item in asyncMessageHandlerFilters)
             {
-                services.TryAddSingleton(item.FilterType);
+                services.TryAddTransient(item.FilterType);
             }
 
             foreach (var item in requestHandlerFilters)
             {
-                services.TryAddSingleton(item.FilterType);
+                services.TryAddTransient(item.FilterType);
             }
 
             foreach (var item in asyncRequestHandlerFilters)
             {
-                services.TryAddSingleton(item.FilterType);
+                services.TryAddTransient(item.FilterType);
             }
         }
 

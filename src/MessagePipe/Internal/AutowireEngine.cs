@@ -28,11 +28,10 @@ namespace MessagePipe.Internal
                 "MagicOnion.Client.*",
                 "MagicOnion.Abstractions",
                 "MagicOnion.Shared",
-                "MessagePipe",
-                "MessagePipe.*",
             };
 
             var assemblies = AppDomain.CurrentDomain.GetAssemblies()
+                .Where(x => x.GetName().Name != "MessagePipe" && x.GetName().Name != "MessagePipe.Redis")
                 .Where(x =>
                 {
                     return !wellKnownIgnoreAssemblies.Any(y =>
@@ -54,6 +53,7 @@ namespace MessagePipe.Internal
         public static IEnumerable<Type> CollectFromAssemblies(IEnumerable<Assembly> searchAssemblies)
         {
             var types = searchAssemblies
+                .Where(x => x.GetName().Name != "MessagePipe" && x.GetName().Name != "MessagePipe.Redis")
                 .SelectMany(x =>
                 {
                     try
@@ -64,18 +64,19 @@ namespace MessagePipe.Internal
                     {
                         return ex.Types.Where(t => t != null);
                     }
-                });
+                })
+                .Where(x => x != null);
 
-            return types;
+            return types!;
         }
 
         public static void RegisterFromTypes(IServiceCollection services, MessagePipeOptions options, IEnumerable<Type> targetTypes)
         {
             foreach (var objectType in targetTypes)
             {
-                var interfaces = objectType.GetInterfaces();
+                if (objectType.IsInterface || objectType.IsAbstract) continue;
 
-                foreach (var interfaceType in interfaces)
+                foreach (var interfaceType in objectType.GetInterfaces())
                 {
                     if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IRequestHandlerCore<,>))
                     {
@@ -88,34 +89,48 @@ namespace MessagePipe.Internal
                         services.Add(interfaceType, objectType, options.InstanceScope);
                         goto NEXT_TYPE;
                     }
+                }
 
-                    if (interfaceType == typeof(MessageHandlerFilter))
+                foreach (var baseType in objectType.GetBaseTypes())
+                {
+                    if (baseType == typeof(MessageHandlerFilter))
                     {
-                        services.TryAddSingleton(objectType);
+                        services.TryAddTransient(objectType);
                         goto NEXT_TYPE;
                     }
 
-                    if (interfaceType == typeof(AsyncMessageHandlerFilter))
+                    if (baseType == typeof(AsyncMessageHandlerFilter))
                     {
-                        services.TryAddSingleton(objectType);
+                        services.TryAddTransient(objectType);
                         goto NEXT_TYPE;
                     }
 
-                    if (interfaceType == typeof(RequestHandlerFilter))
+                    if (baseType == typeof(RequestHandlerFilter))
                     {
-                        services.TryAddSingleton(objectType);
+                        services.TryAddTransient(objectType);
                         goto NEXT_TYPE;
                     }
 
-                    if (interfaceType == typeof(AsyncRequestHandlerFilter))
+                    if (baseType == typeof(AsyncRequestHandlerFilter))
                     {
-                        services.TryAddSingleton(objectType);
+                        services.TryAddTransient(objectType);
                         goto NEXT_TYPE;
                     }
                 }
 
             NEXT_TYPE:
                 continue;
+            }
+        }
+
+        internal static IEnumerable<Type> GetBaseTypes(this Type? t)
+        {
+            if (t == null) yield break;
+            t = t.BaseType;
+            while (t != null)
+            {
+                yield return t;
+                t = t.BaseType;
             }
         }
     }
