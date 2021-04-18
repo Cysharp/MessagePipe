@@ -9,7 +9,7 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class ServiceCollectionRedisExtensions
     {
-        public static IServiceCollection AddMessagePipeRedis(this IServiceCollection services, ConnectionMultiplexer connectionMultiplexer)
+        public static IServiceCollection AddMessagePipeRedis(this IServiceCollection services, IConnectionMultiplexer connectionMultiplexer)
         {
             return AddMessagePipeRedis(services, new SingleConnectionMultiplexerFactory(connectionMultiplexer), _ => { });
         }
@@ -19,7 +19,7 @@ namespace Microsoft.Extensions.DependencyInjection
             return AddMessagePipeRedis(services, connectionMultiplexerFactory, _ => { });
         }
 
-        public static IServiceCollection AddMessagePipeRedis(this IServiceCollection services, ConnectionMultiplexer connectionMultiplexer, Action<MessagePipeRedisOptions> configure)
+        public static IServiceCollection AddMessagePipeRedis(this IServiceCollection services, IConnectionMultiplexer connectionMultiplexer, Action<MessagePipeRedisOptions> configure)
         {
             return AddMessagePipeRedis(services, new SingleConnectionMultiplexerFactory(connectionMultiplexer), configure);
         }

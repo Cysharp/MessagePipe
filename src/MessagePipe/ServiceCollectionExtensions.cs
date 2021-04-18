@@ -1,4 +1,6 @@
 ﻿using MessagePipe;
+using MessagePipe.Internal;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 using System.Linq;
 
@@ -20,32 +22,32 @@ namespace Microsoft.Extensions.DependencyInjection
             var scope = options.InstanceScope;
 
             // keyless PubSub
-            Add(services, typeof(MessageBrokerCore<>), scope);
-            Add(services, typeof(IPublisher<>), typeof(MessageBroker<>), scope);
-            Add(services, typeof(ISubscriber<>), typeof(MessageBroker<>), scope);
+            services.Add(typeof(MessageBrokerCore<>), scope);
+            services.Add(typeof(IPublisher<>), typeof(MessageBroker<>), scope);
+            services.Add(typeof(ISubscriber<>), typeof(MessageBroker<>), scope);
 
             // keyless PubSub async
-            Add(services, typeof(AsyncMessageBrokerCore<>), scope);
-            Add(services, typeof(IAsyncPublisher<>), typeof(AsyncMessageBroker<>), scope);
-            Add(services, typeof(IAsyncSubscriber<>), typeof(AsyncMessageBroker<>), scope);
+            services.Add(typeof(AsyncMessageBrokerCore<>), scope);
+            services.Add(typeof(IAsyncPublisher<>), typeof(AsyncMessageBroker<>), scope);
+            services.Add(typeof(IAsyncSubscriber<>), typeof(AsyncMessageBroker<>), scope);
 
             // keyed PubSub
-            Add(services, typeof(MessageBrokerCore<,>), scope);
-            Add(services, typeof(IPublisher<,>), typeof(MessageBroker<,>), scope);
-            Add(services, typeof(ISubscriber<,>), typeof(MessageBroker<,>), scope);
+            services.Add(typeof(MessageBrokerCore<,>), scope);
+            services.Add(typeof(IPublisher<,>), typeof(MessageBroker<,>), scope);
+            services.Add(typeof(ISubscriber<,>), typeof(MessageBroker<,>), scope);
 
             // keyed PubSub async
-            Add(services, typeof(AsyncMessageBrokerCore<,>), scope);
-            Add(services, typeof(IAsyncPublisher<,>), typeof(AsyncMessageBroker<,>), scope);
-            Add(services, typeof(IAsyncSubscriber<,>), typeof(AsyncMessageBroker<,>), scope);
+            services.Add(typeof(AsyncMessageBrokerCore<,>), scope);
+            services.Add(typeof(IAsyncPublisher<,>), typeof(AsyncMessageBroker<,>), scope);
+            services.Add(typeof(IAsyncSubscriber<,>), typeof(AsyncMessageBroker<,>), scope);
 
             // RequestHandler
-            Add(services, typeof(IRequestHandler<,>), typeof(RequestHandler<,>), scope);
-            Add(services, typeof(IAsyncRequestHandler<,>), typeof(AsyncRequestHandler<,>), scope);
+            services.Add(typeof(IRequestHandler<,>), typeof(RequestHandler<,>), scope);
+            services.Add(typeof(IAsyncRequestHandler<,>), typeof(AsyncRequestHandler<,>), scope);
 
             // RequestAll
-            Add(services, typeof(IRequestAllHandler<,>), typeof(RequestAllHandler<,>), scope);
-            Add(services, typeof(IAsyncRequestAllHandler<,>), typeof(AsyncRequestAllHandler<,>), scope);
+            services.Add(typeof(IRequestAllHandler<,>), typeof(RequestAllHandler<,>), scope);
+            services.Add(typeof(IAsyncRequestAllHandler<,>), typeof(AsyncRequestAllHandler<,>), scope);
 
             // filters
             options.AddGlobalFilter(services);
@@ -56,22 +58,57 @@ namespace Microsoft.Extensions.DependencyInjection
             // others.
             services.AddSingleton(typeof(MessagePipeDiagnosticsInfo));
 
-            // TODO:search handler's filter?
-            // todo:automatically register IRequestHandler<T,T> => Handler
+            if (options.EnableAutowire)
+            {
+                // auto register filter and requesthandler
+
+                if (options.autowireAssemblies == null && options.autowireTypes == null)
+                {
+                    AutowireEngine.RegisterFromTypes(services, options, AutowireEngine.CollectFromCurrentDomain());
+                }
+                else
+                {
+                    var fromAssemblies = (options.autowireAssemblies != null)
+                        ? AutowireEngine.CollectFromAssemblies(options.autowireAssemblies)
+                        : Enumerable.Empty<Type>();
+
+                    var types = (options.autowireTypes != null)
+                        ? options.autowireTypes
+                        : Enumerable.Empty<Type>();
+
+                    AutowireEngine.RegisterFromTypes(services, options, fromAssemblies.Concat(types).Distinct());
+                }
+            }
 
             return services;
         }
 
-        static void Add(IServiceCollection services, Type serviceType, InstanceScope scope)
+        public static IServiceCollection AddMessageHandlerFilter<T>(this IServiceCollection services)
+            where T : MessageHandlerFilter
         {
-            var lifetime = (scope == InstanceScope.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
-            services.Add(new ServiceDescriptor(serviceType, serviceType, lifetime));
+            services.TryAddSingleton<T>();
+            return services;
         }
 
-        static void Add(IServiceCollection services, Type serviceType, Type implementationType, InstanceScope scope)
+        public static IServiceCollection AddAsyncMessageHandlerFilter<T>(this IServiceCollection services)
+            where T : AsyncMessageHandlerFilter
         {
-            var lifetime = (scope == InstanceScope.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
-            services.Add(new ServiceDescriptor(serviceType, implementationType, lifetime));
+            services.TryAddSingleton<T>();
+            return services;
+        }
+
+        public static IServiceCollection AddRequestHandlerFilter<T>(this IServiceCollection services)
+            where T : RequestHandlerFilter
+        {
+            services.TryAddSingleton<T>();
+            return services;
+        }
+
+        public static IServiceCollection AddAsyncRequestHandlerFilter<T>(this IServiceCollection services)
+            where T : AsyncRequestHandlerFilter
+        {
+            services.TryAddSingleton<T>();
+            return services;
         }
 
         public static IServiceCollection AddRequestHandler<T>(this IServiceCollection services)
@@ -89,7 +126,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentException($"Not yet added MessagePipeOptions, please call servcies.AddMessagePipe() before.");
             }
 
-            Add(services, type, typeof(T), ((MessagePipeOptions)option.ImplementationInstance!).InstanceScope);
+            services.Add(type, typeof(T), ((MessagePipeOptions)option.ImplementationInstance!).InstanceScope);
             return services;
         }
 
@@ -108,8 +145,20 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentException($"Not yet added MessagePipeOptions, please call servcies.AddMessagePipe() before.");
             }
 
-            Add(services, type, typeof(T), ((MessagePipeOptions)option.ImplementationInstance!).InstanceScope);
+            services.Add(type, typeof(T), ((MessagePipeOptions)option.ImplementationInstance!).InstanceScope);
             return services;
+        }
+
+        internal static void Add(this IServiceCollection services, Type serviceType, InstanceScope scope)
+        {
+            var lifetime = (scope == InstanceScope.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
+            services.Add(new ServiceDescriptor(serviceType, serviceType, lifetime));
+        }
+
+        internal static void Add(this IServiceCollection services, Type serviceType, Type implementationType, InstanceScope scope)
+        {
+            var lifetime = (scope == InstanceScope.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
+            services.Add(new ServiceDescriptor(serviceType, implementationType, lifetime));
         }
     }
 }

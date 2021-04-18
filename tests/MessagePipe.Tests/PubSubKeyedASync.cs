@@ -1,4 +1,6 @@
-﻿using FluentAssertions;
+﻿#pragma warning disable CS1998
+
+using FluentAssertions;
 using MessagePipe;
 using MessagePipe.Tests;
 using Microsoft.Extensions.DependencyInjection;

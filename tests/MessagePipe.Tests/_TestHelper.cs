@@ -1,9 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using MessagePipe.Redis;
+using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MessagePipe.Tests
 {
@@ -20,6 +18,30 @@ namespace MessagePipe.Tests
         {
             var sc = new ServiceCollection();
             sc.AddMessagePipe(configure);
+            return sc.BuildServiceProvider();
+        }
+
+        public static IServiceProvider BuildRedisServiceProvider(IConnectionMultiplexer connection)
+        {
+            var sc = new ServiceCollection();
+            sc.AddMessagePipe();
+            sc.AddMessagePipeRedis(connection);
+            return sc.BuildServiceProvider();
+        }
+
+        public static IServiceProvider BuildRedisServiceProvider(IConnectionMultiplexer connection, Action<MessagePipeOptions> configure)
+        {
+            var sc = new ServiceCollection();
+            sc.AddMessagePipe(configure);
+            sc.AddMessagePipeRedis(connection);
+            return sc.BuildServiceProvider();
+        }
+
+        public static IServiceProvider BuildRedisServiceProvider(IConnectionMultiplexer connection, Action<MessagePipeOptions> configure, Action<MessagePipeRedisOptions> redisConfigure)
+        {
+            var sc = new ServiceCollection();
+            sc.AddMessagePipe(configure);
+            sc.AddMessagePipeRedis(connection, redisConfigure);
             return sc.BuildServiceProvider();
         }
     }

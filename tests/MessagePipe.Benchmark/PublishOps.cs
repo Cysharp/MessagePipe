@@ -75,7 +75,7 @@ namespace MessagePipe.Benchmark
             mvvmLightStrong = new Messenger();
 
 
-             easyMsgHub = new MessageHub();
+            easyMsgHub = new MessageHub();
 
 
 
@@ -130,7 +130,7 @@ namespace MessagePipe.Benchmark
 
                 result = new (string, int)[]
                 {
-                    Measure("Cysharp.NewLib(WIP)", () => p.Publish(m)),
+                    Measure("MessagePipe", () => p.Publish(m)),
                     Measure("event", () => ev(m)),
                     Measure("Rx.Subject", () => subject.OnNext(m)),
                     Measure("Prism", () => prism.Publish(m)),

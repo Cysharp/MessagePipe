@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace MessagePipe
 {
@@ -49,7 +51,6 @@ namespace MessagePipe
         /// <summary>PublishAsync</summary>
         public AsyncPublishStrategy DefaultAsyncPublishStrategy { get; set; }
 
-        // TODO:wire use
         public bool EnableAutowire { get; set; }
 
         /// <summary>For diagnostics usage, enable MessagePipeDiagnosticsInfo.CapturedStacktraces; default is false.</summary>
@@ -68,27 +69,42 @@ namespace MessagePipe
             this.HandlingSubscribeDisposedPolicy = HandlingSubscribeDisposedPolicy.Ignore;
         }
 
+        // autowire
+
+        internal Assembly[]? autowireAssemblies;
+        internal Type[]? autowireTypes;
+
+        public void SetAutowireSearchAssemblies(params Assembly[] assemblies)
+        {
+            autowireAssemblies = assemblies;
+        }
+
+        public void SetAutowireSearchTypes(params Type[] types)
+        {
+            autowireTypes = types;
+        }
+
         // register DI
         internal void AddGlobalFilter(IServiceCollection services)
         {
             foreach (var item in messageHandlerFilters)
             {
-                services.AddSingleton(item.FilterType);
+                services.TryAddSingleton(item.FilterType);
             }
 
             foreach (var item in asyncMessageHandlerFilters)
             {
-                services.AddSingleton(item.FilterType);
+                services.TryAddSingleton(item.FilterType);
             }
 
             foreach (var item in requestHandlerFilters)
             {
-                services.AddSingleton(item.FilterType);
+                services.TryAddSingleton(item.FilterType);
             }
 
             foreach (var item in asyncRequestHandlerFilters)
             {
-                services.AddSingleton(item.FilterType);
+                services.TryAddSingleton(item.FilterType);
             }
         }
 
