@@ -11,6 +11,14 @@ High performance in-memory/distributed messaging pipeline for .NET and Unity.
 
 Howto
 ---
+```csharp
+Host.CreateDefaultBuilder()
+    .ConfigureServices((ctx, services) =>
+    {
+        services.AddMessagePipe(options => { });
+        // services.AddMessagePipeRedis();
+    })
+```
 
 ```csharp
 var publisher = provider.GetRequiredService<IPublisher<int>>();
