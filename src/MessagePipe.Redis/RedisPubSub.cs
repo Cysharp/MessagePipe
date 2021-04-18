@@ -5,17 +5,6 @@ using System.Threading.Tasks;
 
 namespace MessagePipe.Redis
 {
-    public interface IRedisSerializer
-    {
-        byte[] Serialize<T>(T value);
-        T Deserialize<T>(byte[] value);
-    }
-
-    public interface IConnectionMultiplexerFactory
-    {
-        public IConnectionMultiplexer GetConnectionMultiplexer();
-    }
-
     public sealed class RedisPublisher<TKey, TMessage> : IDistributedPublisher<TKey, TMessage>
     {
         readonly IRedisSerializer serializer;
@@ -48,15 +37,26 @@ namespace MessagePipe.Redis
     {
         IRedisSerializer serializer;
         readonly IConnectionMultiplexerFactory connectionFactory;
+        readonly FilterAttachedMessageHandlerFactory messageHandlerFactory;
+        readonly FilterAttachedAsyncMessageHandlerFactory asyncMessageHandlerFactory;
 
-        public RedisSubscriber(IConnectionMultiplexerFactory connectionFactory, IRedisSerializer serializer)
+        public RedisSubscriber(IConnectionMultiplexerFactory connectionFactory, IRedisSerializer serializer, FilterAttachedMessageHandlerFactory messageHandlerFactory, FilterAttachedAsyncMessageHandlerFactory asyncMessageHandlerFactory)
         {
             this.connectionFactory = connectionFactory;
             this.serializer = serializer;
+            this.messageHandlerFactory = messageHandlerFactory;
+            this.asyncMessageHandlerFactory = asyncMessageHandlerFactory;
         }
 
-        public async ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler, CancellationToken cancellationToken)
+        public ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler, CancellationToken cancellationToken)
         {
+            return SubscribeAsync(key, handler, Array.Empty<MessageHandlerFilter>(), cancellationToken);
+        }
+
+        public async ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler, MessageHandlerFilter[] filters, CancellationToken cancellationToken)
+        {
+            handler = messageHandlerFactory.CreateMessageHandler(handler, filters); // with filter
+
             var channel = CreateChannel(key);
 
             var mq = await connectionFactory.GetConnectionMultiplexer().GetSubscriber().SubscribeAsync(channel).ConfigureAwait(false);
@@ -64,6 +64,27 @@ namespace MessagePipe.Redis
             {
                 var v = serializer.Deserialize<TMessage>((byte[])message.Message);
                 handler.Handle(v);
+            });
+
+            return new Subscription(mq);
+        }
+
+        public ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IAsyncMessageHandler<TMessage> handler, CancellationToken cancellationToken)
+        {
+            return SubscribeAsync(key, handler, Array.Empty<AsyncMessageHandlerFilter>(), cancellationToken);
+        }
+
+        public async ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IAsyncMessageHandler<TMessage> handler, AsyncMessageHandlerFilter[] filters, CancellationToken cancellationToken)
+        {
+            handler = asyncMessageHandlerFactory.CreateAsyncMessageHandler(handler, filters); // with filter
+
+            var channel = CreateChannel(key);
+
+            var mq = await connectionFactory.GetConnectionMultiplexer().GetSubscriber().SubscribeAsync(channel).ConfigureAwait(false);
+            mq.OnMessage(async message =>
+            {
+                var v = serializer.Deserialize<TMessage>((byte[])message.Message);
+                await handler.HandleAsync(v, CancellationToken.None).ConfigureAwait(false);
             });
 
             return new Subscription(mq);

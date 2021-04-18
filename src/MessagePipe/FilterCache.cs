@@ -3,9 +3,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 
-namespace MessagePipe.Internal
+namespace MessagePipe
 {
-    // public but almostly internal use
+    // not intended to use directly, use FilterAttachedMessageHandlerFactory.
+
     public sealed class FilterCache<TAttribute, TFilter>
         where TAttribute : IMessagePipeFilterAttribute
         where TFilter : IMessagePipeFilter

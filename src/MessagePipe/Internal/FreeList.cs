@@ -10,6 +10,7 @@ namespace MessagePipe.Internal
         where T : class
     {
         const int InitialCapacity = 4;
+        const int MinShrinkStart = 8;
 
         T?[] values;
         int count;
@@ -36,7 +37,7 @@ namespace MessagePipe.Internal
         {
             lock (gate)
             {
-                if (isDisposed) throw new ObjectDisposedException("");
+                if (isDisposed) throw new ObjectDisposedException(nameof(FreeList<T>));
 
                 if (freeIndex.Count != 0)
                 {
@@ -78,7 +79,7 @@ namespace MessagePipe.Internal
                 freeIndex.Enqueue(index);
                 count--;
 
-                if (shrinkWhenEmpty && count == 0)
+                if (shrinkWhenEmpty && count == 0 && values.Length > MinShrinkStart)
                 {
                     Initialize(); // re-init.
                 }

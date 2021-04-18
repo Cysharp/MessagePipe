@@ -9,16 +9,12 @@ namespace MessagePipe
     public sealed class AsyncMessageBroker<TMessage> : IAsyncPublisher<TMessage>, IAsyncSubscriber<TMessage>
     {
         readonly AsyncMessageBrokerCore<TMessage> core;
-        readonly MessagePipeOptions options;
-        readonly FilterCache<AsyncMessageHandlerFilterAttribute, AsyncMessageHandlerFilter> filterCache;
-        readonly IServiceProvider provider;
+        readonly FilterAttachedAsyncMessageHandlerFactory handlerFactory;
 
-        public AsyncMessageBroker(AsyncMessageBrokerCore<TMessage> core, MessagePipeOptions options, FilterCache<AsyncMessageHandlerFilterAttribute, AsyncMessageHandlerFilter> filterCache, IServiceProvider provider)
+        public AsyncMessageBroker(AsyncMessageBrokerCore<TMessage> core, FilterAttachedAsyncMessageHandlerFactory handlerFactory)
         {
             this.core = core;
-            this.options = options;
-            this.filterCache = filterCache;
-            this.provider = provider;
+            this.handlerFactory = handlerFactory;
         }
 
         public void Publish(TMessage message, CancellationToken cancellationToken)
@@ -28,7 +24,7 @@ namespace MessagePipe
 
         public ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken)
         {
-            return core.PublishAsync(message, options.DefaultAsyncPublishStrategy, cancellationToken);
+            return core.PublishAsync(message, cancellationToken);
         }
 
         public ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken)
@@ -38,15 +34,7 @@ namespace MessagePipe
 
         public IDisposable Subscribe(IAsyncMessageHandler<TMessage> handler, AsyncMessageHandlerFilter[] filters)
         {
-            var handlerFilters = filterCache.GetOrAddFilters(handler.GetType(), provider);
-            var globalFilters = options.GetGlobalAsyncMessageHandlerFilters(provider);
-
-            if (filters.Length != 0 || handlerFilters.Length != 0 || globalFilters.Length != 0)
-            {
-                handler = new FilterAttachedAsyncMessageHandler<TMessage>(handler, ArrayUtil.Concat(filters, handlerFilters, globalFilters));
-            }
-
-            return core.Subscribe(handler);
+            return core.Subscribe(handlerFactory.CreateAsyncMessageHandler(handler, filters));
         }
     }
 
@@ -54,12 +42,16 @@ namespace MessagePipe
     {
         FreeList<IAsyncMessageHandler<TMessage>> handlers;
         readonly MessagePipeDiagnosticsInfo diagnotics;
+        readonly AsyncPublishStrategy defaultAsyncPublishStrategy;
+        readonly HandlingSubscribeDisposedPolicy handlingSubscribeDisposedPolicy;
         readonly object gate = new object();
         bool isDisposed;
 
-        public AsyncMessageBrokerCore(MessagePipeDiagnosticsInfo diagnotics)
+        public AsyncMessageBrokerCore(MessagePipeDiagnosticsInfo diagnotics, MessagePipeOptions options)
         {
             this.handlers = new FreeList<IAsyncMessageHandler<TMessage>>();
+            this.defaultAsyncPublishStrategy = options.DefaultAsyncPublishStrategy;
+            this.handlingSubscribeDisposedPolicy = options.HandlingSubscribeDisposedPolicy;
             this.diagnotics = diagnotics;
         }
 
@@ -74,7 +66,13 @@ namespace MessagePipe
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public async ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default)
+        public ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken)
+        {
+            return PublishAsync(message, defaultAsyncPublishStrategy, cancellationToken);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public async ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken)
         {
             var array = handlers.GetValues();
             if (publishStrategy == AsyncPublishStrategy.Sequential)
@@ -97,7 +95,7 @@ namespace MessagePipe
         {
             lock (gate)
             {
-                if (isDisposed) return DisposableBag.Empty;
+                if (isDisposed) return handlingSubscribeDisposedPolicy.Handle(nameof(AsyncMessageBrokerCore<TMessage>));
 
                 var subscriptionKey = handlers.Add(handler);
                 var subscription = new Subscription(this, subscriptionKey);

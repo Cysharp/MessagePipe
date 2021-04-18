@@ -1,11 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading;
 
 namespace MessagePipe
 {
@@ -18,6 +13,23 @@ namespace MessagePipe
     public enum InstanceScope
     {
         Singleton, Scoped
+    }
+
+    public enum HandlingSubscribeDisposedPolicy
+    {
+        Ignore, Throw
+    }
+
+    internal static class HandlingSubscribeDisposedPolicyExtensions
+    {
+        public static IDisposable Handle(this HandlingSubscribeDisposedPolicy policy, string name)
+        {
+            if (policy == HandlingSubscribeDisposedPolicy.Throw)
+            {
+                throw new ObjectDisposedException(name);
+            }
+            return DisposableBag.Empty;
+        }
     }
 
     internal readonly struct FilterTypeAndOrder
@@ -37,10 +49,13 @@ namespace MessagePipe
         /// <summary>PublishAsync</summary>
         public AsyncPublishStrategy DefaultAsyncPublishStrategy { get; set; }
 
+        // TODO:wire use
         public bool EnableAutowire { get; set; }
 
         /// <summary>For diagnostics usage, enable MessagePipeDiagnosticsInfo.CapturedStacktraces; default is false.</summary>
         public bool EnableCaptureStackTrace { get; set; }
+
+        public HandlingSubscribeDisposedPolicy HandlingSubscribeDisposedPolicy { get; set; }
 
         public InstanceScope InstanceScope { get; set; }
 
@@ -50,11 +65,8 @@ namespace MessagePipe
             this.InstanceScope = InstanceScope.Singleton;
             this.EnableAutowire = true;
             this.EnableCaptureStackTrace = false;
+            this.HandlingSubscribeDisposedPolicy = HandlingSubscribeDisposedPolicy.Ignore;
         }
-
-
-
-        // Filters
 
         // register DI
         internal void AddGlobalFilter(IServiceCollection services)

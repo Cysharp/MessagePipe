@@ -8,16 +8,12 @@ namespace MessagePipe
         where TKey : notnull
     {
         readonly MessageBrokerCore<TKey, TMessage> core;
-        readonly MessagePipeOptions options;
-        readonly FilterCache<MessageHandlerFilterAttribute, MessageHandlerFilter> filterCache;
-        readonly IServiceProvider provider;
+        readonly FilterAttachedMessageHandlerFactory handlerFactory;
 
-        public MessageBroker(MessageBrokerCore<TKey, TMessage> core, MessagePipeOptions options, FilterCache<MessageHandlerFilterAttribute, MessageHandlerFilter> filterCache, IServiceProvider provider)
+        public MessageBroker(MessageBrokerCore<TKey, TMessage> core, FilterAttachedMessageHandlerFactory handlerFactory)
         {
             this.core = core;
-            this.options = options;
-            this.filterCache = filterCache;
-            this.provider = provider;
+            this.handlerFactory = handlerFactory;
         }
 
         public void Publish(TKey key, TMessage message)
@@ -27,15 +23,7 @@ namespace MessagePipe
 
         public IDisposable Subscribe(TKey key, IMessageHandler<TMessage> handler, params MessageHandlerFilter[] filters)
         {
-            var handlerFilters = filterCache.GetOrAddFilters(handler.GetType(), provider);
-            var globalFilters = options.GetGlobalMessageHandlerFilters(provider);
-
-            if (filters.Length != 0 || handlerFilters.Length != 0 || globalFilters.Length != 0)
-            {
-                handler = new FilterAttachedMessageHandler<TMessage>(handler, ArrayUtil.Concat(filters, handlerFilters, globalFilters));
-            }
-
-            return core.Subscribe(key, handler);
+            return core.Subscribe(key, handlerFactory.CreateMessageHandler(handler, filters));
         }
     }
 
@@ -44,13 +32,15 @@ namespace MessagePipe
     {
         readonly Dictionary<TKey, HandlerHolder> handlerGroup;
         readonly MessagePipeDiagnosticsInfo diagnotics;
+        readonly HandlingSubscribeDisposedPolicy handlingSubscribeDisposedPolicy;
         readonly object gate;
         bool isDisposed;
 
-        public MessageBrokerCore(MessagePipeDiagnosticsInfo diagnotics)
+        public MessageBrokerCore(MessagePipeDiagnosticsInfo diagnotics, MessagePipeOptions options)
         {
             this.handlerGroup = new Dictionary<TKey, HandlerHolder>();
             this.diagnotics = diagnotics;
+            this.handlingSubscribeDisposedPolicy = options.HandlingSubscribeDisposedPolicy;
             this.gate = new object();
         }
 
@@ -76,7 +66,7 @@ namespace MessagePipe
         {
             lock (gate)
             {
-                if (isDisposed) return DisposableBag.Empty;
+                if (isDisposed) return handlingSubscribeDisposedPolicy.Handle(nameof(MessageBrokerCore<TKey, TMessage>));
 
                 if (!handlerGroup.TryGetValue(key, out var holder))
                 {

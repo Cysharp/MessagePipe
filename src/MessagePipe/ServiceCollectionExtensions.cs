@@ -1,5 +1,4 @@
 ﻿using MessagePipe;
-using MessagePipe.Internal;
 using System;
 using System.Linq;
 
@@ -51,6 +50,8 @@ namespace Microsoft.Extensions.DependencyInjection
             // filters
             options.AddGlobalFilter(services);
             services.AddSingleton(typeof(FilterCache<,>));
+            services.AddSingleton(typeof(FilterAttachedMessageHandlerFactory));
+            services.AddSingleton(typeof(FilterAttachedAsyncMessageHandlerFactory));
 
             // others.
             services.AddSingleton(typeof(MessagePipeDiagnosticsInfo));

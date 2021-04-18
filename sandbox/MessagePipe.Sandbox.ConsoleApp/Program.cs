@@ -23,8 +23,13 @@ namespace MessagePipe
             args = new[] { "checkscope" };
 
             await Host.CreateDefaultBuilder()
-                .ConfigureServices(x =>
+                .ConfigureServices((ctx,x) =>
                 {
+                    
+                    
+
+                    // var nano = x.Configuration;
+                    //var tako = x.Configuration.GetSection("Foo").Get<Hoge>();
 
 
 

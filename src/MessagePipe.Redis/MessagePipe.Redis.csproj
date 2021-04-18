@@ -3,14 +3,16 @@
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net5.0</TargetFrameworks>
         <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="MessagePack" Version="2.2.85" />
         <PackageReference Include="StackExchange.Redis" Version="2.2.4" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\MessagePipe\MessagePipe.csproj" />
+        <ProjectReference Include="..\MessagePipe\MessagePipe.csproj" />
     </ItemGroup>
 
 </Project>
