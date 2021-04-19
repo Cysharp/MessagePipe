@@ -10,7 +10,7 @@ namespace MessagePipe
 {
     public sealed class RequestHandler<TRequest, TResponse> : IRequestHandler<TRequest, TResponse>
     {
-        Func<TRequest, TResponse> handler;
+        readonly Func<TRequest, TResponse> handler;
 
         public RequestHandler(IRequestHandlerCore<TRequest, TResponse> handler, MessagePipeOptions options, FilterCache<RequestHandlerFilterAttribute, RequestHandlerFilter> filterCache, IServiceProvider provider)
         {
@@ -37,11 +37,29 @@ namespace MessagePipe
 
     public sealed class RequestAllHandler<TRequest, TResponse> : IRequestAllHandler<TRequest, TResponse>
     {
-        readonly IRequestHandler<TRequest, TResponse>[] handlers;
+        readonly Func<TRequest, TResponse>[] handlers;
 
-        public RequestAllHandler(IEnumerable<IRequestHandler<TRequest, TResponse>> handlers)
+        public RequestAllHandler(IEnumerable<IRequestHandlerCore<TRequest, TResponse>> handlers, MessagePipeOptions options, FilterCache<RequestHandlerFilterAttribute, RequestHandlerFilter> filterCache, IServiceProvider provider)
         {
-            this.handlers = handlers.ToArray();
+            var globalFilters = options.GetGlobalRequestHandlerFilters(provider);
+
+            this.handlers = new Func<TRequest, TResponse>[handlers.Count()];
+            int currentIndex = 0;
+            foreach (var handler in handlers)
+            {
+                var handlerFilters = filterCache.GetOrAddFilters(handler.GetType(), provider);
+                Func<TRequest, TResponse> next = handler.Invoke;
+                if (handlerFilters.Length != 0 || globalFilters.Length != 0)
+                {
+                    foreach (var f in ArrayUtil.Concat(handlerFilters, globalFilters).OrderByDescending(x => x.Order))
+                    {
+                        next = new RequestHandlerFilterRunner<TRequest, TResponse>(f, next).GetDelegate();
+                    }
+                }
+
+                this.handlers[currentIndex++] = next;
+            }
+
         }
 
         public TResponse[] InvokeAll(TRequest request)
