@@ -14,7 +14,7 @@ namespace MessagePipe
         Parallel
     }
 
-    public enum InstanceScope
+    public enum InstanceLifetime
     {
         Singleton, Scoped
     }
@@ -64,12 +64,12 @@ namespace MessagePipe
 
         public HandlingSubscribeDisposedPolicy HandlingSubscribeDisposedPolicy { get; set; }
 
-        public InstanceScope InstanceScope { get; set; }
+        public InstanceLifetime InstanceLifetime { get; set; }
 
         public MessagePipeOptions()
         {
             this.DefaultAsyncPublishStrategy = AsyncPublishStrategy.Parallel;
-            this.InstanceScope = InstanceScope.Singleton;
+            this.InstanceLifetime = InstanceLifetime.Singleton;
             this.EnableCaptureStackTrace = false;
             this.HandlingSubscribeDisposedPolicy = HandlingSubscribeDisposedPolicy.Ignore;
 #if !UNITY_2018_3_OR_NEWER

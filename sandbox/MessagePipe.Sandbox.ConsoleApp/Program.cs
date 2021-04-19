@@ -27,7 +27,7 @@ namespace MessagePipe
                 {
                     x.AddMessagePipe(options =>
                     {
-                        options.InstanceScope = InstanceScope.Singleton;
+                        options.InstanceLifetime = InstanceLifetime.Singleton;
                         options.EnableCaptureStackTrace = true;
                     });
                 })

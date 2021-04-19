@@ -82,13 +82,13 @@ namespace MessagePipe.Internal
                 {
                     if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IRequestHandlerCore<,>))
                     {
-                        services.Add(interfaceType, objectType, options.InstanceScope);
+                        services.Add(interfaceType, objectType, options.InstanceLifetime);
                         goto NEXT_TYPE;
                     }
 
                     if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IAsyncRequestHandlerCore<,>))
                     {
-                        services.Add(interfaceType, objectType, options.InstanceScope);
+                        services.Add(interfaceType, objectType, options.InstanceLifetime);
                         goto NEXT_TYPE;
                     }
                 }

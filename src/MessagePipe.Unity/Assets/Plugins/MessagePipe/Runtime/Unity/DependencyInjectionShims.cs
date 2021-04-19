@@ -25,8 +25,8 @@ namespace MessagePipe
         }
     }
 
-    internal interface IServiceCollection
+    public interface IServiceCollection
     {
-        internal void TryAddTransient(Type type);
+        public void TryAddTransient(Type type);
     }
 }
