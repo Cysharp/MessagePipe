@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿#if !UNITY_2018_3_OR_NEWER
+
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 using System.Collections.Generic;
@@ -80,13 +82,13 @@ namespace MessagePipe.Internal
                 {
                     if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IRequestHandlerCore<,>))
                     {
-                        services.Add(interfaceType, objectType, options.InstanceScope);
+                        services.Add(interfaceType, objectType, options.InstanceLifetime);
                         goto NEXT_TYPE;
                     }
 
                     if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IAsyncRequestHandlerCore<,>))
                     {
-                        services.Add(interfaceType, objectType, options.InstanceScope);
+                        services.Add(interfaceType, objectType, options.InstanceLifetime);
                         goto NEXT_TYPE;
                     }
                 }
@@ -135,3 +137,5 @@ namespace MessagePipe.Internal
         }
     }
 }
+
+#endif

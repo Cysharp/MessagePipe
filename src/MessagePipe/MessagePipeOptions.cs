@@ -1,5 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿#if !UNITY_2018_3_OR_NEWER
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+#endif
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -12,7 +14,7 @@ namespace MessagePipe
         Parallel
     }
 
-    public enum InstanceScope
+    public enum InstanceLifetime
     {
         Singleton, Scoped
     }
@@ -51,23 +53,31 @@ namespace MessagePipe
         /// <summary>PublishAsync</summary>
         public AsyncPublishStrategy DefaultAsyncPublishStrategy { get; set; }
 
+#if !UNITY_2018_3_OR_NEWER
+
         public bool EnableAutowire { get; set; }
+
+#endif
 
         /// <summary>For diagnostics usage, enable MessagePipeDiagnosticsInfo.CapturedStacktraces; default is false.</summary>
         public bool EnableCaptureStackTrace { get; set; }
 
         public HandlingSubscribeDisposedPolicy HandlingSubscribeDisposedPolicy { get; set; }
 
-        public InstanceScope InstanceScope { get; set; }
+        public InstanceLifetime InstanceLifetime { get; set; }
 
         public MessagePipeOptions()
         {
             this.DefaultAsyncPublishStrategy = AsyncPublishStrategy.Parallel;
-            this.InstanceScope = InstanceScope.Singleton;
-            this.EnableAutowire = true;
+            this.InstanceLifetime = InstanceLifetime.Singleton;
             this.EnableCaptureStackTrace = false;
             this.HandlingSubscribeDisposedPolicy = HandlingSubscribeDisposedPolicy.Ignore;
+#if !UNITY_2018_3_OR_NEWER
+            this.EnableAutowire = true;
+#endif
         }
+
+#if !UNITY_2018_3_OR_NEWER
 
         // autowire
 
@@ -107,6 +117,8 @@ namespace MessagePipe
                 services.TryAddTransient(item.FilterType);
             }
         }
+
+#endif
 
         // MessageHandlerFilter
 
@@ -195,5 +207,7 @@ namespace MessagePipe
 
             return filterCache;
         }
+
+
     }
 }

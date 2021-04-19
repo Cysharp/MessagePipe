@@ -116,3 +116,7 @@ nuget/*.unitypackage
 .idea/
 
 # Unity
+
+src/MessagePipe.Unity/Library/*
+src/MessagePipe.Unity/Temp/*
+src/MessagePipe.Unity/Logs/*

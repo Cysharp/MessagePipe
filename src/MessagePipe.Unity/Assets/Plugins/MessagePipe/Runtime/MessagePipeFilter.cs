@@ -1,0 +1,239 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+
+namespace MessagePipe
+{
+    public interface IMessagePipeFilterAttribute
+    {
+        public Type Type { get; }
+        public int Order { get; }
+    }
+
+    public interface IMessagePipeFilter
+    {
+        int Order { get; set; }
+    }
+
+    // Sync filter
+
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+    public class MessageHandlerFilterAttribute : Attribute, IMessagePipeFilterAttribute
+    {
+        public Type Type { get; }
+        public int Order { get; set; }
+
+        public MessageHandlerFilterAttribute(Type type)
+        {
+            if (!typeof(MessageHandlerFilter).IsAssignableFrom(type))
+            {
+                throw new ArgumentException($"{type.FullName} is not MessageHandlerFilter.");
+            }
+            this.Type = type;
+        }
+    }
+
+    public abstract class MessageHandlerFilter : IMessagePipeFilter
+    {
+        public int Order { get; set; }
+        public abstract void Handle<T>(T message, Action<T> next);
+    }
+
+    internal sealed class FilterAttachedMessageHandler<T> : IMessageHandler<T>
+    {
+        Action<T> handler;
+
+        public FilterAttachedMessageHandler(IMessageHandler<T> body, IEnumerable<MessageHandlerFilter> filters)
+        {
+            Action<T> next = body.Handle;
+            foreach (var f in filters.OrderByDescending(x => x.Order))
+            {
+                next = new MessageHandlerFilterRunner<T>(f, next).GetDelegate();
+            }
+
+            this.handler = next;
+        }
+
+        public void Handle(T message)
+        {
+            handler(message);
+        }
+    }
+
+    internal sealed class MessageHandlerFilterRunner<T>
+    {
+        readonly MessageHandlerFilter filter;
+        readonly Action<T> next;
+
+        public MessageHandlerFilterRunner(MessageHandlerFilter filter, Action<T> next)
+        {
+            this.filter = filter;
+            this.next = next;
+        }
+
+        public Action<T> GetDelegate() => Handle;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void Handle(T message)
+        {
+            filter.Handle(message, next);
+        }
+    }
+
+    // Async filter
+
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+    public class AsyncMessageHandlerFilterAttribute : Attribute, IMessagePipeFilterAttribute
+    {
+        public Type Type { get; }
+        public int Order { get; set; }
+
+        public AsyncMessageHandlerFilterAttribute(Type type)
+        {
+            if (!typeof(AsyncMessageHandlerFilter).IsAssignableFrom(type))
+            {
+                throw new ArgumentException($"{type.FullName} is not AsyncMessageHandlerFilter.");
+            }
+            this.Type = type;
+        }
+    }
+
+    public abstract class AsyncMessageHandlerFilter : IMessagePipeFilter
+    {
+        public int Order { get; set; }
+        public abstract UniTask HandleAsync<T>(T message, CancellationToken cancellationToken, Func<T, CancellationToken, UniTask> next);
+    }
+
+    internal sealed class FilterAttachedAsyncMessageHandler<T> : IAsyncMessageHandler<T>
+    {
+        Func<T, CancellationToken, UniTask> handler;
+
+        public FilterAttachedAsyncMessageHandler(IAsyncMessageHandler<T> body, IEnumerable<AsyncMessageHandlerFilter> filters)
+        {
+            Func<T, CancellationToken, UniTask> next = body.HandleAsync;
+            foreach (var f in filters.OrderByDescending(x => x.Order))
+            {
+                next = new AsyncMessageHandlerFilterRunner<T>(f, next).GetDelegate();
+            }
+
+            this.handler = next;
+        }
+
+        public UniTask HandleAsync(T message, CancellationToken cancellationToken)
+        {
+            return handler.Invoke(message, cancellationToken);
+        }
+    }
+
+    internal sealed class AsyncMessageHandlerFilterRunner<T>
+    {
+        readonly AsyncMessageHandlerFilter filter;
+        readonly Func<T, CancellationToken, UniTask> next;
+
+        public AsyncMessageHandlerFilterRunner(AsyncMessageHandlerFilter filter, Func<T, CancellationToken, UniTask> next)
+        {
+            this.filter = filter;
+            this.next = next;
+        }
+
+        public Func<T, CancellationToken, UniTask> GetDelegate() => HandleAsync;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        UniTask HandleAsync(T message, CancellationToken cancellationToken)
+        {
+            return filter.HandleAsync(message, cancellationToken, next);
+        }
+    }
+
+    // Req-Res Filter
+
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+    public class RequestHandlerFilterAttribute : Attribute, IMessagePipeFilterAttribute
+    {
+        public Type Type { get; }
+        public int Order { get; set; }
+
+        public RequestHandlerFilterAttribute(Type type)
+        {
+            if (!typeof(RequestHandlerFilter).IsAssignableFrom(type))
+            {
+                throw new ArgumentException($"{type.FullName} is not RequestHandlerFilter.");
+            }
+            this.Type = type;
+        }
+    }
+
+    public abstract class RequestHandlerFilter : IMessagePipeFilter
+    {
+        public int Order { get; set; }
+        public abstract TResponse Invoke<TRequest, TResponse>(TRequest request, Func<TRequest, TResponse> next);
+    }
+
+    internal sealed class RequestHandlerFilterRunner<TRequest, TResponse>
+    {
+        readonly RequestHandlerFilter filter;
+        readonly Func<TRequest, TResponse> next;
+
+        public RequestHandlerFilterRunner(RequestHandlerFilter filter, Func<TRequest, TResponse> next)
+        {
+            this.filter = filter;
+            this.next = next;
+        }
+
+        public Func<TRequest, TResponse> GetDelegate() => Invoke;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        TResponse Invoke(TRequest request)
+        {
+            return filter.Invoke(request, next);
+        }
+    }
+
+    // async Req-Res
+
+
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+    public class AsyncRequestHandlerFilterAttribute : Attribute, IMessagePipeFilterAttribute
+    {
+        public Type Type { get; }
+        public int Order { get; set; }
+
+        public AsyncRequestHandlerFilterAttribute(Type type)
+        {
+            if (!typeof(AsyncRequestHandlerFilter).IsAssignableFrom(type))
+            {
+                throw new ArgumentException($"{type.FullName} is not AsyncRequestHandlerFilter.");
+            }
+            this.Type = type;
+        }
+    }
+
+    public abstract class AsyncRequestHandlerFilter : IMessagePipeFilter
+    {
+        public int Order { get; set; }
+        public abstract UniTask<TResponse> InvokeAsync<TRequest, TResponse>(TRequest request, CancellationToken cancellationToken, Func<TRequest, CancellationToken, UniTask<TResponse>> next);
+    }
+
+    internal sealed class AsyncRequestHandlerFilterRunner<TRequest, TResponse>
+    {
+        readonly AsyncRequestHandlerFilter filter;
+        readonly Func<TRequest, CancellationToken, UniTask<TResponse>> next;
+
+        public AsyncRequestHandlerFilterRunner(AsyncRequestHandlerFilter filter, Func<TRequest, CancellationToken, UniTask<TResponse>> next)
+        {
+            this.filter = filter;
+            this.next = next;
+        }
+
+        public Func<TRequest, CancellationToken, UniTask<TResponse>> GetDelegate() => InvokeAsync;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        UniTask<TResponse> InvokeAsync(TRequest request, CancellationToken cancellationToken)
+        {
+            return filter.InvokeAsync(request, cancellationToken, next);
+        }
+    }
+}

@@ -39,15 +39,15 @@ namespace Microsoft.Extensions.DependencyInjection
             return services;
         }
 
-        static void Add(this IServiceCollection services, Type serviceType, InstanceScope scope)
+        static void Add(this IServiceCollection services, Type serviceType, InstanceLifetime scope)
         {
-            var lifetime = (scope == InstanceScope.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
+            var lifetime = (scope == InstanceLifetime.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
             services.Add(new ServiceDescriptor(serviceType, serviceType, lifetime));
         }
 
-        static void Add(this IServiceCollection services, Type serviceType, Type implementationType, InstanceScope scope)
+        static void Add(this IServiceCollection services, Type serviceType, Type implementationType, InstanceLifetime scope)
         {
-            var lifetime = (scope == InstanceScope.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
+            var lifetime = (scope == InstanceLifetime.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
             services.Add(new ServiceDescriptor(serviceType, implementationType, lifetime));
         }
     }

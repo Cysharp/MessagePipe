@@ -1,4 +1,6 @@
-﻿using MessagePipe;
+﻿#if !UNITY_2018_3_OR_NEWER
+
+using MessagePipe;
 using MessagePipe.Internal;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
@@ -19,35 +21,35 @@ namespace Microsoft.Extensions.DependencyInjection
             configure(options);
             services.AddSingleton(options); // add as singleton instance
 
-            var scope = options.InstanceScope;
+            var lifetime = options.InstanceLifetime;
 
             // keyless PubSub
-            services.Add(typeof(MessageBrokerCore<>), scope);
-            services.Add(typeof(IPublisher<>), typeof(MessageBroker<>), scope);
-            services.Add(typeof(ISubscriber<>), typeof(MessageBroker<>), scope);
+            services.Add(typeof(MessageBrokerCore<>), lifetime);
+            services.Add(typeof(IPublisher<>), typeof(MessageBroker<>), lifetime);
+            services.Add(typeof(ISubscriber<>), typeof(MessageBroker<>), lifetime);
 
             // keyless PubSub async
-            services.Add(typeof(AsyncMessageBrokerCore<>), scope);
-            services.Add(typeof(IAsyncPublisher<>), typeof(AsyncMessageBroker<>), scope);
-            services.Add(typeof(IAsyncSubscriber<>), typeof(AsyncMessageBroker<>), scope);
+            services.Add(typeof(AsyncMessageBrokerCore<>), lifetime);
+            services.Add(typeof(IAsyncPublisher<>), typeof(AsyncMessageBroker<>), lifetime);
+            services.Add(typeof(IAsyncSubscriber<>), typeof(AsyncMessageBroker<>), lifetime);
 
             // keyed PubSub
-            services.Add(typeof(MessageBrokerCore<,>), scope);
-            services.Add(typeof(IPublisher<,>), typeof(MessageBroker<,>), scope);
-            services.Add(typeof(ISubscriber<,>), typeof(MessageBroker<,>), scope);
+            services.Add(typeof(MessageBrokerCore<,>), lifetime);
+            services.Add(typeof(IPublisher<,>), typeof(MessageBroker<,>), lifetime);
+            services.Add(typeof(ISubscriber<,>), typeof(MessageBroker<,>), lifetime);
 
             // keyed PubSub async
-            services.Add(typeof(AsyncMessageBrokerCore<,>), scope);
-            services.Add(typeof(IAsyncPublisher<,>), typeof(AsyncMessageBroker<,>), scope);
-            services.Add(typeof(IAsyncSubscriber<,>), typeof(AsyncMessageBroker<,>), scope);
+            services.Add(typeof(AsyncMessageBrokerCore<,>), lifetime);
+            services.Add(typeof(IAsyncPublisher<,>), typeof(AsyncMessageBroker<,>), lifetime);
+            services.Add(typeof(IAsyncSubscriber<,>), typeof(AsyncMessageBroker<,>), lifetime);
 
             // RequestHandler
-            services.Add(typeof(IRequestHandler<,>), typeof(RequestHandler<,>), scope);
-            services.Add(typeof(IAsyncRequestHandler<,>), typeof(AsyncRequestHandler<,>), scope);
+            services.Add(typeof(IRequestHandler<,>), typeof(RequestHandler<,>), lifetime);
+            services.Add(typeof(IAsyncRequestHandler<,>), typeof(AsyncRequestHandler<,>), lifetime);
 
             // RequestAll
-            services.Add(typeof(IRequestAllHandler<,>), typeof(RequestAllHandler<,>), scope);
-            services.Add(typeof(IAsyncRequestAllHandler<,>), typeof(AsyncRequestAllHandler<,>), scope);
+            services.Add(typeof(IRequestAllHandler<,>), typeof(RequestAllHandler<,>), lifetime);
+            services.Add(typeof(IAsyncRequestAllHandler<,>), typeof(AsyncRequestAllHandler<,>), lifetime);
 
             // filters
             options.AddGlobalFilter(services);
@@ -127,7 +129,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentException($"Not yet added MessagePipeOptions, please call servcies.AddMessagePipe() before.");
             }
 
-            services.Add(type, typeof(T), ((MessagePipeOptions)option.ImplementationInstance!).InstanceScope);
+            services.Add(type, typeof(T), ((MessagePipeOptions)option.ImplementationInstance!).InstanceLifetime);
             return services;
         }
 
@@ -146,20 +148,22 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentException($"Not yet added MessagePipeOptions, please call servcies.AddMessagePipe() before.");
             }
 
-            services.Add(type, typeof(T), ((MessagePipeOptions)option.ImplementationInstance!).InstanceScope);
+            services.Add(type, typeof(T), ((MessagePipeOptions)option.ImplementationInstance!).InstanceLifetime);
             return services;
         }
 
-        internal static void Add(this IServiceCollection services, Type serviceType, InstanceScope scope)
+        internal static void Add(this IServiceCollection services, Type serviceType, InstanceLifetime lifetime)
         {
-            var lifetime = (scope == InstanceScope.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
-            services.Add(new ServiceDescriptor(serviceType, serviceType, lifetime));
+            var lt = (lifetime == InstanceLifetime.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
+            services.Add(new ServiceDescriptor(serviceType, serviceType, lt));
         }
 
-        internal static void Add(this IServiceCollection services, Type serviceType, Type implementationType, InstanceScope scope)
+        internal static void Add(this IServiceCollection services, Type serviceType, Type implementationType, InstanceLifetime lifetime)
         {
-            var lifetime = (scope == InstanceScope.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
-            services.Add(new ServiceDescriptor(serviceType, implementationType, lifetime));
+            var lt = (lifetime == InstanceLifetime.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
+            services.Add(new ServiceDescriptor(serviceType, implementationType, lt));
         }
     }
 }
+
+#endif
