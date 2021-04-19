@@ -21,6 +21,20 @@ namespace MessagePipe.Tests
             return sc.BuildServiceProvider();
         }
 
+        public static ConnectionMultiplexer GetLocalConnectionMultiplexer()
+        {
+            var c = ConfigurationOptions.Parse("localhost");
+            c.ConnectTimeout = 1000;
+            try
+            {
+                return StackExchange.Redis.ConnectionMultiplexer.Connect(c);
+            }
+            catch (RedisConnectionException ex)
+            {
+                throw new TimeoutException("Can not connect to redis, if you don't up redis in local, call 'docker compose-up' on project root.", ex);
+            }
+        }
+
         public static IServiceProvider BuildRedisServiceProvider(IConnectionMultiplexer connection)
         {
             var sc = new ServiceCollection();
