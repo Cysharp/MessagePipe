@@ -3,6 +3,7 @@
     <PropertyGroup>
         <TargetFramework>net5.0</TargetFramework>
         <IsPackable>false</IsPackable>
+        <Configurations>Debug;Release;WinBenchmark</Configurations>
     </PropertyGroup>
 
     <ItemGroup>

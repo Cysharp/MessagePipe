@@ -1,5 +1,5 @@
 ﻿using Easy.MessageHub;
-using GalaSoft.MvvmLight.Messaging;
+
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Prism.Events;
@@ -14,9 +14,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Zenject;
 
+#if WinBenchmark
+using GalaSoft.MvvmLight.Messaging;
+#endif
+
 namespace MessagePipe.Benchmark
 {
-    public class PublishOps
+    public  class PublishOps
     {
         IPublisher<Message> p;
         Message m;
@@ -28,8 +32,6 @@ namespace MessagePipe.Benchmark
         Hub hub;
         SignalBus signalBus;
 
-        Messenger mvvmLight;
-        Messenger mvvmLightStrong;
         IPublisher<Message> filter1;
         IPublisher<Message> filter2;
         IPublisher<Guid, Message> keyed;
@@ -37,7 +39,16 @@ namespace MessagePipe.Benchmark
 
         MessageHub easyMsgHub;
 
-        public PublishOps()
+        PlainAction[] simpleArray;
+        IInvoke[] interfaceArray;
+        Action[] actionDelegate;
+
+#if WinBenchmark
+        Messenger mvvmLight;
+        Messenger mvvmLightStrong;
+#endif
+
+        public unsafe PublishOps()
         {
             var provider = new ServiceCollection().AddMessagePipe().BuildServiceProvider();
 
@@ -70,14 +81,20 @@ namespace MessagePipe.Benchmark
             subject = new Subject<Message>();
 
             signalBus = SetupZenject();
-
-            mvvmLight = new Messenger();
-            mvvmLightStrong = new Messenger();
-
-
             easyMsgHub = new MessageHub();
 
 
+#if WinBenchmark
+            mvvmLight = new Messenger();
+            mvvmLightStrong = new Messenger();
+#endif
+
+
+
+
+            simpleArray = new PlainAction[8];
+            actionDelegate = new Action[8];
+            interfaceArray = new IInvoke[8];
 
 
             for (int i = 0; i < 8; i++)
@@ -88,9 +105,12 @@ namespace MessagePipe.Benchmark
                 ev += _ => { };
                 subject.Subscribe(_ => { });
                 hub.Subscribe<Message>(_ => { });
+
+#if WinBenchmark
                 UniRx.MessageBroker.Default.Receive<Message>().Subscribe(new NopObserver());
                 mvvmLight.Register<Message>(this, _ => { }, false);
                 // mvvmLightStrong.Register<Message>(this, _ => { }, true);
+#endif
 
                 keyedS.Subscribe(key, _ => { });
 
@@ -98,6 +118,10 @@ namespace MessagePipe.Benchmark
                 filter2Sub.Subscribe(new EmptyMessageHandler(), new EmptyMessageHandlerFilter(), new EmptyMessageHandlerFilter());
 
                 easyMsgHub.Subscribe<Message>(_ => { });
+
+                simpleArray[i] = new PlainAction();
+                actionDelegate[i] = new PlainAction().DelegateAction;
+                interfaceArray[i] = new PlainAction();
             }
 
             signalBus.Subscribe<Message>(m => { });
@@ -137,18 +161,45 @@ namespace MessagePipe.Benchmark
                     Measure("Prism(keepRef)", () => prismStrong.Publish(m)),
                     await MeasureAsync("MediatR", () => medi.Publish(m)),
                     Measure("upta/PubSub", () => hub.Publish(m)),
-                    Measure("UniRx.MessageBroker", () => UniRx.MessageBroker.Default.Publish(m)),
                     Measure("Zenject.Signals", () => signalBus.Fire<Message>(m)),
+
+                    #if WinBenchmark
+                    Measure("UniRx.MessageBroker", () => UniRx.MessageBroker.Default.Publish(m)),
                     Measure("MvvmLight", () => mvvmLight.Send(m)),
                     // Measure("MvvmLight(keepRef)", () => mvvmLightStrong.Send(m))
+                    #endif
+                            
                     Measure("Easy.MessageHub", () => easyMsgHub.Publish(m)),
-                
 
 
-                    //Measure("MessagePipe(f1)", () => filter1.Publish(m)),
-                    //Measure("MessagePipe(f2)", () => filter2.Publish(m)),
-                    //Measure("MessagePipe(key)", () => keyed.Publish(key, m)),
-                };
+                    Measure("Array", () =>
+                    {
+                        var xs = simpleArray;
+                        for (int i = 0; i < xs.Length; i++)
+                        {
+                         xs[i].Invoke();
+                        }
+                    }),
+                    Measure("Action[]", () =>
+                    {
+                        var xs = actionDelegate;
+                        for (int i = 0; i < xs.Length; i++)
+                        {
+                         xs[i].Invoke();
+                        }
+                    }),
+                    Measure("Interface[]", () =>
+                    {
+                        var xs = interfaceArray;
+                        for (int i = 0; i < xs.Length; i++)
+                        {
+                         xs[i].Invoke();
+                        }
+                    }),
+                //Measure("MessagePipe(f1)", () => filter1.Publish(m)),
+                //Measure("MessagePipe(f2)", () => filter2.Publish(m)),
+                //Measure("MessagePipe(key)", () => keyed.Publish(key, m)),
+            };
             }
 
             Console.WriteLine("----");
@@ -223,11 +274,30 @@ namespace MessagePipe.Benchmark
 
     }
 
+    public interface IInvoke
+    {
+        void Invoke();
+    }
+
+
+    public sealed class PlainAction : IInvoke
+    {
+        public readonly Action DelegateAction;
+
+        public PlainAction()
+        {
+            this.DelegateAction = this.Invoke;
+        }
+
+        public void Invoke()
+        {
+        }
+    }
 
     public class Message : PubSubEvent<Message>, INotification
     {
     }
-
+#if WinBenchmark
     public class NopObserver : UniRx.IObserver<Message>
     {
         public void OnCompleted()
@@ -242,6 +312,7 @@ namespace MessagePipe.Benchmark
         {
         }
     }
+#endif
 
     public class Pong0 : INotificationHandler<Message>
     {

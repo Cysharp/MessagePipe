@@ -11,6 +11,9 @@ namespace MessagePipe
     {
     }
 
+    /// <summary>
+    /// Diagnostics info of in-memory(ISubscriber/IAsyncSubscriber) subscriptions.
+    /// </summary>
     public class MessagePipeDiagnosticsInfo
     {
         int subscribeCount;

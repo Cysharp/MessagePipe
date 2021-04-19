@@ -21,46 +21,50 @@ namespace __MessagePipe.Tests
             const string Key1 = "foo";
             const string Key2 = "bar";
 
-            var conection = await StackExchange.Redis.ConnectionMultiplexer.ConnectAsync("localhost");
+            var conection = TestHelper.GetLocalConnectionMultiplexer();
             var provider = TestHelper.BuildRedisServiceProvider(conection);
 
-            var info = provider.GetRequiredService<MessagePipeDiagnosticsInfo>();
-            var p = provider.GetRequiredService<IAsyncPublisher<string, string>>();
-            var s = provider.GetRequiredService<IAsyncSubscriber<string, string>>();
+            var p = provider.GetRequiredService<IDistributedPublisher<string, string>>();
+            var s = provider.GetRequiredService<IDistributedSubscriber<string, string>>();
 
             var result = new List<string>();
-            var d1 = s.Subscribe(Key1, async (x, ct) => result.Add("1:" + x));
-            var d2 = s.Subscribe(Key2, async (x, ct) => result.Add("2:" + x));
-            var d3 = s.Subscribe(Key1, async (x, ct) => result.Add("3:" + x));
-
-            info.SubscribeCount.Should().Be(3);
+            var d1 = await s.SubscribeAsync(Key1, (x) =>
+            {
+                result.Add("1:" + x);
+            });
+            var d2 = await s.SubscribeAsync(Key2, (x) => result.Add("2:" + x));
+            var d3 = await s.SubscribeAsync(Key1, (x) => result.Add("3:" + x));
 
             // use BeEquivalentTo, allow different order
 
-            p.Publish(Key1, "one");
+            await p.PublishAsync(Key1, "one");
+            await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
+
             result.Should().BeEquivalentTo("1:one", "3:one");
             result.Clear();
 
-            p.Publish(Key2, "one");
+            await p.PublishAsync(Key2, "one");
+            await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
+
             result.Should().BeEquivalentTo("2:one");
             result.Clear();
 
-            d3.Dispose();
+            await d3.DisposeAsync();
 
-            p.Publish(Key1, "two");
+            await p.PublishAsync(Key1, "two");
+            await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
             result.Should().BeEquivalentTo("1:two");
             result.Clear();
 
-            d1.Dispose();
-            d2.Dispose();
+            await d1.DisposeAsync();
+            await d2.DisposeAsync();
 
-            p.Publish(Key1, "zero");
-            p.Publish(Key2, "zero");
+            await p.PublishAsync(Key1, "zero");
+            await p.PublishAsync(Key2, "zero");
+            await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
 
             result.Should().Equal();
             result.Clear();
-
-            info.SubscribeCount.Should().Be(0);
         }
 
     }

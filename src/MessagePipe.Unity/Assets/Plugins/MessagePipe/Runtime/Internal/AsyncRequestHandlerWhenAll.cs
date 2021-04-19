@@ -14,7 +14,9 @@ namespace MessagePipe.Internal
 
         readonly TResponse[] result;
 
-        public AsyncRequestHandlerWhenAll(Func<TRequest, CancellationToken, UniTask<TResponse>>[] handlers, TRequest request, CancellationToken cancellationtoken)
+
+        public AsyncRequestHandlerWhenAll(IAsyncRequestHandlerCore<TRequest, TResponse>[] handlers, TRequest request, CancellationToken cancellationtoken)
+
         {
             result = new TResponse[handlers.Length];
 
