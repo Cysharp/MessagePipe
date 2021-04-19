@@ -4,6 +4,7 @@
         <TargetFrameworks>netstandard2.0;net5.0</TargetFrameworks>
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
+        <Configurations>Debug;Release;WinBenchmark</Configurations>
     </PropertyGroup>
 
     <ItemGroup>

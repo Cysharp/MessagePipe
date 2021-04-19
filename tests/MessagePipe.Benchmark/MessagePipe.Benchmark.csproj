@@ -2,7 +2,16 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net5.0-windows</TargetFramework>
+        <TargetFramework>net5.0</TargetFramework>
+        <Configurations>Debug;Release;WinBenchmark</Configurations>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)' == 'WinBenchmark'">
+        <DefineConstants>RELEASE;WinBenchmark</DefineConstants>
+        <DebugSymbols>false</DebugSymbols>
+        <DebugType>portable</DebugType>
+        <Optimize>true</Optimize>
     </PropertyGroup>
 
     <ItemGroup>
@@ -10,10 +19,12 @@
         <PackageReference Include="MediatR" Version="9.0.0" />
         <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />
-        <PackageReference Include="MvvmLightLibs" Version="5.4.1.1" />
         <PackageReference Include="Prism.Core" Version="8.0.0.1909" />
         <PackageReference Include="PubSub" Version="4.0.1" />
         <PackageReference Include="System.Reactive" Version="5.0.0" />
+    </ItemGroup>
+    <ItemGroup Condition="$(Configuration) == 'WinBenchmark'">
+        <PackageReference Include="MvvmLightLibs" Version="5.4.1.1" />
         <PackageReference Include="UniRx" Version="5.4.1" />
     </ItemGroup>
 
