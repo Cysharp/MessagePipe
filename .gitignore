@@ -119,3 +119,4 @@ nuget/*.unitypackage
 
 src/MessagePipe.Unity/Library/*
 src/MessagePipe.Unity/Temp/*
+src/MessagePipe.Unity/Logs/*
