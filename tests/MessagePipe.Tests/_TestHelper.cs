@@ -31,7 +31,7 @@ namespace MessagePipe.Tests
             }
             catch (RedisConnectionException ex)
             {
-                throw new TimeoutException("Can not connect to redis, if you don't up redis in local, call 'docker compose-up' on project root.", ex);
+                throw new TimeoutException("Can not connect to redis, if you don't up redis in local, call 'docker-compose up' on project root.", ex);
             }
         }
 

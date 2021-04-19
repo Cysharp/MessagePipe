@@ -126,9 +126,9 @@ namespace MessagePipe
     {
         readonly TKey key;
         readonly ISubscriber<TKey, TMessage> subscriber;
-        readonly MessageHandlerFilter[] filters;
+        readonly MessageHandlerFilter<TMessage>[] filters;
 
-        public ObservableSubscriber(TKey key, ISubscriber<TKey, TMessage> subscriber, MessageHandlerFilter[] filters)
+        public ObservableSubscriber(TKey key, ISubscriber<TKey, TMessage> subscriber, MessageHandlerFilter<TMessage>[] filters)
         {
             this.key = key;
             this.subscriber = subscriber;
@@ -144,9 +144,9 @@ namespace MessagePipe
     internal sealed class ObservableSubscriber<TMessage> : IObservable<TMessage>
     {
         readonly ISubscriber<TMessage> subscriber;
-        readonly MessageHandlerFilter[] filters;
+        readonly MessageHandlerFilter<TMessage>[] filters;
 
-        public ObservableSubscriber(ISubscriber<TMessage> subscriber, MessageHandlerFilter[] filters)
+        public ObservableSubscriber(ISubscriber<TMessage> subscriber, MessageHandlerFilter<TMessage>[] filters)
         {
             this.subscriber = subscriber;
             this.filters = filters;

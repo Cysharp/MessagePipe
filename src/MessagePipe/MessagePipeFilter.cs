@@ -28,7 +28,7 @@ namespace MessagePipe
 
         public MessageHandlerFilterAttribute(Type type)
         {
-            if (!typeof(MessageHandlerFilter).IsAssignableFrom(type))
+            if (!typeof(IMessageHandlerFilter).IsAssignableFrom(type))
             {
                 throw new ArgumentException($"{type.FullName} is not MessageHandlerFilter.");
             }
@@ -36,17 +36,21 @@ namespace MessagePipe
         }
     }
 
-    public abstract class MessageHandlerFilter : IMessagePipeFilter
+    public interface IMessageHandlerFilter : IMessagePipeFilter
+    {
+    }
+
+    public abstract class MessageHandlerFilter<TMessage> : IMessageHandlerFilter
     {
         public int Order { get; set; }
-        public abstract void Handle<T>(T message, Action<T> next);
+        public abstract void Handle(TMessage message, Action<TMessage> next);
     }
 
     internal sealed class FilterAttachedMessageHandler<T> : IMessageHandler<T>
     {
         Action<T> handler;
 
-        public FilterAttachedMessageHandler(IMessageHandler<T> body, IEnumerable<MessageHandlerFilter> filters)
+        public FilterAttachedMessageHandler(IMessageHandler<T> body, IEnumerable<MessageHandlerFilter<T>> filters)
         {
             Action<T> next = body.Handle;
             foreach (var f in filters.OrderByDescending(x => x.Order))
@@ -65,10 +69,10 @@ namespace MessagePipe
 
     internal sealed class MessageHandlerFilterRunner<T>
     {
-        readonly MessageHandlerFilter filter;
+        readonly MessageHandlerFilter<T> filter;
         readonly Action<T> next;
 
-        public MessageHandlerFilterRunner(MessageHandlerFilter filter, Action<T> next)
+        public MessageHandlerFilterRunner(MessageHandlerFilter<T> filter, Action<T> next)
         {
             this.filter = filter;
             this.next = next;

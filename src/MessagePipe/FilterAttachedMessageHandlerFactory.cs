@@ -1,28 +1,31 @@
 ﻿using MessagePipe.Internal;
 using System;
+using System.Linq;
 
 namespace MessagePipe
 {
     public sealed class FilterAttachedMessageHandlerFactory
     {
         readonly MessagePipeOptions options;
-        readonly FilterCache<MessageHandlerFilterAttribute, MessageHandlerFilter> filterCache;
+        readonly FilterCache<MessageHandlerFilterAttribute> filterCache;
         readonly IServiceProvider provider;
 
-        public FilterAttachedMessageHandlerFactory(MessagePipeOptions options, FilterCache<MessageHandlerFilterAttribute, MessageHandlerFilter> filterCache, IServiceProvider provider)
+        public FilterAttachedMessageHandlerFactory(MessagePipeOptions options, FilterCache<MessageHandlerFilterAttribute> filterCache, IServiceProvider provider)
         {
             this.options = options;
             this.filterCache = filterCache;
             this.provider = provider;
         }
 
-        public IMessageHandler<TMessage> CreateMessageHandler<TMessage>(IMessageHandler<TMessage> handler, MessageHandlerFilter[] filters)
+        public IMessageHandler<TMessage> CreateMessageHandler<TMessage>(IMessageHandler<TMessage> handler, MessageHandlerFilter<TMessage>[] filters)
         {
             var handlerFilters = filterCache.GetOrAddFilters(handler.GetType(), provider);
             var globalFilters = options.GetGlobalMessageHandlerFilters(provider);
 
             if (filters.Length != 0 || handlerFilters.Length != 0 || globalFilters.Length != 0)
             {
+                //  Cast<MessageHandlerFilter<TMessage>>().ToArray(); /// TODO:ToArray is bad for performance.
+
                 handler = new FilterAttachedMessageHandler<TMessage>(handler, ArrayUtil.Concat(filters, handlerFilters, globalFilters));
             }
 

@@ -7,14 +7,14 @@ namespace MessagePipe
 {
     // handler
 
-    public interface IMessageHandler<T>
+    public interface IMessageHandler<TMessage>
     {
-        void Handle(T message);
+        void Handle(TMessage message);
     }
 
-    public interface IAsyncMessageHandler<T>
+    public interface IAsyncMessageHandler<TMessage>
     {
-        ValueTask HandleAsync(T message, CancellationToken cancellationToken);
+        ValueTask HandleAsync(TMessage message, CancellationToken cancellationToken);
     }
 
     // Keyed
@@ -28,7 +28,7 @@ namespace MessagePipe
     public interface ISubscriber<TKey, TMessage>
         where TKey : notnull
     {
-        public IDisposable Subscribe(TKey key, IMessageHandler<TMessage> handler, params MessageHandlerFilter[] filters);
+        public IDisposable Subscribe(TKey key, IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
     }
 
     public interface IAsyncPublisher<TKey, TMessage>
@@ -54,7 +54,7 @@ namespace MessagePipe
 
     public interface ISubscriber<TMessage>
     {
-        public IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter[] filters);
+        public IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
     }
 
     public interface IAsyncPublisher<TMessage>

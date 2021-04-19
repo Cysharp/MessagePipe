@@ -123,16 +123,17 @@ namespace MessagePipe
         // MessageHandlerFilter
 
         List<FilterTypeAndOrder> messageHandlerFilters = new List<FilterTypeAndOrder>();
-        MessageHandlerFilter[]? messageHandlerFilterCache;
+        IMessageHandlerFilter[]? messageHandlerFilterCache;
 
         public void AddGlobalMessageHandlerFilter<T>(int order = 0)
-            where T : MessageHandlerFilter
+            where T : IMessageHandlerFilter
         {
             messageHandlerFilters.Add(new FilterTypeAndOrder(typeof(T), order));
         }
 
-        internal MessageHandlerFilter[] GetGlobalMessageHandlerFilters(IServiceProvider provider)
+        internal IMessageHandlerFilter[] GetGlobalMessageHandlerFilters(IServiceProvider provider)
         {
+            // TODO:TODO.
             return GetOrCreateHandlerCache(ref messageHandlerFilters, ref messageHandlerFilterCache, provider);
         }
 

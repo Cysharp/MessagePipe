@@ -20,7 +20,7 @@ namespace MessagePipe
             core.Publish(message);
         }
 
-        public IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter[] filters)
+        public IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters)
         {
             return core.Subscribe(handlerFactory.CreateMessageHandler(handler, filters));
         }

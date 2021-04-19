@@ -53,7 +53,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             // filters
             options.AddGlobalFilter(services);
-            services.AddSingleton(typeof(FilterCache<,>));
+            services.AddSingleton(typeof(FilterCache<>));
             services.AddSingleton(typeof(FilterAttachedMessageHandlerFactory));
             services.AddSingleton(typeof(FilterAttachedAsyncMessageHandlerFactory));
 
@@ -74,7 +74,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         ? AutoRegistrationEngine.CollectFromAssemblies(options.autoregistrationAssemblies)
                         : Enumerable.Empty<Type>();
                     var types = options.autoregistrationTypes ?? Enumerable.Empty<Type>();
-                    
+
                     AutoRegistrationEngine.RegisterFromTypes(services, options, fromAssemblies.Concat(types).Distinct());
                 }
             }

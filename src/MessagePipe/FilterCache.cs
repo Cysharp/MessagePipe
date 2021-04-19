@@ -9,13 +9,17 @@ namespace MessagePipe
 {
     // not intended to use directly, use FilterAttachedMessageHandlerFactory.
 
-    public sealed class FilterCache<TAttribute, TFilter>
+    public sealed class FilterCache<TAttribute>
         where TAttribute : IMessagePipeFilterAttribute
-        where TFilter : IMessagePipeFilter
     {
-        readonly ConcurrentDictionary<Type, TFilter[]> cache = new ConcurrentDictionary<Type, TFilter[]>();
+        // cache per handler type
+        // [MessagePipeFilter(typeof(FilterType))] // FilterType -> cache value
+        // public class **FooHandler** : IMessageHandler // cache key
 
-        public TFilter[] GetOrAddFilters(Type handlerType, IServiceProvider provider)
+        readonly ConcurrentDictionary<Type, IMessagePipeFilter[]> cache = new ConcurrentDictionary<Type, IMessagePipeFilter[]>();
+
+
+        public IMessagePipeFilter[] GetOrAddFilters(Type handlerType, IServiceProvider provider)
         {
             if (cache.TryGetValue(handlerType, out var value))
             {
@@ -26,14 +30,14 @@ namespace MessagePipe
 
             if (filterAttributes.Length == 0)
             {
-                return cache.GetOrAdd(handlerType, Array.Empty<TFilter>());
+                return cache.GetOrAdd(handlerType, Array.Empty<IMessagePipeFilter>());
             }
             else
             {
                 var array = filterAttributes.Cast<TAttribute>()
                     .Select(x =>
                     {
-                        var f = (TFilter)provider.GetRequiredService(x.Type);
+                        var f = (IMessagePipeFilter)provider.GetRequiredService(x.Type);
                         f.Order = x.Order;
                         return f;
                     })
