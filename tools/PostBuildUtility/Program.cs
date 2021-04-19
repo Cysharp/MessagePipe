@@ -28,24 +28,26 @@ namespace PostBuildUtility
 
             var replaceSet = new Dictionary<string, string>
             {
+                // to UniTask
                 {"ValueTask", "UniTask" },
+                {"System.Threading.Tasks", "Cysharp.Threading.Tasks" },
+                {"IAsyncEnumerable", "IUniTaskAsyncEnumerable" },
+                {"[EnumeratorCancellation]", "" },
 
-                //{"Exception?", "Exception" },
-                //{"Action<LogInfo, Exception>?", "Action<LogInfo, Exception>" },
-                //{"Utf8JsonWriter?", "Utf8JsonWriter" },
-                //{"string?", "string" },
-                //{"object?", "object" },
-                //{"default!", "default" },
-                //{"fn!", "fn" },
-                //{"byte[]?", "byte[]" },
-                //{"null!", "null" },
-                //{"className!", "className" },
-                //{"Action<Utf8JsonWriter, LogInfo>?", "Action<Utf8JsonWriter, LogInfo>" },
-                //{"Action<IBufferWriter<byte>, LogInfo>?", "Action<IBufferWriter<byte>, LogInfo>" },
-                //{"Action<Exception>?", "Action<Exception>" },
-                //{"Func<T, LogInfo, IZLoggerEntry>?", "Func<T, LogInfo, IZLoggerEntry>" },
-                //{"ToString()!", "ToString()" },
-                //{"FieldInfo?", "FieldInfo" }
+                // Remove nullable
+                {"T?", "T" },
+                {"T[]?", "T[]" },
+                {"Assembly[]?", "Assembly[]" },
+                {"Type[]?", "Type[]" },
+                {"ExceptionDispatchInfo?", "ExceptionDispatchInfo" },
+                {"Type?", "Type" },
+                {"AsyncRequestHandlerFilter[]?", "AsyncRequestHandlerFilter[]" },
+                {"RequestHandlerFilter[]?", "RequestHandlerFilter[]" },
+                {"AsyncMessageHandlerFilter[]?", "AsyncMessageHandlerFilter[]" },
+                {"MessageHandlerFilter[]?", "MessageHandlerFilter[]" },
+                {"IAsyncMessageHandler<T>?", "IAsyncMessageHandler<T>" },
+                {"IAsyncMessageHandler<TMessage>?", "IAsyncMessageHandler<TMessage>" },
+                {"IMessageHandler<TMessage>?", "IMessageHandler<TMessage>" },
             };
 
             System.Console.WriteLine("Start to replace code, remove nullability and use UniTask.");

@@ -1,5 +1,7 @@
 ﻿using System;
+#if !UNITY_2018_3_OR_NEWER
 using System.Runtime.CompilerServices;
+#endif
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,7 +20,11 @@ namespace MessagePipe
         // T and T2 should be same.
         public override void Handle<T2>(T2 message, Action<T2> next)
         {
+#if UNITY_2018_3_OR_NEWER
+            if (predicate((T)(object)message))
+#else
             if (predicate(Unsafe.As<T2, T>(ref message)))
+#endif
             {
                 next(message);
             }
@@ -37,7 +43,11 @@ namespace MessagePipe
 
         public override ValueTask HandleAsync<T2>(T2 message, CancellationToken cancellationToken, Func<T2, CancellationToken, ValueTask> next)
         {
+#if UNITY_2018_3_OR_NEWER
+            if (predicate((T)(object)message))
+#else
             if (predicate(Unsafe.As<T2, T>(ref message)))
+#endif
             {
                 return next(message, cancellationToken);
             }

@@ -1,4 +1,4 @@
-﻿using MessagePipe.Internal;
+using MessagePipe.Internal;
 using System;
 
 namespace MessagePipe

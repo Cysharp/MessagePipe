@@ -1,5 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+#if !UNITY_2018_3_OR_NEWER
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+#endif
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -51,7 +53,11 @@ namespace MessagePipe
         /// <summary>PublishAsync</summary>
         public AsyncPublishStrategy DefaultAsyncPublishStrategy { get; set; }
 
+#if !UNITY_2018_3_OR_NEWER
+
         public bool EnableAutowire { get; set; }
+
+#endif
 
         /// <summary>For diagnostics usage, enable MessagePipeDiagnosticsInfo.CapturedStacktraces; default is false.</summary>
         public bool EnableCaptureStackTrace { get; set; }
@@ -64,15 +70,19 @@ namespace MessagePipe
         {
             this.DefaultAsyncPublishStrategy = AsyncPublishStrategy.Parallel;
             this.InstanceScope = InstanceScope.Singleton;
-            this.EnableAutowire = true;
             this.EnableCaptureStackTrace = false;
             this.HandlingSubscribeDisposedPolicy = HandlingSubscribeDisposedPolicy.Ignore;
+#if !UNITY_2018_3_OR_NEWER
+            this.EnableAutowire = true;
+#endif
         }
+
+#if !UNITY_2018_3_OR_NEWER
 
         // autowire
 
-        internal Assembly[]? autowireAssemblies;
-        internal Type[]? autowireTypes;
+        internal Assembly[] autowireAssemblies;
+        internal Type[] autowireTypes;
 
         public void SetAutowireSearchAssemblies(params Assembly[] assemblies)
         {
@@ -108,10 +118,12 @@ namespace MessagePipe
             }
         }
 
+#endif
+
         // MessageHandlerFilter
 
         List<FilterTypeAndOrder> messageHandlerFilters = new List<FilterTypeAndOrder>();
-        MessageHandlerFilter[]? messageHandlerFilterCache;
+        MessageHandlerFilter[] messageHandlerFilterCache;
 
         public void AddGlobalMessageHandlerFilter<T>(int order = 0)
             where T : MessageHandlerFilter
@@ -127,7 +139,7 @@ namespace MessagePipe
         // AsyncMessageHandlerFilter
 
         List<FilterTypeAndOrder> asyncMessageHandlerFilters = new List<FilterTypeAndOrder>();
-        AsyncMessageHandlerFilter[]? asyncMessageHandlerFilterCache;
+        AsyncMessageHandlerFilter[] asyncMessageHandlerFilterCache;
 
         public void AddGlobalAsyncMessageHandlerFilter<T>(int order = 0)
             where T : AsyncMessageHandlerFilter
@@ -143,7 +155,7 @@ namespace MessagePipe
         // RequestHandlerFilter
 
         List<FilterTypeAndOrder> requestHandlerFilters = new List<FilterTypeAndOrder>();
-        RequestHandlerFilter[]? requestHandlerFilterCache;
+        RequestHandlerFilter[] requestHandlerFilterCache;
 
         public void AddGlobalRequestHandlerFilter<T>(int order = 0)
             where T : RequestHandlerFilter
@@ -159,7 +171,7 @@ namespace MessagePipe
         //  AsyncRequestHandlerFilter
 
         List<FilterTypeAndOrder> asyncRequestHandlerFilters = new List<FilterTypeAndOrder>();
-        AsyncRequestHandlerFilter[]? asyncRequestHandlerFilterCache;
+        AsyncRequestHandlerFilter[] asyncRequestHandlerFilterCache;
 
         public void AddGlobalAsyncRequestHandlerFilter<T>(int order = 0)
             where T : RequestHandlerFilter
@@ -172,7 +184,7 @@ namespace MessagePipe
             return GetOrCreateHandlerCache(ref asyncRequestHandlerFilters, ref asyncRequestHandlerFilterCache, provider);
         }
 
-        static T[] GetOrCreateHandlerCache<T>(ref List<FilterTypeAndOrder> filterDefinitions, ref T[]? filterCache, IServiceProvider provider)
+        static T[] GetOrCreateHandlerCache<T>(ref List<FilterTypeAndOrder> filterDefinitions, ref T[] filterCache, IServiceProvider provider)
             where T : IMessagePipeFilter
         {
             if (filterCache == null)
@@ -195,5 +207,7 @@ namespace MessagePipe
 
             return filterCache;
         }
+
+
     }
 }

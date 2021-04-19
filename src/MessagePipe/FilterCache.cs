@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿#if !UNITY_2018_3_OR_NEWER
+using Microsoft.Extensions.DependencyInjection;
+#endif
 using System;
 using System.Collections.Concurrent;
 using System.Linq;

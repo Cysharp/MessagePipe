@@ -71,12 +71,29 @@ namespace MessagePipe
             }
         }
 
+#if UNITY_2018_3_OR_NEWER
+
+        public Cysharp.Threading.Tasks.IUniTaskAsyncEnumerable<TResponse> InvokeAllLazyAsync(TRequest request, CancellationToken cancellationToken)
+        {
+
+           return Cysharp.Threading.Tasks.Linq.UniTaskAsyncEnumerable.Create<TResponse>(async (writer, token) =>
+           {
+               for (int i = 0; i < handlers.Length; i++)
+               {
+                   await writer.YieldAsync(await handlers[i].InvokeAsync(request, cancellationToken));
+               }
+           });
+        }
+#else
+
         public async IAsyncEnumerable<TResponse> InvokeAllLazyAsync(TRequest request, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             for (int i = 0; i < handlers.Length; i++)
             {
-                yield return await handlers[i].InvokeAsync(request);
+                yield return await handlers[i].InvokeAsync(request, cancellationToken);
             }
         }
+
+#endif
     }
 }

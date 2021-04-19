@@ -1,10 +1,10 @@
-﻿using MessagePipe.Internal;
+using MessagePipe.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 namespace MessagePipe
 {
@@ -12,14 +12,14 @@ namespace MessagePipe
 
     public sealed class AsyncRequestHandler<TRequest, TResponse> : IAsyncRequestHandler<TRequest, TResponse>
     {
-        Func<TRequest, CancellationToken, ValueTask<TResponse>> handler;
+        Func<TRequest, CancellationToken, UniTask<TResponse>> handler;
 
         public AsyncRequestHandler(IAsyncRequestHandlerCore<TRequest, TResponse> handler, MessagePipeOptions options, FilterCache<AsyncRequestHandlerFilterAttribute, AsyncRequestHandlerFilter> filterCache, IServiceProvider provider)
         {
             var handlerFilters = filterCache.GetOrAddFilters(handler.GetType(), provider);
             var globalFilters = options.GetGlobalAsyncRequestHandlerFilters(provider);
 
-            Func<TRequest, CancellationToken, ValueTask<TResponse>> next = handler.InvokeAsync;
+            Func<TRequest, CancellationToken, UniTask<TResponse>> next = handler.InvokeAsync;
             if (handlerFilters.Length != 0 || globalFilters.Length != 0)
             {
                 foreach (var f in ArrayUtil.Concat(handlerFilters, globalFilters).OrderByDescending(x => x.Order))
@@ -31,7 +31,7 @@ namespace MessagePipe
             this.handler = next;
         }
 
-        public ValueTask<TResponse> InvokeAsync(TRequest request, CancellationToken cancellationToken = default)
+        public UniTask<TResponse> InvokeAsync(TRequest request, CancellationToken cancellationToken = default)
         {
             return handler(request, cancellationToken);
         }
@@ -48,12 +48,12 @@ namespace MessagePipe
             this.defaultAsyncPublishStrategy = options.DefaultAsyncPublishStrategy;
         }
 
-        public ValueTask<TResponse[]> InvokeAllAsync(TRequest request, CancellationToken cancellationToken)
+        public UniTask<TResponse[]> InvokeAllAsync(TRequest request, CancellationToken cancellationToken)
         {
             return InvokeAllAsync(request, defaultAsyncPublishStrategy, cancellationToken);
         }
 
-        public async ValueTask<TResponse[]> InvokeAllAsync(TRequest request, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken)
+        public async UniTask<TResponse[]> InvokeAllAsync(TRequest request, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken)
         {
             var responses = new TResponse[handlers.Length];
 
@@ -71,12 +71,29 @@ namespace MessagePipe
             }
         }
 
-        public async IAsyncEnumerable<TResponse> InvokeAllLazyAsync(TRequest request, [EnumeratorCancellation] CancellationToken cancellationToken)
+#if UNITY_2018_3_OR_NEWER
+
+        public Cysharp.Threading.Tasks.IUniTaskAsyncEnumerable<TResponse> InvokeAllLazyAsync(TRequest request, CancellationToken cancellationToken)
+        {
+
+           return Cysharp.Threading.Tasks.Linq.UniTaskAsyncEnumerable.Create<TResponse>(async (writer, token) =>
+           {
+               for (int i = 0; i < handlers.Length; i++)
+               {
+                   await writer.YieldAsync(await handlers[i].InvokeAsync(request, cancellationToken));
+               }
+           });
+        }
+#else
+
+        public async IUniTaskAsyncEnumerable<TResponse> InvokeAllLazyAsync(TRequest request,  CancellationToken cancellationToken)
         {
             for (int i = 0; i < handlers.Length; i++)
             {
-                yield return await handlers[i].InvokeAsync(request);
+                yield return await handlers[i].InvokeAsync(request, cancellationToken);
             }
         }
+
+#endif
     }
 }

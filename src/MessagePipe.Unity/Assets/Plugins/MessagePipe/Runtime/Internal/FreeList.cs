@@ -1,4 +1,4 @@
-﻿#pragma warning disable CS8618
+#pragma warning disable CS8618
 
 using System;
 using System.Collections.Generic;
@@ -12,7 +12,7 @@ namespace MessagePipe.Internal
         const int InitialCapacity = 4;
         const int MinShrinkStart = 8;
 
-        T?[] values;
+        T[] values;
         int count;
         FastQueue<int> freeIndex;
         bool isDisposed;
@@ -23,7 +23,7 @@ namespace MessagePipe.Internal
             Initialize();
         }
 
-        public T?[] GetValues() => values; // no lock, safe for iterate
+        public T[] GetValues() => values; // no lock, safe for iterate
 
         public int GetCount()
         {
@@ -113,7 +113,7 @@ namespace MessagePipe.Internal
                 isDisposed = true;
 
                 freeIndex = null!;
-                values = Array.Empty<T?>();
+                values = Array.Empty<T>();
                 count = 0;
             }
         }
@@ -128,7 +128,7 @@ namespace MessagePipe.Internal
             }
             count = 0;
 
-            var v = new T?[InitialCapacity];
+            var v = new T[InitialCapacity];
             Volatile.Write(ref values, v);
         }
     }

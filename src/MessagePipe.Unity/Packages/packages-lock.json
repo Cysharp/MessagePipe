@@ -1,5 +1,19 @@
 {
   "dependencies": {
+    "com.cysharp.runtimeunittesttoolkit": {
+      "version": "https://github.com/Cysharp/RuntimeUnitTestToolkit.git?path=RuntimeUnitTestToolkit/Assets/RuntimeUnitTestToolkit",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "edf6f27b6f24fe098d02ad52f30063ba53ec192e"
+    },
+    "com.cysharp.unitask": {
+      "version": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "9e18ba332e6459bca251718a9145d2ac2dfa83a2"
+    },
     "com.unity.2d.animation": {
       "version": "5.0.4",
       "depth": 0,

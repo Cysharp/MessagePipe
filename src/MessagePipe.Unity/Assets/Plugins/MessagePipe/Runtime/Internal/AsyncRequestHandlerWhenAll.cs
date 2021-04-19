@@ -1,15 +1,15 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 namespace MessagePipe.Internal
 {
     internal class AsyncRequestHandlerWhenAll<TRequest, TResponse> : ICriticalNotifyCompletion
     {
         int completedCount = 0;
-        ExceptionDispatchInfo? exception;
+        ExceptionDispatchInfo exception;
         Action continuation = ContinuationSentinel.AvailableContinuation;
 
         readonly TResponse[] result;
@@ -20,7 +20,7 @@ namespace MessagePipe.Internal
 
             for (int i = 0; i < handlers.Length; i++)
             {
-                ValueTask<TResponse> task;
+                UniTask<TResponse> task;
                 try
                 {
                     task = handlers[i].InvokeAsync(request, cancellationtoken);
@@ -35,7 +35,7 @@ namespace MessagePipe.Internal
             }
         }
 
-        async void HandleTask(ValueTask<TResponse> task, int index)
+        async void HandleTask(UniTask<TResponse> task, int index)
         {
             TResponse response;
             try

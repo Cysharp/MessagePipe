@@ -1,4 +1,6 @@
-﻿using MessagePipe;
+#if !UNITY_2018_3_OR_NEWER
+
+using MessagePipe;
 using MessagePipe.Internal;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
@@ -162,3 +164,5 @@ namespace Microsoft.Extensions.DependencyInjection
         }
     }
 }
+
+#endif
