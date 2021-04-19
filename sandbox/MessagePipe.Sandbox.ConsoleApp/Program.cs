@@ -20,7 +20,7 @@ namespace MessagePipe
     {
         static async Task Main(string[] args)
         {
-            args = new[] { "filter" };
+            //args = new[] { "filter" };
 
             await Host.CreateDefaultBuilder()
                 .ConfigureServices((ctx, x) =>
