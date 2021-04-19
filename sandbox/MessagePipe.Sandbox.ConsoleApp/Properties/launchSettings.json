@@ -1,0 +1,15 @@
+{
+  "profiles": {
+    "MessagePipe.Sandbox.ConsoleApp": {
+      "commandName": "Project"
+    },
+    "ping": {
+      "commandName": "Project",
+      "commandLineArgs": "ping"
+    },
+    "pingmany": {
+      "commandName": "Project",
+      "commandLineArgs": "pingmany"
+    }
+  }
+}

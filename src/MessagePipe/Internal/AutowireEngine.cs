@@ -95,25 +95,25 @@ namespace MessagePipe.Internal
                 {
                     if (baseType == typeof(MessageHandlerFilter))
                     {
-                        services.TryAddTransient(objectType);
+                        services.AddTransient(objectType);
                         goto NEXT_TYPE;
                     }
 
                     if (baseType == typeof(AsyncMessageHandlerFilter))
                     {
-                        services.TryAddTransient(objectType);
+                        services.AddTransient(objectType);
                         goto NEXT_TYPE;
                     }
 
                     if (baseType == typeof(RequestHandlerFilter))
                     {
-                        services.TryAddTransient(objectType);
+                        services.AddTransient(objectType);
                         goto NEXT_TYPE;
                     }
 
                     if (baseType == typeof(AsyncRequestHandlerFilter))
                     {
-                        services.TryAddTransient(objectType);
+                        services.AddTransient(objectType);
                         goto NEXT_TYPE;
                     }
                 }

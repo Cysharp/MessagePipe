@@ -39,10 +39,10 @@ namespace MessagePipe
 
     public sealed class AsyncRequestAllHandler<TRequest, TResponse> : IAsyncRequestAllHandler<TRequest, TResponse>
     {
-        readonly IAsyncRequestHandler<TRequest, TResponse>[] handlers;
+        readonly IAsyncRequestHandlerCore<TRequest, TResponse>[] handlers;
         readonly AsyncPublishStrategy defaultAsyncPublishStrategy;
 
-        public AsyncRequestAllHandler(IEnumerable<IAsyncRequestHandler<TRequest, TResponse>> handlers, MessagePipeOptions options)
+        public AsyncRequestAllHandler(IEnumerable<IAsyncRequestHandlerCore<TRequest, TResponse>> handlers, MessagePipeOptions options)
         {
             this.handlers = handlers.ToArray();
             this.defaultAsyncPublishStrategy = options.DefaultAsyncPublishStrategy;
