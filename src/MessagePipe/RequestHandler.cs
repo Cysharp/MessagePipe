@@ -10,7 +10,7 @@ namespace MessagePipe
 {
     public sealed class RequestHandler<TRequest, TResponse> : IRequestHandler<TRequest, TResponse>
     {
-        Func<TRequest, TResponse> handler;
+        readonly Func<TRequest, TResponse> handler;
 
         public RequestHandler(IRequestHandlerCore<TRequest, TResponse> handler, MessagePipeOptions options, FilterCache<RequestHandlerFilterAttribute, RequestHandlerFilter> filterCache, IServiceProvider provider)
         {
@@ -37,16 +37,17 @@ namespace MessagePipe
 
     public sealed class RequestAllHandler<TRequest, TResponse> : IRequestAllHandler<TRequest, TResponse>
     {
-        //readonly IRequestHandlerCore<TRequest, TResponse>[] handlers;
-        List<Func<TRequest, TResponse>> handlers = new List<Func<TRequest, TResponse>>(4);
+        readonly Func<TRequest, TResponse>[] handlers;
 
         public RequestAllHandler(IEnumerable<IRequestHandlerCore<TRequest, TResponse>> handlers, MessagePipeOptions options, FilterCache<RequestHandlerFilterAttribute, RequestHandlerFilter> filterCache, IServiceProvider provider)
         {
+            var globalFilters = options.GetGlobalRequestHandlerFilters(provider);
+
+            this.handlers = new Func<TRequest, TResponse>[handlers.Count()];
+            int currentIndex = 0;
             foreach (var handler in handlers)
             {
                 var handlerFilters = filterCache.GetOrAddFilters(handler.GetType(), provider);
-                var globalFilters = options.GetGlobalRequestHandlerFilters(provider);
-
                 Func<TRequest, TResponse> next = handler.Invoke;
                 if (handlerFilters.Length != 0 || globalFilters.Length != 0)
                 {
@@ -56,16 +57,16 @@ namespace MessagePipe
                     }
                 }
 
-                this.handlers.Add(next);
+                this.handlers[currentIndex++] = next;
             }
 
         }
 
         public TResponse[] InvokeAll(TRequest request)
         {
-            var responses = new TResponse[handlers.Count];
+            var responses = new TResponse[handlers.Length];
 
-            for (int i = 0; i < handlers.Count; i++)
+            for (int i = 0; i < handlers.Length; i++)
             {
                 responses[i] = handlers[i].Invoke(request);
             }
@@ -75,7 +76,7 @@ namespace MessagePipe
 
         public IEnumerable<TResponse> InvokeAllLazy(TRequest request)
         {
-            for (int i = 0; i < handlers.Count; i++)
+            for (int i = 0; i < handlers.Length; i++)
             {
                 yield return handlers[i].Invoke(request);
             }

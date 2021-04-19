@@ -39,13 +39,30 @@ namespace MessagePipe
 
     public sealed class AsyncRequestAllHandler<TRequest, TResponse> : IAsyncRequestAllHandler<TRequest, TResponse>
     {
-        readonly IAsyncRequestHandlerCore<TRequest, TResponse>[] handlers;
+        Func<TRequest, CancellationToken, UniTask<TResponse>>[] handlers;
         readonly AsyncPublishStrategy defaultAsyncPublishStrategy;
 
-        public AsyncRequestAllHandler(IEnumerable<IAsyncRequestHandlerCore<TRequest, TResponse>> handlers, MessagePipeOptions options)
+        public AsyncRequestAllHandler(IEnumerable<IAsyncRequestHandlerCore<TRequest, TResponse>> handlers, MessagePipeOptions options, FilterCache<AsyncRequestHandlerFilterAttribute, AsyncRequestHandlerFilter> filterCache, IServiceProvider provider)
+
         {
-            this.handlers = handlers.ToArray();
-            this.defaultAsyncPublishStrategy = options.DefaultAsyncPublishStrategy;
+            var globalFilters = options.GetGlobalAsyncRequestHandlerFilters(provider);
+
+            this.handlers = new Func<TRequest, CancellationToken, UniTask<TResponse>>[handlers.Count()];
+            int currentIndex = 0;
+            foreach (var handler in handlers)
+            {
+                var handlerFilters = filterCache.GetOrAddFilters(handler.GetType(), provider);
+
+                Func<TRequest, CancellationToken, UniTask<TResponse>> next = handler.InvokeAsync;
+                if (handlerFilters.Length != 0 || globalFilters.Length != 0)
+                {
+                    foreach (var f in ArrayUtil.Concat(handlerFilters, globalFilters).OrderByDescending(x => x.Order))
+                    {
+                        next = new AsyncRequestHandlerFilterRunner<TRequest, TResponse>(f, next).GetDelegate();
+                    }
+                }
+                this.handlers[currentIndex++] = next;
+            }
         }
 
         public UniTask<TResponse[]> InvokeAllAsync(TRequest request, CancellationToken cancellationToken)
@@ -61,7 +78,7 @@ namespace MessagePipe
             {
                 for (int i = 0; i < handlers.Length; i++)
                 {
-                    responses[i] = await handlers[i].InvokeAsync(request, cancellationToken);
+                    responses[i] = await handlers[i].Invoke(request, cancellationToken);
                 }
                 return responses;
             }
@@ -90,7 +107,7 @@ namespace MessagePipe
         {
             for (int i = 0; i < handlers.Length; i++)
             {
-                yield return await handlers[i].InvokeAsync(request, cancellationToken);
+                yield return await handlers[i].Invoke(request, cancellationToken);
             }
         }
 

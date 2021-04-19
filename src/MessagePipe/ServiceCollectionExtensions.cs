@@ -66,7 +66,6 @@ namespace Microsoft.Extensions.DependencyInjection
 
                 if (options.autowireAssemblies == null && options.autowireTypes == null)
                 {
-                    var types = AutowireEngine.CollectFromCurrentDomain();
                     AutowireEngine.RegisterFromTypes(services, options, AutowireEngine.CollectFromCurrentDomain());
                 }
                 else
