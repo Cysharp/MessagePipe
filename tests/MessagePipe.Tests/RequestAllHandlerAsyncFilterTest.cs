@@ -9,7 +9,6 @@ using System.Runtime.CompilerServices;
 using MessagePipe;
 using MessagePipe.Tests;
 using Microsoft.Extensions.DependencyInjection;
-using System.Linq;
 using System.Threading;
 
 namespace __MessagePipe.Tests

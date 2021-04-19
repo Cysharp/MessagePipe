@@ -60,14 +60,13 @@ namespace MessagePipe
                 this.handlers[currentIndex++] = next;
             }
 
-
         }
 
         public TResponse[] InvokeAll(TRequest request)
         {
-            var responses = new TResponse[handlers.Count];
+            var responses = new TResponse[handlers.Length];
 
-            for (int i = 0; i < handlers.Count; i++)
+            for (int i = 0; i < handlers.Length; i++)
             {
                 responses[i] = handlers[i].Invoke(request);
             }
@@ -77,7 +76,7 @@ namespace MessagePipe
 
         public IEnumerable<TResponse> InvokeAllLazy(TRequest request)
         {
-            for (int i = 0; i < handlers.Count; i++)
+            for (int i = 0; i < handlers.Length; i++)
             {
                 yield return handlers[i].Invoke(request);
             }

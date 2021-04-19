@@ -1,4 +1,4 @@
-#if !UNITY_2018_3_OR_NEWER
+﻿#if !UNITY_2018_3_OR_NEWER
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -9,7 +9,7 @@ using System.Reflection;
 
 namespace MessagePipe.Internal
 {
-    internal static class AutowireEngine
+    internal static class AutoRegistrationEngine
     {
         public static IEnumerable<Type> CollectFromCurrentDomain()
         {
@@ -125,7 +125,7 @@ namespace MessagePipe.Internal
             }
         }
 
-        internal static IEnumerable<Type> GetBaseTypes(this Type t)
+        internal static IEnumerable<Type> GetBaseTypes(this Type? t)
         {
             if (t == null) yield break;
             t = t.BaseType;

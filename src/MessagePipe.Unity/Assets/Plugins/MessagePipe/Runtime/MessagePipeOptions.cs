@@ -55,7 +55,7 @@ namespace MessagePipe
 
 #if !UNITY_2018_3_OR_NEWER
 
-        public bool EnableAutowire { get; set; }
+        public bool EnableAutoRegistration { get; set; }
 
 #endif
 
@@ -73,7 +73,7 @@ namespace MessagePipe
             this.EnableCaptureStackTrace = false;
             this.HandlingSubscribeDisposedPolicy = HandlingSubscribeDisposedPolicy.Ignore;
 #if !UNITY_2018_3_OR_NEWER
-            this.EnableAutowire = true;
+            this.EnableAutoRegistration = true;
 #endif
         }
 
@@ -81,17 +81,17 @@ namespace MessagePipe
 
         // autowire
 
-        internal Assembly[] autowireAssemblies;
-        internal Type[] autowireTypes;
+        internal Assembly[] autoregistrationAssemblies;
+        internal Type[] autoregistrationTypes;
 
-        public void SetAutowireSearchAssemblies(params Assembly[] assemblies)
+        public void SetAutoRegistrationSearchAssemblies(params Assembly[] assemblies)
         {
-            autowireAssemblies = assemblies;
+            autoregistrationAssemblies = assemblies;
         }
 
-        public void SetAutowireSearchTypes(params Type[] types)
+        public void SetAutoRegistrationSearchTypes(params Type[] types)
         {
-            autowireTypes = types;
+            autoregistrationTypes = types;
         }
 
         // register DI

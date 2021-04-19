@@ -51,5 +51,5 @@ namespace MessagePipe
         IUniTaskAsyncEnumerable<TResponse> InvokeAllLazyAsync(TRequest request, CancellationToken cancellationToken = default);
     }
 
-    
+
 }

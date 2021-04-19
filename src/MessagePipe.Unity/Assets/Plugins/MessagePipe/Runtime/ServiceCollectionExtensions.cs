@@ -60,26 +60,22 @@ namespace Microsoft.Extensions.DependencyInjection
             // others.
             services.AddSingleton(typeof(MessagePipeDiagnosticsInfo));
 
-            if (options.EnableAutowire)
+            if (options.EnableAutoRegistration)
             {
                 // auto register filter and requesthandler
 
-                if (options.autowireAssemblies == null && options.autowireTypes == null)
+                if (options.autoregistrationAssemblies == null && options.autoregistrationTypes == null)
                 {
-                    var types = AutowireEngine.CollectFromCurrentDomain();
-                    AutowireEngine.RegisterFromTypes(services, options, AutowireEngine.CollectFromCurrentDomain());
+                    AutoRegistrationEngine.RegisterFromTypes(services, options, AutoRegistrationEngine.CollectFromCurrentDomain());
                 }
                 else
                 {
-                    var fromAssemblies = (options.autowireAssemblies != null)
-                        ? AutowireEngine.CollectFromAssemblies(options.autowireAssemblies)
+                    var fromAssemblies = (options.autoregistrationAssemblies != null)
+                        ? AutoRegistrationEngine.CollectFromAssemblies(options.autoregistrationAssemblies)
                         : Enumerable.Empty<Type>();
-
-                    var types = (options.autowireTypes != null)
-                        ? options.autowireTypes
-                        : Enumerable.Empty<Type>();
-
-                    AutowireEngine.RegisterFromTypes(services, options, fromAssemblies.Concat(types).Distinct());
+                    var types = options.autoregistrationTypes ?? Enumerable.Empty<Type>();
+                    
+                    AutoRegistrationEngine.RegisterFromTypes(services, options, fromAssemblies.Concat(types).Distinct());
                 }
             }
 

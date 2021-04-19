@@ -34,18 +34,11 @@
     <ItemGroup>
         <TargetFiles1 Include="$(MSBuildProjectDirectory)\**\*.cs" Exclude="**\bin\**\*.*;**\obj\**\*.*;_InternalVisibleTo.cs" />
     </ItemGroup>
+
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">
         <Copy SourceFiles="@(TargetFiles1)" DestinationFiles="$(DestinationRoot)\%(RecursiveDir)%(Filename)%(Extension)" SkipUnchangedFiles="true" />
 
         <!-- After copy, replace for unity codes -->
         <Exec Command="dotnet run --no-build -c $(ConfigurationName) --project $(MSBuildProjectDirectory)\..\..\tools\PostBuildUtility\PostBuildUtility.csproj -- replace-to-unity $(DestinationRoot)" />
     </Target>
-
-
-
-
 </Project>
-
-
-
-

@@ -43,9 +43,9 @@ namespace MessagePipe
         readonly AsyncPublishStrategy defaultAsyncPublishStrategy;
 
         public AsyncRequestAllHandler(IEnumerable<IAsyncRequestHandlerCore<TRequest, TResponse>> handlers, MessagePipeOptions options, FilterCache<AsyncRequestHandlerFilterAttribute, AsyncRequestHandlerFilter> filterCache, IServiceProvider provider)
-
         {
             var globalFilters = options.GetGlobalAsyncRequestHandlerFilters(provider);
+            this.defaultAsyncPublishStrategy = options.DefaultAsyncPublishStrategy;
 
             this.handlers = new Func<TRequest, CancellationToken, UniTask<TResponse>>[handlers.Count()];
             int currentIndex = 0;

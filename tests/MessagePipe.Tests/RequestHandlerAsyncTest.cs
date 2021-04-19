@@ -27,7 +27,7 @@ namespace __MessagePipe.Tests
         }
 
         [Fact]
-        public async Task TestCancellation()
+        public void TestCancellation()
         {
             var provider = TestHelper.BuildServiceProvider();
             var info = provider.GetRequiredService<MessagePipeDiagnosticsInfo>();
