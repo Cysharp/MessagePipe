@@ -19,6 +19,7 @@ namespace MessagePipe.Redis
 
         public byte[] Serialize<T>(T value)
         {
+            if (value is byte[] xs) return xs;
             return MessagePackSerializer.Serialize<T>(value, options);
         }
 

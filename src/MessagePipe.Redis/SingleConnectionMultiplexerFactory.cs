@@ -11,7 +11,7 @@ namespace MessagePipe.Redis
             this.connectionMultiplexer = connectionMultiplexer;
         }
 
-        public IConnectionMultiplexer GetConnectionMultiplexer()
+        public IConnectionMultiplexer GetConnectionMultiplexer<TKey>(TKey key)
         {
             return connectionMultiplexer;
         }

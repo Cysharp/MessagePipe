@@ -29,21 +29,23 @@ namespace Microsoft.Extensions.DependencyInjection
             var options = new MessagePipeRedisOptions(connectionMultiplexerFactory);
             configure(options);
             services.AddSingleton(options); // add as singleton instance
+            services.AddSingleton<IConnectionMultiplexerFactory>(options.ConnectionMultiplexerFactory);
+            services.AddSingleton<IRedisSerializer>(options.RedisSerializer);
 
             var scope = options.InstanceScope;
-            Add(services, typeof(IDistributedPublisher<,>), typeof(RedisPublisher<,>), scope);
-            Add(services, typeof(IDistributedSubscriber<,>), typeof(RedisSubscriber<,>), scope);
+            services.Add(typeof(IDistributedPublisher<,>), typeof(RedisPublisher<,>), scope);
+            services.Add(typeof(IDistributedSubscriber<,>), typeof(RedisSubscriber<,>), scope);
 
             return services;
         }
 
-        static void Add(IServiceCollection services, Type serviceType, InstanceScope scope)
+        static void Add(this IServiceCollection services, Type serviceType, InstanceScope scope)
         {
             var lifetime = (scope == InstanceScope.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
             services.Add(new ServiceDescriptor(serviceType, serviceType, lifetime));
         }
 
-        static void Add(IServiceCollection services, Type serviceType, Type implementationType, InstanceScope scope)
+        static void Add(this IServiceCollection services, Type serviceType, Type implementationType, InstanceScope scope)
         {
             var lifetime = (scope == InstanceScope.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
             services.Add(new ServiceDescriptor(serviceType, implementationType, lifetime));

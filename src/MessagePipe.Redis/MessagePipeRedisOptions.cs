@@ -10,7 +10,7 @@ namespace MessagePipe.Redis
 
     public interface IConnectionMultiplexerFactory
     {
-        public IConnectionMultiplexer GetConnectionMultiplexer();
+        public IConnectionMultiplexer GetConnectionMultiplexer<TKey>(TKey key);
     }
 
     public sealed class MessagePipeRedisOptions

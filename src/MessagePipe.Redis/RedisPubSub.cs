@@ -22,14 +22,20 @@ namespace MessagePipe.Redis
             var value = serializer.Serialize(message);
 
             // Redis.PublishAsync has no cancellationToken overload.
-            await connectionFactory.GetConnectionMultiplexer().GetSubscriber().PublishAsync(channel, value).ConfigureAwait(false);
+            await connectionFactory.GetConnectionMultiplexer(key).GetSubscriber().PublishAsync(channel, value).ConfigureAwait(false);
         }
 
         RedisChannel CreateChannel(TKey key)
         {
-            return (key is string s)
-                ? new RedisChannel(s, RedisChannel.PatternMode.Auto) // use Auto.
-                : new RedisChannel(serializer.Serialize(key), RedisChannel.PatternMode.Literal);
+            switch (key)
+            {
+                case string s:
+                    return new RedisChannel(s, RedisChannel.PatternMode.Auto); // use Auto.
+                case byte[] v:
+                    return new RedisChannel(v, RedisChannel.PatternMode.Auto);
+                default:
+                    return new RedisChannel(serializer.Serialize(key), RedisChannel.PatternMode.Literal);
+            }
         }
     }
 
@@ -59,7 +65,7 @@ namespace MessagePipe.Redis
 
             var channel = CreateChannel(key);
 
-            var mq = await connectionFactory.GetConnectionMultiplexer().GetSubscriber().SubscribeAsync(channel).ConfigureAwait(false);
+            var mq = await connectionFactory.GetConnectionMultiplexer(key).GetSubscriber().SubscribeAsync(channel).ConfigureAwait(false);
             mq.OnMessage(message =>
             {
                 var v = serializer.Deserialize<TMessage>((byte[])message.Message);
@@ -80,7 +86,7 @@ namespace MessagePipe.Redis
 
             var channel = CreateChannel(key);
 
-            var mq = await connectionFactory.GetConnectionMultiplexer().GetSubscriber().SubscribeAsync(channel).ConfigureAwait(false);
+            var mq = await connectionFactory.GetConnectionMultiplexer(key).GetSubscriber().SubscribeAsync(channel).ConfigureAwait(false);
             mq.OnMessage(async message =>
             {
                 var v = serializer.Deserialize<TMessage>((byte[])message.Message);
@@ -92,9 +98,15 @@ namespace MessagePipe.Redis
 
         RedisChannel CreateChannel(TKey key)
         {
-            return (key is string s)
-                ? new RedisChannel(s, RedisChannel.PatternMode.Auto) // use Auto.
-                : new RedisChannel(serializer.Serialize(key), RedisChannel.PatternMode.Literal);
+            switch (key)
+            {
+                case string s:
+                    return new RedisChannel(s, RedisChannel.PatternMode.Auto); // use Auto.
+                case byte[] v:
+                    return new RedisChannel(v, RedisChannel.PatternMode.Auto);
+                default:
+                    return new RedisChannel(serializer.Serialize(key), RedisChannel.PatternMode.Literal);
+            }
         }
 
         sealed class Subscription : IAsyncDisposable
