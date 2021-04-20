@@ -176,18 +176,33 @@ namespace Microsoft.Extensions.DependencyInjection
             foreach (var objectType in targetTypes)
             {
                 if (objectType.IsInterface || objectType.IsAbstract) continue;
+                if (objectType.GetCustomAttributes(typeof(IgnoreAutoRegistration), false).Length != 0) continue;
 
                 foreach (var interfaceType in objectType.GetInterfaces())
                 {
                     if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IRequestHandlerCore<,>))
                     {
-                        services.Add(interfaceType, objectType, requestHandlerLifetime);
+                        if (!objectType.IsGenericType || objectType.IsConstructedGenericType)
+                        {
+                            services.Add(interfaceType, objectType, requestHandlerLifetime);
+                        }
+                        else if (interfaceType.GetGenericArguments().All(x => x.IsGenericParameter))
+                        {
+                            services.Add(typeof(IRequestHandlerCore<,>), objectType, requestHandlerLifetime);
+                        }
                         goto NEXT_TYPE;
                     }
 
                     if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IAsyncRequestHandlerCore<,>))
                     {
-                        services.Add(interfaceType, objectType, requestHandlerLifetime);
+                        if (!objectType.IsGenericType || objectType.IsConstructedGenericType)
+                        {
+                            services.Add(interfaceType, objectType, requestHandlerLifetime);
+                        }
+                        else if (interfaceType.GetGenericArguments().All(x => x.IsGenericParameter))
+                        {
+                            services.Add(typeof(IAsyncRequestHandlerCore<,>), objectType, requestHandlerLifetime);
+                        }
                         goto NEXT_TYPE;
                     }
                 }

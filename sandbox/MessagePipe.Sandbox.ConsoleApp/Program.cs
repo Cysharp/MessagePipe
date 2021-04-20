@@ -16,11 +16,39 @@ namespace MessagePipe
         public int MyProperty { get; set; }
     }
 
+    // [IgnoreAutoRegistration]
+    public class MyGenericsHandler<TR2> : IRequestHandler<int, TR2>
+    {
+        public TR2 Invoke(int request)
+        {
+            Console.WriteLine("everything default!");
+            return default(TR2);
+        }
+    }
+    public class MyMyGenericsHandler<TR1,TR2> : IRequestHandler<TR1, TR2>
+    {
+        public TR2 Invoke(TR1 request)
+        {
+            Console.WriteLine("everything default!");
+            return default(TR2);
+        }
+    }
+
+    public class MyGenericsHandler2 : IRequestHandler<int, int>
+    {
+        public int Invoke(int request)
+        {
+            Console.WriteLine("everything default 2!");
+            return default(int);
+        }
+    }
+
+
     class Program : ConsoleAppBase
     {
         static async Task Main(string[] args)
         {
-            args = new[] { "keyed" };
+            args = new[] { "moremore" };
 
             await Host.CreateDefaultBuilder()
                 .ConfigureServices((ctx, x) =>
@@ -32,8 +60,15 @@ namespace MessagePipe
 
                         options.AddGlobalMessageHandlerFilter(typeof(MyFilter<>));
                         //options.AddGlobalMessageHandlerFilter<MyFilter<MyMessage>>();
-
                     });
+
+
+                    //var interfaceType = typeof(IRequestHandlerCore<,>);
+                    //var objectType = typeof(MyGenericsHandler<,>);
+                    //x.Add(interfaceType, objectType, InstanceLifetime.Singleton);
+
+
+
                 })
                 .ConfigureLogging(x =>
                 {
@@ -63,7 +98,11 @@ namespace MessagePipe
         IServiceScopeFactory scopeF;
         MessagePipeDiagnosticsInfo diagnosticsInfo;
 
-        public Program(IPublisher<string, MyMessage> publisher, ISubscriber<string, MyMessage> subscriber,
+        IServiceProvider provider;
+
+        public Program(
+            IPublisher<string, MyMessage> publisher,
+            ISubscriber<string, MyMessage> subscriber,
             IPublisher<MyMessage> keyless1,
             ISubscriber<MyMessage> keyless2,
 
@@ -77,9 +116,14 @@ namespace MessagePipe
             IPublisher<int> intP,
             ISubscriber<int> intS,
             IServiceScopeFactory scopeF,
-            MessagePipeDiagnosticsInfo diagnosticsInfo
+            MessagePipeDiagnosticsInfo diagnosticsInfo,
+
+            IServiceProvider provider
+
+
             )
         {
+            this.provider = provider;
             this.scopeF = scopeF;
             this.publisher = publisher;
             this.subscriber = subscriber;
@@ -93,6 +137,9 @@ namespace MessagePipe
             this.intPublisher = intP;
             this.intSubscriber = intS;
             this.diagnosticsInfo = diagnosticsInfo;
+
+            var r1 = provider.GetRequiredService<IRequestHandler<string, int>>();
+            r1.Invoke("foo");
         }
 
         [Command("keyed")]
@@ -295,6 +342,19 @@ namespace MessagePipe
 
             p2.Publish(1999);
         }
+
+        [Command("moremore")]
+        public void CheckMoreAndMore()
+        {
+            var req = provider.GetRequiredService<IRequestHandler<int, int>>();
+            var all = provider.GetRequiredService<IRequestAllHandler<int, int>>();
+
+
+            req.Invoke(100);
+
+
+            intPublisher.Publish(10);
+        }
     }
 
     public class PingHandler : IRequestHandler<Ping, Pong>
@@ -395,5 +455,36 @@ namespace MessagePipe
     {
 
     }
+
+
+
+    public class FirstHandler : IRequestHandler<int, int>
+    {
+        public int Invoke(int request)
+        {
+            Console.WriteLine("Called First!");
+            return request;
+        }
+    }
+
+    public class SecondHandler : IRequestHandler<int, int>
+    {
+        public int Invoke(int request)
+        {
+            Console.WriteLine("Called Second!");
+            return request;
+        }
+    }
+
+    public class ThirdHandler : IRequestHandler<int, int>
+    {
+        public int Invoke(int request)
+        {
+            Console.WriteLine("Called Third!");
+            return request;
+        }
+    }
+
+
 
 }
