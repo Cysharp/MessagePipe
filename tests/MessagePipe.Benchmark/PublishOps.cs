@@ -35,6 +35,8 @@ namespace MessagePipe.Benchmark
         IPublisher<Message> filter1;
         IPublisher<Message> filter2;
         IPublisher<Guid, Message> keyed;
+        IAsyncPublisher<Message> asyncP;
+        IAsyncSubscriber<Message> asyncS;
         Guid key = Guid.NewGuid();
 
         MessageHub easyMsgHub;
@@ -83,6 +85,9 @@ namespace MessagePipe.Benchmark
             signalBus = SetupZenject();
             easyMsgHub = new MessageHub();
 
+            asyncP = provider.GetRequiredService<IAsyncPublisher<Message>>();
+            asyncS = provider.GetRequiredService<IAsyncSubscriber<Message>>();
+
 
 #if WinBenchmark
             mvvmLight = new Messenger();
@@ -122,6 +127,8 @@ namespace MessagePipe.Benchmark
                 simpleArray[i] = new PlainAction();
                 actionDelegate[i] = new PlainAction().DelegateAction;
                 interfaceArray[i] = new PlainAction();
+
+                asyncS.Subscribe((_, c) => default(ValueTask));
             }
 
             signalBus.Subscribe<Message>(m => { });
@@ -171,34 +178,36 @@ namespace MessagePipe.Benchmark
                             
                     Measure("Easy.MessageHub", () => easyMsgHub.Publish(m)),
 
-
-                    Measure("Array", () =>
-                    {
-                        var xs = simpleArray;
-                        for (int i = 0; i < xs.Length; i++)
-                        {
-                         xs[i].Invoke();
-                        }
-                    }),
-                    Measure("Action[]", () =>
-                    {
-                        var xs = actionDelegate;
-                        for (int i = 0; i < xs.Length; i++)
-                        {
-                         xs[i].Invoke();
-                        }
-                    }),
-                    Measure("Interface[]", () =>
-                    {
-                        var xs = interfaceArray;
-                        for (int i = 0; i < xs.Length; i++)
-                        {
-                         xs[i].Invoke();
-                        }
-                    }),
-                //Measure("MessagePipe(f1)", () => filter1.Publish(m)),
-                //Measure("MessagePipe(f2)", () => filter2.Publish(m)),
-                //Measure("MessagePipe(key)", () => keyed.Publish(key, m)),
+                    //Measure("Array", () =>
+                    //{
+                    //    var xs = simpleArray;
+                    //    for (int i = 0; i < xs.Length; i++)
+                    //    {
+                    //     xs[i].Invoke();
+                    //    }
+                    //}),
+                    //Measure("Action[]", () =>
+                    //{
+                    //    var xs = actionDelegate;
+                    //    for (int i = 0; i < xs.Length; i++)
+                    //    {
+                    //     xs[i].Invoke();
+                    //    }
+                    //}),
+                    //Measure("Interface[]", () =>
+                    //{
+                    //    var xs = interfaceArray;
+                    //    for (int i = 0; i < xs.Length; i++)
+                    //    {
+                    //     xs[i].Invoke();
+                    //    }
+                    //}),
+                    Measure("MessagePipe(f1)", () => filter1.Publish(m)),
+                    Measure("MessagePipe(f2)", () => filter2.Publish(m)),
+                    Measure("MessagePipe(key)", () => keyed.Publish(key, m)),
+                    await MeasureAsync("MessagePipe(async-s)",  () =>  asyncP.PublishAsync(m, AsyncPublishStrategy.Sequential)),
+                    await MeasureAsync("MessagePipe(async-p)",  () => asyncP.PublishAsync(m, AsyncPublishStrategy.Parallel)),
+                    Measure("MessagePipe(async-f)", () => asyncP.Publish(m)),
             };
             }
 
@@ -243,6 +252,35 @@ namespace MessagePipe.Benchmark
         }
 
         static async Task<(string, int)> MeasureAsync(string label, Func<Task> action)
+        {
+            Console.WriteLine("Start:" + label);
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            GC.TryStartNoGCRegion(1000 * 1000, true);
+
+            var count = 0;
+            var sw = Stopwatch.StartNew();
+            while (sw.ElapsedMilliseconds <= 1000)
+            {
+                await action().ConfigureAwait(false);
+                count++;
+            }
+
+            try
+            {
+                GC.EndNoGCRegion();
+            }
+            catch
+            {
+                Console.WriteLine("Faile NoGC:" + label);
+            }
+
+            return (label, count);
+        }
+
+        static async Task<(string, int)> MeasureAsync(string label, Func<ValueTask> action)
         {
             Console.WriteLine("Start:" + label);
             GC.Collect();
