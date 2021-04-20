@@ -32,9 +32,9 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<IConnectionMultiplexerFactory>(options.ConnectionMultiplexerFactory);
             services.AddSingleton<IRedisSerializer>(options.RedisSerializer);
 
-            var scope = options.InstanceScope;
-            services.Add(typeof(IDistributedPublisher<,>), typeof(RedisPublisher<,>), scope);
-            services.Add(typeof(IDistributedSubscriber<,>), typeof(RedisSubscriber<,>), scope);
+            var lifetime = options.InstanceLifetime;
+            services.Add(typeof(IDistributedPublisher<,>), typeof(RedisPublisher<,>), lifetime);
+            services.Add(typeof(IDistributedSubscriber<,>), typeof(RedisSubscriber<,>), lifetime);
 
             return services;
         }

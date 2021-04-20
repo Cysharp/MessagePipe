@@ -36,10 +36,12 @@
     </ItemGroup>
     <ItemGroup>
       <TargetFiles1 Remove="AttributeFilterProvider.cs" />
+      <TargetFiles1 Remove="DistributedSubscriberExtensions.cs" />
       <TargetFiles1 Remove="FilterAttachedAsyncMessageHandlerFactory.cs" />
       <TargetFiles1 Remove="FilterAttachedAsyncRequestHandlerFactory.cs" />
       <TargetFiles1 Remove="FilterAttachedRequestHandlerFactory.cs" />
       <TargetFiles1 Remove="IgnoreAutoRegistration.cs" />
+      <TargetFiles1 Remove="InMemoryDistributedPubSub.cs" />
       <TargetFiles1 Remove="Internal\TypeCollector.cs" />
     </ItemGroup>
 

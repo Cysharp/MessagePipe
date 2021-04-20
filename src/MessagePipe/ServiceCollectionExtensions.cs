@@ -143,7 +143,6 @@ namespace Microsoft.Extensions.DependencyInjection
             return AddAsyncRequestHandler(services, typeof(T));
         }
 
-
         static IServiceCollection AddRequestHandlerCore(IServiceCollection services, Type type, Type coreType)
         {
             var interfaceType = type.GetInterfaces().FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == coreType);
@@ -152,8 +151,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentException($"{type.FullName} does not implement {coreType.Name.Replace("Core", "")}.");
             }
 
-            var option = services.FirstOrDefault(x => x.ServiceType == typeof(MessagePipeOptions));
-            if (option == null)
+            var options = services.FirstOrDefault(x => x.ServiceType == typeof(MessagePipeOptions));
+            if (options == null)
             {
                 throw new ArgumentException($"Not yet added MessagePipeOptions, please call servcies.AddMessagePipe() before.");
             }
@@ -168,10 +167,22 @@ namespace Microsoft.Extensions.DependencyInjection
                 interfaceType = interfaceType.GetGenericTypeDefinition();
             }
 
-            services.Add(interfaceType, type, ((MessagePipeOptions)option.ImplementationInstance!).InstanceLifetime);
+            services.Add(interfaceType, type, ((MessagePipeOptions)options.ImplementationInstance!).InstanceLifetime);
             return services;
         }
 
+        public static void AddInMemoryDistributedMessageBroker(this IServiceCollection services)
+        {
+            var options = services.FirstOrDefault(x => x.ServiceType == typeof(MessagePipeOptions));
+            if (options == null)
+            {
+                throw new ArgumentException($"Not yet added MessagePipeOptions, please call servcies.AddMessagePipe() before.");
+            }
+
+            var lifetime = ((MessagePipeOptions)options.ImplementationInstance!).InstanceLifetime;
+            services.Add(typeof(IDistributedPublisher<,>), typeof(InMemoryDistributedPublisher<,>), lifetime);
+            services.Add(typeof(IDistributedSubscriber<,>), typeof(InMemoryDistributedSubscriber<,>), lifetime);
+        }
 
         internal static void Add(this IServiceCollection services, Type serviceType, InstanceLifetime lifetime)
         {

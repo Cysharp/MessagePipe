@@ -1,5 +1,6 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿#if !UNITY_2018_3_OR_NEWER
+
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -69,76 +70,6 @@ namespace MessagePipe
             return dest;
         }
     }
-
-    // utils
-
-    internal sealed class AnonymousMessageHandler<TMessage> : IMessageHandler<TMessage>
-    {
-        readonly Action<TMessage> handler;
-
-        public AnonymousMessageHandler(Action<TMessage> handler)
-        {
-            this.handler = handler;
-        }
-
-        public void Handle(TMessage message)
-        {
-            handler.Invoke(message);
-        }
-    }
-
-    internal sealed class AnonymousAsyncMessageHandler<TMessage> : IAsyncMessageHandler<TMessage>
-    {
-        readonly Func<TMessage, CancellationToken, ValueTask> handler;
-
-        public AnonymousAsyncMessageHandler(Func<TMessage, CancellationToken, ValueTask> handler)
-        {
-            this.handler = handler;
-        }
-
-        public ValueTask HandleAsync(TMessage message, CancellationToken cancellationToken)
-        {
-            return handler.Invoke(message, cancellationToken);
-        }
-    }
-
-    internal sealed class PredicateFilter<T> : MessageHandlerFilter<T>
-    {
-        readonly Func<T, bool> predicate;
-
-        public PredicateFilter(Func<T, bool> predicate)
-        {
-            this.predicate = predicate;
-            this.Order = int.MinValue; // filter first.
-        }
-
-        // T and T2 should be same.
-        public override void Handle(T message, Action<T> next)
-        {
-            if (predicate(message))
-            {
-                next(message);
-            }
-        }
-    }
-
-    internal sealed class AsyncPredicateFilter<T> : AsyncMessageHandlerFilter<T>
-    {
-        readonly Func<T, bool> predicate;
-
-        public AsyncPredicateFilter(Func<T, bool> predicate)
-        {
-            this.predicate = predicate;
-            this.Order = int.MinValue; // filter first.
-        }
-
-        public override ValueTask HandleAsync(T message, CancellationToken cancellationToken, Func<T, CancellationToken, ValueTask> next)
-        {
-            if (predicate(message))
-            {
-                return next(message, cancellationToken);
-            }
-            return default(ValueTask);
-        }
-    }
 }
+
+#endif
