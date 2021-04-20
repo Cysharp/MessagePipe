@@ -36,12 +36,12 @@ namespace MessagePipe
         }
     }
 
-    internal readonly struct FilterTypeAndOrder
+    internal readonly struct FilterDefinition
     {
         public readonly Type FilterType;
         public readonly int Order;
 
-        public FilterTypeAndOrder(Type filterType, int order)
+        public FilterDefinition(Type filterType, int order)
         {
             FilterType = filterType;
             Order = order;
@@ -54,7 +54,6 @@ namespace MessagePipe
         public AsyncPublishStrategy DefaultAsyncPublishStrategy { get; set; }
 
 #if !UNITY_2018_3_OR_NEWER
-
         public bool EnableAutoRegistration { get; set; }
 
 #endif
@@ -94,9 +93,9 @@ namespace MessagePipe
             autoregistrationTypes = types;
         }
 
-        // register DI
         internal void AddGlobalFilter(IServiceCollection services)
         {
+            // all filters should register as transient.
             foreach (var item in messageHandlerFilters)
             {
                 services.TryAddTransient(item.FilterType);
@@ -122,92 +121,80 @@ namespace MessagePipe
 
         // MessageHandlerFilter
 
-        List<FilterTypeAndOrder> messageHandlerFilters = new List<FilterTypeAndOrder>();
-        MessageHandlerFilter[] messageHandlerFilterCache;
+        List<FilterDefinition> messageHandlerFilters = new List<FilterDefinition>();
 
         public void AddGlobalMessageHandlerFilter<T>(int order = 0)
-            where T : MessageHandlerFilter
+            where T : IMessageHandlerFilter
         {
-            messageHandlerFilters.Add(new FilterTypeAndOrder(typeof(T), order));
+            messageHandlerFilters.Add(new FilterDefinition(typeof(T), order));
         }
 
-        internal MessageHandlerFilter[] GetGlobalMessageHandlerFilters(IServiceProvider provider)
+        internal (int count, IEnumerable<IMessageHandlerFilter>) GetGlobalMessageHandlerFilters(IServiceProvider provider)
         {
-            return GetOrCreateHandlerCache(ref messageHandlerFilters, ref messageHandlerFilterCache, provider);
+            return (messageHandlerFilters.Count, CreateFilters<IMessageHandlerFilter>(messageHandlerFilters, provider));
         }
 
         // AsyncMessageHandlerFilter
 
-        List<FilterTypeAndOrder> asyncMessageHandlerFilters = new List<FilterTypeAndOrder>();
-        AsyncMessageHandlerFilter[] asyncMessageHandlerFilterCache;
+        List<FilterDefinition> asyncMessageHandlerFilters = new List<FilterDefinition>();
 
         public void AddGlobalAsyncMessageHandlerFilter<T>(int order = 0)
-            where T : AsyncMessageHandlerFilter
+            where T : IAsyncMessageHandlerFilter
         {
-            asyncMessageHandlerFilters.Add(new FilterTypeAndOrder(typeof(T), order));
+            asyncMessageHandlerFilters.Add(new FilterDefinition(typeof(T), order));
         }
 
-        internal AsyncMessageHandlerFilter[] GetGlobalAsyncMessageHandlerFilters(IServiceProvider provider)
+        internal (int count, IEnumerable<IAsyncMessageHandlerFilter>) GetGlobalAsyncMessageHandlerFilters(IServiceProvider provider)
         {
-            return GetOrCreateHandlerCache(ref asyncMessageHandlerFilters, ref asyncMessageHandlerFilterCache, provider);
+            return (asyncMessageHandlerFilters.Count, CreateFilters<IAsyncMessageHandlerFilter>(asyncMessageHandlerFilters, provider));
         }
 
         // RequestHandlerFilter
 
-        List<FilterTypeAndOrder> requestHandlerFilters = new List<FilterTypeAndOrder>();
-        RequestHandlerFilter[] requestHandlerFilterCache;
+        List<FilterDefinition> requestHandlerFilters = new List<FilterDefinition>();
 
         public void AddGlobalRequestHandlerFilter<T>(int order = 0)
-            where T : RequestHandlerFilter
+            where T : IRequestHandlerFilter
         {
-            requestHandlerFilters.Add(new FilterTypeAndOrder(typeof(T), order));
+            requestHandlerFilters.Add(new FilterDefinition(typeof(T), order));
         }
 
-        internal RequestHandlerFilter[] GetGlobalRequestHandlerFilters(IServiceProvider provider)
+        internal (int, IEnumerable<IRequestHandlerFilter>) GetGlobalRequestHandlerFilters(IServiceProvider provider)
         {
-            return GetOrCreateHandlerCache(ref requestHandlerFilters, ref requestHandlerFilterCache, provider);
+            return (requestHandlerFilters.Count, CreateFilters<IRequestHandlerFilter>(requestHandlerFilters, provider));
         }
 
         //  AsyncRequestHandlerFilter
 
-        List<FilterTypeAndOrder> asyncRequestHandlerFilters = new List<FilterTypeAndOrder>();
-        AsyncRequestHandlerFilter[] asyncRequestHandlerFilterCache;
+        List<FilterDefinition> asyncRequestHandlerFilters = new List<FilterDefinition>();
 
         public void AddGlobalAsyncRequestHandlerFilter<T>(int order = 0)
-            where T : RequestHandlerFilter
+            where T : IAsyncRequestHandlerFilter
         {
-            asyncRequestHandlerFilters.Add(new FilterTypeAndOrder(typeof(T), order));
+            asyncRequestHandlerFilters.Add(new FilterDefinition(typeof(T), order));
         }
 
-        internal AsyncRequestHandlerFilter[] GetGlobalAsyncRequestHandlerFilters(IServiceProvider provider)
+        internal (int, IEnumerable<IAsyncRequestHandlerFilter>) GetGlobalAsyncRequestHandlerFilters(IServiceProvider provider)
         {
-            return GetOrCreateHandlerCache(ref asyncRequestHandlerFilters, ref asyncRequestHandlerFilterCache, provider);
+            return (asyncRequestHandlerFilters.Count, CreateFilters<IAsyncRequestHandlerFilter>(asyncRequestHandlerFilters, provider));
         }
 
-        static T[] GetOrCreateHandlerCache<T>(ref List<FilterTypeAndOrder> filterDefinitions, ref T[] filterCache, IServiceProvider provider)
+        static IEnumerable<T> CreateFilters<T>(List<FilterDefinition> filterDefinitions, IServiceProvider provider)
             where T : IMessagePipeFilter
         {
-            if (filterCache == null)
-            {
-                lock (filterDefinitions)
-                {
-                    if (filterCache == null)
-                    {
-                        var temp = new T[filterDefinitions.Count];
-                        for (int i = 0; i < temp.Length; i++)
-                        {
-                            var filter = (T)provider.GetRequiredService(filterDefinitions[i].FilterType);
-                            filter.Order = filterDefinitions[i].Order;
-                            temp[i] = filter;
-                        }
-                        filterCache = temp;
-                    }
-                }
-            }
-
-            return filterCache;
+            if (filterDefinitions.Count == 0) return Array.Empty<T>();
+            return CreateFiltersCore<T>(filterDefinitions, provider);
         }
 
-
+        static IEnumerable<T> CreateFiltersCore<T>(List<FilterDefinition> filterDefinitions, IServiceProvider provider)
+            where T : IMessagePipeFilter
+        {
+            for (int i = 0; i < filterDefinitions.Count; i++)
+            {
+                var filter = (T)provider.GetRequiredService(filterDefinitions[i].FilterType);
+                filter.Order = filterDefinitions[i].Order;
+                yield return filter;
+            }
+        }
     }
 }

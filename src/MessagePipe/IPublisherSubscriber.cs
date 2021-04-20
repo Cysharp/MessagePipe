@@ -1,5 +1,4 @@
-﻿using MessagePipe.Internal;
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,6 +14,30 @@ namespace MessagePipe
     public interface IAsyncMessageHandler<TMessage>
     {
         ValueTask HandleAsync(TMessage message, CancellationToken cancellationToken);
+    }
+
+    // Keyless
+
+    public interface IPublisher<TMessage>
+    {
+        void Publish(TMessage message);
+    }
+
+    public interface ISubscriber<TMessage>
+    {
+        public IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
+    }
+
+    public interface IAsyncPublisher<TMessage>
+    {
+        void Publish(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
+    }
+
+    public interface IAsyncSubscriber<TMessage>
+    {
+        public IDisposable Subscribe(IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
     }
 
     // Keyed
@@ -42,30 +65,6 @@ namespace MessagePipe
     public interface IAsyncSubscriber<TKey, TMessage>
         where TKey : notnull
     {
-        public IDisposable Subscribe(TKey key, IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter[] filters);
-    }
-
-    // Keyless
-
-    public interface IPublisher<TMessage>
-    {
-        void Publish(TMessage message);
-    }
-
-    public interface ISubscriber<TMessage>
-    {
-        public IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
-    }
-
-    public interface IAsyncPublisher<TMessage>
-    {
-        void Publish(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
-        ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
-        ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
-    }
-
-    public interface IAsyncSubscriber<TMessage>
-    {
-        public IDisposable Subscribe(IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter[] filters);
+        public IDisposable Subscribe(TKey key, IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
     }
 }

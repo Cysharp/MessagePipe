@@ -53,7 +53,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             // filters
             options.AddGlobalFilter(services);
-            services.AddSingleton(typeof(FilterCache<,>));
+            services.AddSingleton(typeof(AttributeFilterProvider<>)); // attribute and order is deterministic at compile, so use Singleton lifetime of cache.
             services.AddSingleton(typeof(FilterAttachedMessageHandlerFactory));
             services.AddSingleton(typeof(FilterAttachedAsyncMessageHandlerFactory));
 
@@ -74,7 +74,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         ? AutoRegistrationEngine.CollectFromAssemblies(options.autoregistrationAssemblies)
                         : Enumerable.Empty<Type>();
                     var types = options.autoregistrationTypes ?? Enumerable.Empty<Type>();
-                    
+
                     AutoRegistrationEngine.RegisterFromTypes(services, options, fromAssemblies.Concat(types).Distinct());
                 }
             }
@@ -83,28 +83,28 @@ namespace Microsoft.Extensions.DependencyInjection
         }
 
         public static IServiceCollection AddMessageHandlerFilter<T>(this IServiceCollection services)
-            where T : MessageHandlerFilter
+            where T : class, IMessageHandlerFilter
         {
             services.TryAddTransient<T>();
             return services;
         }
 
         public static IServiceCollection AddAsyncMessageHandlerFilter<T>(this IServiceCollection services)
-            where T : AsyncMessageHandlerFilter
+            where T : class, IAsyncMessageHandlerFilter
         {
             services.TryAddTransient<T>();
             return services;
         }
 
         public static IServiceCollection AddRequestHandlerFilter<T>(this IServiceCollection services)
-            where T : RequestHandlerFilter
+            where T : class, IRequestHandlerFilter
         {
             services.TryAddTransient<T>();
             return services;
         }
 
         public static IServiceCollection AddAsyncRequestHandlerFilter<T>(this IServiceCollection services)
-            where T : AsyncRequestHandlerFilter
+            where T : class, IAsyncRequestHandlerFilter
         {
             services.TryAddTransient<T>();
             return services;

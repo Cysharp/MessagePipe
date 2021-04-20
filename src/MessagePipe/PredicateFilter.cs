@@ -1,53 +1,41 @@
 ﻿using System;
-#if !UNITY_2018_3_OR_NEWER
-using System.Runtime.CompilerServices;
-#endif
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace MessagePipe
 {
-    internal sealed class PredicateFilter<T> : MessageHandlerFilter
+    internal sealed class PredicateFilter<T> : MessageHandlerFilter<T>
     {
         readonly Func<T, bool> predicate;
 
         public PredicateFilter(Func<T, bool> predicate)
         {
             this.predicate = predicate;
-            this.Order = int.MinValue; // filter first.
+            this.Order = int.MinValue; // predicate filter first.
         }
 
-        // T and T2 should be same.
-        public override void Handle<T2>(T2 message, Action<T2> next)
+        public override void Handle(T message, Action<T> next)
         {
-#if UNITY_2018_3_OR_NEWER
-            if (predicate((T)(object)message))
-#else
-            if (predicate(Unsafe.As<T2, T>(ref message)))
-#endif
+            if (predicate(message))
             {
                 next(message);
             }
         }
     }
 
-    internal sealed class AsyncPredicateFilter<T> : AsyncMessageHandlerFilter
+    internal sealed class AsyncPredicateFilter<T> : AsyncMessageHandlerFilter<T>
     {
         readonly Func<T, bool> predicate;
 
         public AsyncPredicateFilter(Func<T, bool> predicate)
         {
             this.predicate = predicate;
-            this.Order = int.MinValue; // filter first.
+            this.Order = int.MinValue; // predicate filter first.
         }
 
-        public override ValueTask HandleAsync<T2>(T2 message, CancellationToken cancellationToken, Func<T2, CancellationToken, ValueTask> next)
+        public override ValueTask HandleAsync(T message, CancellationToken cancellationToken, Func<T, CancellationToken, ValueTask> next)
         {
-#if UNITY_2018_3_OR_NEWER
-            if (predicate((T)(object)message))
-#else
-            if (predicate(Unsafe.As<T2, T>(ref message)))
-#endif
+            if (predicate(message))
             {
                 return next(message, cancellationToken);
             }
