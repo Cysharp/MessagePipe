@@ -121,32 +121,35 @@ namespace Microsoft.Extensions.DependencyInjection
             return services;
         }
 
+        public static IServiceCollection AddRequestHandler(this IServiceCollection services, Type type)
+        {
+            return AddRequestHandlerCore(services, type, typeof(IRequestHandlerCore<,>));
+        }
+
         public static IServiceCollection AddRequestHandler<T>(this IServiceCollection services)
             where T : IRequestHandler
         {
-            var type = typeof(T).GetInterfaces().FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IRequestHandlerCore<,>));
-            if (type == null)
-            {
-                throw new ArgumentException($"{typeof(T).FullName} does not implement IRequestHandler<TRequest, TResponse>.");
-            }
+            return AddRequestHandler(services, typeof(T));
+        }
 
-            var option = services.FirstOrDefault(x => x.ServiceType == typeof(MessagePipeOptions));
-            if (option == null)
-            {
-                throw new ArgumentException($"Not yet added MessagePipeOptions, please call servcies.AddMessagePipe() before.");
-            }
-
-            services.Add(type, typeof(T), ((MessagePipeOptions)option.ImplementationInstance!).InstanceLifetime);
-            return services;
+        public static IServiceCollection AddAsyncRequestHandler(this IServiceCollection services, Type type)
+        {
+            return AddRequestHandlerCore(services, type, typeof(IAsyncRequestHandlerCore<,>));
         }
 
         public static IServiceCollection AddAsyncRequestHandler<T>(this IServiceCollection services)
             where T : IAsyncRequestHandler
         {
-            var type = typeof(T).GetInterfaces().FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IAsyncRequestHandlerCore<,>));
-            if (type == null)
+            return AddAsyncRequestHandler(services, typeof(T));
+        }
+
+
+        static IServiceCollection AddRequestHandlerCore(IServiceCollection services, Type type, Type coreType)
+        {
+            var interfaceType = type.GetInterfaces().FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == coreType);
+            if (interfaceType == null)
             {
-                throw new ArgumentException($"{typeof(T).FullName} does not implement IAsyncRequestHandler<TRequest, TResponse>.");
+                throw new ArgumentException($"{type.FullName} does not implement {coreType.Name.Replace("Core", "")}.");
             }
 
             var option = services.FirstOrDefault(x => x.ServiceType == typeof(MessagePipeOptions));
@@ -155,9 +158,20 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentException($"Not yet added MessagePipeOptions, please call servcies.AddMessagePipe() before.");
             }
 
-            services.Add(type, typeof(T), ((MessagePipeOptions)option.ImplementationInstance!).InstanceLifetime);
+            if (type.IsGenericType && !type.IsConstructedGenericType)
+            {
+                if (!interfaceType.GetGenericArguments().All(x => x.IsGenericParameter))
+                {
+                    throw new ArgumentException("partial open generic type is not supported. Type:" + type.FullName);
+                }
+
+                interfaceType = interfaceType.GetGenericTypeDefinition();
+            }
+
+            services.Add(interfaceType, type, ((MessagePipeOptions)option.ImplementationInstance!).InstanceLifetime);
             return services;
         }
+
 
         internal static void Add(this IServiceCollection services, Type serviceType, InstanceLifetime lifetime)
         {
@@ -199,7 +213,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         {
                             services.Add(interfaceType, objectType, requestHandlerLifetime);
                         }
-                        else
+                        else if (interfaceType.GetGenericArguments().All(x => x.IsGenericParameter))
                         {
                             services.Add(typeof(IAsyncRequestHandlerCore<,>), objectType, requestHandlerLifetime);
                         }

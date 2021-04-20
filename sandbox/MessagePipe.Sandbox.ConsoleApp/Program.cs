@@ -16,16 +16,17 @@ namespace MessagePipe
         public int MyProperty { get; set; }
     }
 
-    // [IgnoreAutoRegistration]
-    public class MyGenericsHandler<TR2> : IRequestHandler<int, TR2>
+    [IgnoreAutoRegistration]
+    public class MyGenericsHandler<TR2> : IRequestHandler<string, TR2>
     {
-        public TR2 Invoke(int request)
+        public TR2 Invoke(string request)
         {
             Console.WriteLine("everything default!");
             return default(TR2);
         }
     }
-    public class MyMyGenericsHandler<TR1,TR2> : IRequestHandler<TR1, TR2>
+    //[IgnoreAutoRegistration]
+    public class MyMyGenericsHandler<TR1, TR2> : IRequestHandler<TR1, TR2>
     {
         public TR2 Invoke(TR1 request)
         {
@@ -34,6 +35,7 @@ namespace MessagePipe
         }
     }
 
+    [IgnoreAutoRegistration]
     public class MyGenericsHandler2 : IRequestHandler<int, int>
     {
         public int Invoke(int request)
@@ -67,6 +69,8 @@ namespace MessagePipe
                     //var objectType = typeof(MyGenericsHandler<,>);
                     //x.Add(interfaceType, objectType, InstanceLifetime.Singleton);
 
+                    //x.AddRequestHandler(typeof(MyMyGenericsHandler<,> ));
+                    //x.AddRequestHandler(typeof(MyGenericsHandler<>));
 
 
                 })
