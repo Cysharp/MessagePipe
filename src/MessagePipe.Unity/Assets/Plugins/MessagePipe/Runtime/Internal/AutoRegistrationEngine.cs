@@ -95,27 +95,27 @@ namespace MessagePipe.Internal
 
                 foreach (var baseType in objectType.GetBaseTypes())
                 {
-                    if (baseType.IsGenericType && baseType.GetGenericTypeDefinition()  == typeof(MessageHandlerFilter<>))
+                    if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(MessageHandlerFilter<>))
                     {
-                        services.AddTransient(objectType);
+                        services.TryAddTransient(objectType);
                         goto NEXT_TYPE;
                     }
 
                     if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(AsyncMessageHandlerFilter<>))
                     {
-                        services.AddTransient(objectType);
+                        services.TryAddTransient(objectType);
                         goto NEXT_TYPE;
                     }
 
                     if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(RequestHandlerFilter<,>))
                     {
-                        services.AddTransient(objectType);
+                        services.TryAddTransient(objectType);
                         goto NEXT_TYPE;
                     }
 
                     if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(AsyncRequestHandlerFilter<,>))
                     {
-                        services.AddTransient(objectType);
+                        services.TryAddTransient(objectType);
                         goto NEXT_TYPE;
                     }
                 }

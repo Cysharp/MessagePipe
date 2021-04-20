@@ -56,10 +56,10 @@ namespace MessagePipe.Redis
 
         public ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler, CancellationToken cancellationToken)
         {
-            return SubscribeAsync(key, handler, Array.Empty<MessageHandlerFilter>(), cancellationToken);
+            return SubscribeAsync(key, handler, Array.Empty<MessageHandlerFilter<TMessage>>(), cancellationToken);
         }
 
-        public async ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler, MessageHandlerFilter[] filters, CancellationToken cancellationToken)
+        public async ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler, MessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken)
         {
             handler = messageHandlerFactory.CreateMessageHandler(handler, filters); // with filter
 
@@ -77,10 +77,10 @@ namespace MessagePipe.Redis
 
         public ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IAsyncMessageHandler<TMessage> handler, CancellationToken cancellationToken)
         {
-            return SubscribeAsync(key, handler, Array.Empty<AsyncMessageHandlerFilter>(), cancellationToken);
+            return SubscribeAsync(key, handler, Array.Empty<AsyncMessageHandlerFilter<TMessage>>(), cancellationToken);
         }
 
-        public async ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IAsyncMessageHandler<TMessage> handler, AsyncMessageHandlerFilter[] filters, CancellationToken cancellationToken)
+        public async ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IAsyncMessageHandler<TMessage> handler, AsyncMessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken)
         {
             handler = asyncMessageHandlerFactory.CreateAsyncMessageHandler(handler, filters); // with filter
 

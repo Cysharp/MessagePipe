@@ -24,7 +24,7 @@ namespace MessagePipe
 
         public IMessageHandler<TMessage> CreateMessageHandler<TMessage>(IMessageHandler<TMessage> handler, MessageHandlerFilter<TMessage>[] filters)
         {
-            var (globalLength, globalFilters) = options.GetGlobalMessageHandlerFilters(provider);
+            var (globalLength, globalFilters) = options.GetGlobalMessageHandlerFilters(provider, typeof(TMessage));
             var (handlerLength, handlerFilters) = filterProvider.GetAttributeFilters(handler.GetType(), provider);
 
             if (filters.Length != 0 || globalLength != 0 || handlerLength != 0)

@@ -11,20 +11,20 @@ namespace MessagePipe
 
         public static ValueTask<IAsyncDisposable> SubscribeAsync<TKey, TMessage>(this IDistributedSubscriber<TKey, TMessage> subscriber, TKey key, Action<TMessage> handler, CancellationToken cancellationToken = default)
         {
-            return SubscribeAsync(subscriber, key, handler, Array.Empty<MessageHandlerFilter>(), cancellationToken);
+            return SubscribeAsync(subscriber, key, handler, Array.Empty<MessageHandlerFilter<TMessage>>(), cancellationToken);
         }
 
-        public static ValueTask<IAsyncDisposable> SubscribeAsync<TKey, TMessage>(this IDistributedSubscriber<TKey, TMessage> subscriber, TKey key, Action<TMessage> handler, MessageHandlerFilter[] filters, CancellationToken cancellationToken = default)
+        public static ValueTask<IAsyncDisposable> SubscribeAsync<TKey, TMessage>(this IDistributedSubscriber<TKey, TMessage> subscriber, TKey key, Action<TMessage> handler, MessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken = default)
         {
             return subscriber.SubscribeAsync(key, new AnonymousMessageHandler<TMessage>(handler), filters, cancellationToken);
         }
 
         public static ValueTask<IAsyncDisposable> SubscribeAsync<TKey, TMessage>(this IDistributedSubscriber<TKey, TMessage> subscriber, TKey key, Action<TMessage> handler, Func<TMessage, bool> predicate, CancellationToken cancellationToken = default)
         {
-            return SubscribeAsync(subscriber, key, handler, predicate, Array.Empty<MessageHandlerFilter>(), cancellationToken);
+            return SubscribeAsync(subscriber, key, handler, predicate, Array.Empty<MessageHandlerFilter<TMessage>>(), cancellationToken);
         }
 
-        public static ValueTask<IAsyncDisposable> SubscribeAsync<TKey, TMessage>(this IDistributedSubscriber<TKey, TMessage> subscriber, TKey key, Action<TMessage> handler, Func<TMessage, bool> predicate, MessageHandlerFilter[] filters, CancellationToken cancellationToken = default)
+        public static ValueTask<IAsyncDisposable> SubscribeAsync<TKey, TMessage>(this IDistributedSubscriber<TKey, TMessage> subscriber, TKey key, Action<TMessage> handler, Func<TMessage, bool> predicate, MessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken = default)
         {
             var predicateFilter = new PredicateFilter<TMessage>(predicate);
             filters = (filters.Length == 0)
@@ -38,20 +38,20 @@ namespace MessagePipe
 
         public static ValueTask<IAsyncDisposable> SubscribeAsync<TKey, TMessage>(this IDistributedSubscriber<TKey, TMessage> subscriber, TKey key, Func<TMessage, CancellationToken, ValueTask> handler, CancellationToken cancellationToken = default)
         {
-            return SubscribeAsync(subscriber, key, handler, Array.Empty<AsyncMessageHandlerFilter>(), cancellationToken);
+            return SubscribeAsync(subscriber, key, handler, Array.Empty<AsyncMessageHandlerFilter<TMessage>>(), cancellationToken);
         }
 
-        public static ValueTask<IAsyncDisposable> SubscribeAsync<TKey, TMessage>(this IDistributedSubscriber<TKey, TMessage> subscriber, TKey key, Func<TMessage, CancellationToken, ValueTask> handler, AsyncMessageHandlerFilter[] filters, CancellationToken cancellationToken = default)
+        public static ValueTask<IAsyncDisposable> SubscribeAsync<TKey, TMessage>(this IDistributedSubscriber<TKey, TMessage> subscriber, TKey key, Func<TMessage, CancellationToken, ValueTask> handler, AsyncMessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken = default)
         {
             return subscriber.SubscribeAsync(key, new AnonymousAsyncMessageHandler<TMessage>(handler), filters, cancellationToken);
         }
 
         public static ValueTask<IAsyncDisposable> SubscribeAsync<TKey, TMessage>(this IDistributedSubscriber<TKey, TMessage> subscriber, TKey key, Func<TMessage, CancellationToken, ValueTask> handler, Func<TMessage, bool> predicate, CancellationToken cancellationToken = default)
         {
-            return SubscribeAsync(subscriber, key, handler, predicate, Array.Empty<AsyncMessageHandlerFilter>(), cancellationToken);
+            return SubscribeAsync(subscriber, key, handler, predicate, Array.Empty<AsyncMessageHandlerFilter<TMessage>>(), cancellationToken);
         }
 
-        public static ValueTask<IAsyncDisposable> SubscribeAsync<TKey, TMessage>(this IDistributedSubscriber<TKey, TMessage> subscriber, TKey key, Func<TMessage, CancellationToken, ValueTask> handler, Func<TMessage, bool> predicate, AsyncMessageHandlerFilter[] filters, CancellationToken cancellationToken = default)
+        public static ValueTask<IAsyncDisposable> SubscribeAsync<TKey, TMessage>(this IDistributedSubscriber<TKey, TMessage> subscriber, TKey key, Func<TMessage, CancellationToken, ValueTask> handler, Func<TMessage, bool> predicate, AsyncMessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken = default)
         {
             var predicateFilter = new AsyncPredicateFilter<TMessage>(predicate);
             filters = (filters.Length == 0)
@@ -102,7 +102,7 @@ namespace MessagePipe
         }
     }
 
-    internal sealed class PredicateFilter<T> : MessageHandlerFilter
+    internal sealed class PredicateFilter<T> : MessageHandlerFilter<T>
     {
         readonly Func<T, bool> predicate;
 
@@ -113,16 +113,16 @@ namespace MessagePipe
         }
 
         // T and T2 should be same.
-        public override void Handle<T2>(T2 message, Action<T2> next)
+        public override void Handle(T message, Action<T> next)
         {
-            if (predicate(Unsafe.As<T2, T>(ref message)))
+            if (predicate(message))
             {
                 next(message);
             }
         }
     }
 
-    internal sealed class AsyncPredicateFilter<T> : AsyncMessageHandlerFilter
+    internal sealed class AsyncPredicateFilter<T> : AsyncMessageHandlerFilter<T>
     {
         readonly Func<T, bool> predicate;
 
@@ -132,9 +132,9 @@ namespace MessagePipe
             this.Order = int.MinValue; // filter first.
         }
 
-        public override ValueTask HandleAsync<T2>(T2 message, CancellationToken cancellationToken, Func<T2, CancellationToken, ValueTask> next)
+        public override ValueTask HandleAsync(T message, CancellationToken cancellationToken, Func<T, CancellationToken, ValueTask> next)
         {
-            if (predicate(Unsafe.As<T2, T>(ref message)))
+            if (predicate(message))
             {
                 return next(message, cancellationToken);
             }

@@ -24,8 +24,8 @@ namespace MessagePipe
                 return (value.Length, CreateFilters(value, provider));
             }
 
-            var filterAttributes = handlerType.GetCustomAttributes(typeof(TAttribute), true);
-
+            // require to get all filter for alidate.
+            var filterAttributes = handlerType.GetCustomAttributes(typeof(IMessagePipeFilterAttribute), true).OfType<TAttribute>().ToArray();
             if (filterAttributes.Length == 0)
             {
                 cache[handlerType] = Array.Empty<FilterDefinition>();

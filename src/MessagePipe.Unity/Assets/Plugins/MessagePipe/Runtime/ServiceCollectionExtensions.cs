@@ -4,6 +4,7 @@ using MessagePipe;
 using MessagePipe.Internal;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -21,7 +22,7 @@ namespace Microsoft.Extensions.DependencyInjection
             configure(options);
             services.AddSingleton(options); // add as singleton instance
 
-            var lifetime = options.InstanceLifetime;
+            var lifetime = options.InstanceLifetime; // lifetime is Singleton or Scoped
 
             // keyless PubSub
             services.Add(typeof(MessageBrokerCore<>), lifetime);
@@ -51,31 +52,41 @@ namespace Microsoft.Extensions.DependencyInjection
             services.Add(typeof(IRequestAllHandler<,>), typeof(RequestAllHandler<,>), lifetime);
             services.Add(typeof(IAsyncRequestAllHandler<,>), typeof(AsyncRequestAllHandler<,>), lifetime);
 
-            // filters
-            options.AddGlobalFilter(services);
-            services.AddSingleton(typeof(AttributeFilterProvider<>)); // attribute and order is deterministic at compile, so use Singleton lifetime of cache.
+            // filters.
+            // attribute and order is deterministic at compile, so use Singleton lifetime of cache.
+            services.AddSingleton(typeof(AttributeFilterProvider<MessageHandlerFilterAttribute>));
+            services.AddSingleton(typeof(AttributeFilterProvider<AsyncMessageHandlerFilterAttribute>));
+            services.AddSingleton(typeof(AttributeFilterProvider<RequestHandlerFilterAttribute>));
+            services.AddSingleton(typeof(AttributeFilterProvider<AsyncRequestHandlerFilterAttribute>));
             services.AddSingleton(typeof(FilterAttachedMessageHandlerFactory));
             services.AddSingleton(typeof(FilterAttachedAsyncMessageHandlerFactory));
+            services.AddSingleton(typeof(FilterAttachedRequestHandlerFactory));
+            services.AddSingleton(typeof(FilterAttachedAsyncRequestHandlerFactory));
+            foreach (var item in options.GetGlobalFilterTypes())
+            {
+                services.TryAddTransient(item); // filter itself is Transient
+            }
 
             // others.
             services.AddSingleton(typeof(MessagePipeDiagnosticsInfo));
 
+            // auto registration is .NET only.
             if (options.EnableAutoRegistration)
             {
                 // auto register filter and requesthandler
-
+                // request handler is option's lifetime, filter is transient
                 if (options.autoregistrationAssemblies == null && options.autoregistrationTypes == null)
                 {
-                    AutoRegistrationEngine.RegisterFromTypes(services, options, AutoRegistrationEngine.CollectFromCurrentDomain());
+                    AddRequestHandlerAndFilterFromTypes(services, lifetime, TypeCollector.CollectFromCurrentDomain());
                 }
                 else
                 {
                     var fromAssemblies = (options.autoregistrationAssemblies != null)
-                        ? AutoRegistrationEngine.CollectFromAssemblies(options.autoregistrationAssemblies)
+                        ? TypeCollector.CollectFromAssemblies(options.autoregistrationAssemblies)
                         : Enumerable.Empty<Type>();
                     var types = options.autoregistrationTypes ?? Enumerable.Empty<Type>();
 
-                    AutoRegistrationEngine.RegisterFromTypes(services, options, fromAssemblies.Concat(types).Distinct());
+                    AddRequestHandlerAndFilterFromTypes(services, lifetime, fromAssemblies.Concat(types).Distinct());
                 }
             }
 
@@ -158,6 +169,70 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             var lt = (lifetime == InstanceLifetime.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
             services.Add(new ServiceDescriptor(serviceType, implementationType, lt));
+        }
+
+        static void AddRequestHandlerAndFilterFromTypes(IServiceCollection services, InstanceLifetime requestHandlerLifetime, IEnumerable<Type> targetTypes)
+        {
+            foreach (var objectType in targetTypes)
+            {
+                if (objectType.IsInterface || objectType.IsAbstract) continue;
+
+                foreach (var interfaceType in objectType.GetInterfaces())
+                {
+                    if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IRequestHandlerCore<,>))
+                    {
+                        services.Add(interfaceType, objectType, requestHandlerLifetime);
+                        goto NEXT_TYPE;
+                    }
+
+                    if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IAsyncRequestHandlerCore<,>))
+                    {
+                        services.Add(interfaceType, objectType, requestHandlerLifetime);
+                        goto NEXT_TYPE;
+                    }
+                }
+
+                foreach (var baseType in objectType.GetBaseTypes())
+                {
+                    if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(MessageHandlerFilter<>))
+                    {
+                        services.TryAddTransient(objectType);
+                        goto NEXT_TYPE;
+                    }
+
+                    if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(AsyncMessageHandlerFilter<>))
+                    {
+                        services.TryAddTransient(objectType);
+                        goto NEXT_TYPE;
+                    }
+
+                    if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(RequestHandlerFilter<,>))
+                    {
+                        services.TryAddTransient(objectType);
+                        goto NEXT_TYPE;
+                    }
+
+                    if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(AsyncRequestHandlerFilter<,>))
+                    {
+                        services.TryAddTransient(objectType);
+                        goto NEXT_TYPE;
+                    }
+                }
+
+            NEXT_TYPE:
+                continue;
+            }
+        }
+
+        static IEnumerable<Type> GetBaseTypes(this Type t)
+        {
+            if (t == null) yield break;
+            t = t.BaseType;
+            while (t != null)
+            {
+                yield return t;
+                t = t.BaseType;
+            }
         }
     }
 }

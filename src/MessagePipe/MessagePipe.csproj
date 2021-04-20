@@ -39,6 +39,7 @@
       <TargetFiles1 Remove="FilterAttachedAsyncMessageHandlerFactory.cs" />
       <TargetFiles1 Remove="FilterAttachedAsyncRequestHandlerFactory.cs" />
       <TargetFiles1 Remove="FilterAttachedRequestHandlerFactory.cs" />
+      <TargetFiles1 Remove="Internal\TypeCollector.cs" />
     </ItemGroup>
 
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">

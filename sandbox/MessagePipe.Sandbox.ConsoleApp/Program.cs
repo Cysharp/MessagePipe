@@ -20,7 +20,7 @@ namespace MessagePipe
     {
         static async Task Main(string[] args)
         {
-            //args = new[] { "filter" };
+            args = new[] { "keyed" };
 
             await Host.CreateDefaultBuilder()
                 .ConfigureServices((ctx, x) =>
@@ -29,6 +29,10 @@ namespace MessagePipe
                     {
                         options.InstanceLifetime = InstanceLifetime.Singleton;
                         options.EnableCaptureStackTrace = true;
+
+                        options.AddGlobalMessageHandlerFilter(typeof(MyFilter<>));
+                        //options.AddGlobalMessageHandlerFilter<MyFilter<MyMessage>>();
+
                     });
                 })
                 .ConfigureLogging(x =>
@@ -98,6 +102,8 @@ namespace MessagePipe
             {
                 Console.WriteLine("A:" + x.MyProperty);
             });
+
+            this.subscriber.Subscribe("foo", new MyFirst());
 
             var d = this.subscriber.Subscribe("foo", x =>
              {
@@ -316,9 +322,9 @@ namespace MessagePipe
     }
 
 
-    public class MyFilter : MessageHandlerFilter
+    public class MyFilter<T> : MessageHandlerFilter<T>
     {
-        public override void Handle<T>(T message, Action<T> next)
+        public override void Handle(T message, Action<T> next)
         {
             Console.WriteLine("before:" + Order);
             next(message);
@@ -326,9 +332,9 @@ namespace MessagePipe
         }
     }
 
-    [MessageHandlerFilter(typeof(MyFilter), Order = 30)]
-    [MessageHandlerFilter(typeof(MyFilter), Order = -99)]
-    [MessageHandlerFilter(typeof(MyFilter), Order = 1000)]
+    [MessageHandlerFilter(typeof(MyFilter<MyMessage>), Order = 30)]
+    [MessageHandlerFilter(typeof(MyFilter<MyMessage>), Order = -99)]
+    [MessageHandlerFilter(typeof(MyFilter<MyMessage>), Order = 1000)]
     public class MyFirst : IMessageHandler<MyMessage>
     {
         public void Handle(MyMessage message)

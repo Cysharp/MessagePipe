@@ -24,7 +24,7 @@ namespace MessagePipe
 
         public IAsyncMessageHandler<TMessage> CreateAsyncMessageHandler<TMessage>(IAsyncMessageHandler<TMessage> handler, AsyncMessageHandlerFilter<TMessage>[] filters)
         {
-            var (globalLength, globalFilters) = options.GetGlobalAsyncMessageHandlerFilters(provider);
+            var (globalLength, globalFilters) = options.GetGlobalAsyncMessageHandlerFilters(provider, typeof(TMessage));
             var (handlerLength, handlerFilters) = filterProvider.GetAttributeFilters(handler.GetType(), provider);
 
             if (filters.Length != 0 || globalLength != 0 || handlerLength != 0)
