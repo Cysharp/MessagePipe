@@ -25,6 +25,19 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PostBuildUtility", "tools\P
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePipe.Redis.Tests", "tests\MessagePipe.Redis.Tests\MessagePipe.Redis.Tests.csproj", "{0C4DDD4B-8DCE-48EB-B309-39132313C3AB}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_items", "_items", "{33ADB827-BA73-4B6A-AA57-13C74AB9183D}"
+	ProjectSection(SolutionItems) = preProject
+		.dockerignore = .dockerignore
+		.gitignore = .gitignore
+		docker-compose.yml = docker-compose.yml
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{71072B57-914A-4CA8-915A-64E832DA6E1F}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\build-debug.yml = .github\workflows\build-debug.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -86,6 +99,7 @@ Global
 		{1DD3A001-BB03-4192-892C-92B298E79E68} = {36546FD6-866F-4809-AFCE-87F7F4201361}
 		{7C720CA5-C5F6-4B23-B4DD-4E98FF22111F} = {7946AB0F-638C-4D40-BB01-1EC790B0E921}
 		{0C4DDD4B-8DCE-48EB-B309-39132313C3AB} = {36546FD6-866F-4809-AFCE-87F7F4201361}
+		{71072B57-914A-4CA8-915A-64E832DA6E1F} = {33ADB827-BA73-4B6A-AA57-13C74AB9183D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {138B7AA8-E4C0-46A3-A48B-0D373CAC365D}
