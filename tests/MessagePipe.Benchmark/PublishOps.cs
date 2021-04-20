@@ -20,7 +20,7 @@ using GalaSoft.MvvmLight.Messaging;
 
 namespace MessagePipe.Benchmark
 {
-    public  class PublishOps
+    public class PublishOps
     {
         IPublisher<Message> p;
         Message m;
@@ -354,9 +354,9 @@ namespace MessagePipe.Benchmark
         }
     }
 
-    public class EmptyMessageHandlerFilter : MessageHandlerFilter
+    public class EmptyMessageHandlerFilter : MessageHandlerFilter<Message>
     {
-        public override void Handle<T>(T message, Action<T> next)
+        public override void Handle(Message message, Action<Message> next)
         {
             next(message);
         }

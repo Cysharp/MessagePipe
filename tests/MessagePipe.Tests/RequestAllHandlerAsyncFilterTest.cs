@@ -1,4 +1,6 @@
-﻿using System;
+﻿#pragma warning disable CS1998
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -40,34 +42,32 @@ namespace __MessagePipe.Tests
             nullPongs.Should().ContainEquivalentOf(new Pong("ping was null!"));
         }
 
-        public class PingPongHandlerAsyncFilter : AsyncRequestHandlerFilter
+        public class PingPongHandlerAsyncFilter : AsyncRequestHandlerFilter<Ping, Pong>
         {
-            public override ValueTask<TResponse> InvokeAsync<TRequest, TResponse>(TRequest request, CancellationToken cancellationToken, Func<TRequest, CancellationToken, ValueTask<TResponse>> next)
+            public override async ValueTask<Pong> InvokeAsync(Ping request, CancellationToken cancellationToken, Func<Ping, CancellationToken, ValueTask<Pong>> next)
             {
-                var req = Unsafe.As<TRequest, Ping>(ref request);
-                if (req.AnyValue == null)
+                if (request.AnyValue == null)
                 {
                     var ret = new Pong("ping was null.");
-                    return ValueTask.FromResult(Unsafe.As<Pong, TResponse>(ref ret));
+                    return ret;
                 }
-                return ValueTask.FromResult(Unsafe.As<Ping, TResponse>(ref req));
+                return new Pong(request.AnyValue);
             }
         }
-        public class PingPongHandlerAsyncFilter2 : AsyncRequestHandlerFilter
+        public class PingPongHandlerAsyncFilter2 : AsyncRequestHandlerFilter<Ping, Pong>
         {
-            public override ValueTask<TResponse> InvokeAsync<TRequest, TResponse>(TRequest request, CancellationToken cancellationToken, Func<TRequest, CancellationToken, ValueTask<TResponse>> next)
+            public override async ValueTask<Pong> InvokeAsync(Ping request, CancellationToken cancellationToken, Func<Ping, CancellationToken, ValueTask<Pong>> next)
             {
-                var req = Unsafe.As<TRequest, Ping>(ref request);
-                if (req.AnyValue == null)
+                if (request.AnyValue == null)
                 {
                     var ret = new Pong("ping was null!");
-                    return ValueTask.FromResult(Unsafe.As<Pong, TResponse>(ref ret));
+                    return ret;
                 }
-                return ValueTask.FromResult(Unsafe.As<Ping, TResponse>(ref req));
+                return new Pong(request.AnyValue);
             }
         }
 
-        class Ping
+        public class Ping
         {
             public string AnyValue;
             public Ping(string anyValue)
@@ -75,7 +75,7 @@ namespace __MessagePipe.Tests
                 AnyValue = anyValue;
             }
         }
-        class Pong
+        public class Pong
         {
             public string AnyValue;
             public Pong(string anyValue)

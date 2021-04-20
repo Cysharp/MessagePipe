@@ -9,12 +9,12 @@ namespace MessagePipe
     {
         // pubsub-keyless-sync
 
-        public static IDisposable Subscribe<TMessage>(this ISubscriber<TMessage> subscriber, Action<TMessage> handler, params MessageHandlerFilter[] filters)
+        public static IDisposable Subscribe<TMessage>(this ISubscriber<TMessage> subscriber, Action<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters)
         {
             return subscriber.Subscribe(new AnonymousMessageHandler<TMessage>(handler), filters);
         }
 
-        public static IDisposable Subscribe<TMessage>(this ISubscriber<TMessage> subscriber, Action<TMessage> handler, Func<TMessage, bool> predicate, params MessageHandlerFilter[] filters)
+        public static IDisposable Subscribe<TMessage>(this ISubscriber<TMessage> subscriber, Action<TMessage> handler, Func<TMessage, bool> predicate, params MessageHandlerFilter<TMessage>[] filters)
         {
             var predicateFilter = new PredicateFilter<TMessage>(predicate);
             filters = (filters.Length == 0)
@@ -24,19 +24,19 @@ namespace MessagePipe
             return subscriber.Subscribe(new AnonymousMessageHandler<TMessage>(handler), filters);
         }
 
-        public static IObservable<TMessage> AsObservable<TMessage>(this ISubscriber<TMessage> subscriber, params MessageHandlerFilter[] filters)
+        public static IObservable<TMessage> AsObservable<TMessage>(this ISubscriber<TMessage> subscriber, params MessageHandlerFilter<TMessage>[] filters)
         {
             return new ObservableSubscriber<TMessage>(subscriber, filters);
         }
 
         // pubsub-keyless-async
 
-        public static IDisposable Subscribe<TMessage>(this IAsyncSubscriber<TMessage> subscriber, Func<TMessage, CancellationToken, ValueTask> handler, params AsyncMessageHandlerFilter[] filters)
+        public static IDisposable Subscribe<TMessage>(this IAsyncSubscriber<TMessage> subscriber, Func<TMessage, CancellationToken, ValueTask> handler, params AsyncMessageHandlerFilter<TMessage>[] filters)
         {
             return subscriber.Subscribe(new AnonymousAsyncMessageHandler<TMessage>(handler), filters);
         }
 
-        public static IDisposable Subscribe<TMessage>(this IAsyncSubscriber<TMessage> subscriber, Func<TMessage, CancellationToken, ValueTask> handler, Func<TMessage, bool> predicate, params AsyncMessageHandlerFilter[] filters)
+        public static IDisposable Subscribe<TMessage>(this IAsyncSubscriber<TMessage> subscriber, Func<TMessage, CancellationToken, ValueTask> handler, Func<TMessage, bool> predicate, params AsyncMessageHandlerFilter<TMessage>[] filters)
         {
             var predicateFilter = new AsyncPredicateFilter<TMessage>(predicate);
             filters = (filters.Length == 0)
@@ -48,13 +48,13 @@ namespace MessagePipe
 
         // pubsub-key-sync
 
-        public static IDisposable Subscribe<TKey, TMessage>(this ISubscriber<TKey, TMessage> subscriber, TKey key, Action<TMessage> handler, params MessageHandlerFilter[] filters)
+        public static IDisposable Subscribe<TKey, TMessage>(this ISubscriber<TKey, TMessage> subscriber, TKey key, Action<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters)
             where TKey : notnull
         {
             return subscriber.Subscribe(key, new AnonymousMessageHandler<TMessage>(handler), filters);
         }
 
-        public static IDisposable Subscribe<TKey, TMessage>(this ISubscriber<TKey, TMessage> subscriber, TKey key, Action<TMessage> handler, Func<TMessage, bool> predicate, params MessageHandlerFilter[] filters)
+        public static IDisposable Subscribe<TKey, TMessage>(this ISubscriber<TKey, TMessage> subscriber, TKey key, Action<TMessage> handler, Func<TMessage, bool> predicate, params MessageHandlerFilter<TMessage>[] filters)
             where TKey : notnull
         {
             var predicateFilter = new PredicateFilter<TMessage>(predicate);
@@ -65,7 +65,7 @@ namespace MessagePipe
             return subscriber.Subscribe(key, new AnonymousMessageHandler<TMessage>(handler), filters);
         }
 
-        public static IObservable<TMessage> AsObservable<TKey, TMessage>(this ISubscriber<TKey, TMessage> subscriber, TKey key, params MessageHandlerFilter[] filters)
+        public static IObservable<TMessage> AsObservable<TKey, TMessage>(this ISubscriber<TKey, TMessage> subscriber, TKey key, params MessageHandlerFilter<TMessage>[] filters)
             where TKey : notnull
         {
             return new ObservableSubscriber<TKey, TMessage>(key, subscriber, filters);
@@ -73,13 +73,13 @@ namespace MessagePipe
 
         // pubsub-key-async
 
-        public static IDisposable Subscribe<TKey, TMessage>(this IAsyncSubscriber<TKey, TMessage> subscriber, TKey key, Func<TMessage, CancellationToken, ValueTask> handler, params AsyncMessageHandlerFilter[] filters)
+        public static IDisposable Subscribe<TKey, TMessage>(this IAsyncSubscriber<TKey, TMessage> subscriber, TKey key, Func<TMessage, CancellationToken, ValueTask> handler, params AsyncMessageHandlerFilter<TMessage>[] filters)
             where TKey : notnull
         {
             return subscriber.Subscribe(key, new AnonymousAsyncMessageHandler<TMessage>(handler), filters);
         }
 
-        public static IDisposable Subscribe<TKey, TMessage>(this IAsyncSubscriber<TKey, TMessage> subscriber, TKey key, Func<TMessage, CancellationToken, ValueTask> handler, Func<TMessage, bool> predicate, params AsyncMessageHandlerFilter[] filters)
+        public static IDisposable Subscribe<TKey, TMessage>(this IAsyncSubscriber<TKey, TMessage> subscriber, TKey key, Func<TMessage, CancellationToken, ValueTask> handler, Func<TMessage, bool> predicate, params AsyncMessageHandlerFilter<TMessage>[] filters)
             where TKey : notnull
         {
             var predicateFilter = new AsyncPredicateFilter<TMessage>(predicate);
@@ -126,9 +126,9 @@ namespace MessagePipe
     {
         readonly TKey key;
         readonly ISubscriber<TKey, TMessage> subscriber;
-        readonly MessageHandlerFilter[] filters;
+        readonly MessageHandlerFilter<TMessage>[] filters;
 
-        public ObservableSubscriber(TKey key, ISubscriber<TKey, TMessage> subscriber, MessageHandlerFilter[] filters)
+        public ObservableSubscriber(TKey key, ISubscriber<TKey, TMessage> subscriber, MessageHandlerFilter<TMessage>[] filters)
         {
             this.key = key;
             this.subscriber = subscriber;
@@ -144,9 +144,9 @@ namespace MessagePipe
     internal sealed class ObservableSubscriber<TMessage> : IObservable<TMessage>
     {
         readonly ISubscriber<TMessage> subscriber;
-        readonly MessageHandlerFilter[] filters;
+        readonly MessageHandlerFilter<TMessage>[] filters;
 
-        public ObservableSubscriber(ISubscriber<TMessage> subscriber, MessageHandlerFilter[] filters)
+        public ObservableSubscriber(ISubscriber<TMessage> subscriber, MessageHandlerFilter<TMessage>[] filters)
         {
             this.subscriber = subscriber;
             this.filters = filters;

@@ -32,7 +32,7 @@ namespace MessagePipe
             return core.PublishAsync(message, publishStrategy, cancellationToken);
         }
 
-        public IDisposable Subscribe(IAsyncMessageHandler<TMessage> handler, AsyncMessageHandlerFilter[] filters)
+        public IDisposable Subscribe(IAsyncMessageHandler<TMessage> handler, AsyncMessageHandlerFilter<TMessage>[] filters)
         {
             return core.Subscribe(handlerFactory.CreateAsyncMessageHandler(handler, filters));
         }

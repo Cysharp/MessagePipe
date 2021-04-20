@@ -31,21 +31,20 @@ namespace __MessagePipe.Tests
             nullPong.AnyValue.Should().Be("ping was null.");
         }
 
-        public class PingPongHandlerFilter : RequestHandlerFilter
+        public class PingPongHandlerFilter : RequestHandlerFilter<Ping, Pong>
         {
-            public override TResponse Invoke<TRequest, TResponse>(TRequest request, Func<TRequest, TResponse> next)
+            public override Pong Invoke(Ping request, Func<Ping, Pong> next)
             {
-                var req = Unsafe.As<TRequest, Ping>(ref request);
-                if (req.AnyValue == null)
+                if (request.AnyValue == null)
                 {
                     var ret = new Pong("ping was null.");
-                    return Unsafe.As<Pong, TResponse>(ref ret);
+                    return ret;
                 }
-                return Unsafe.As<Ping, TResponse>(ref req);
+                return new Pong(request.AnyValue);
             }
         }
 
-        class Ping
+        public class Ping
         {
             public string AnyValue;
 
@@ -54,7 +53,7 @@ namespace __MessagePipe.Tests
                 AnyValue = anyValue;
             }
         }
-        class Pong
+        public class Pong
         {
             public string AnyValue;
 

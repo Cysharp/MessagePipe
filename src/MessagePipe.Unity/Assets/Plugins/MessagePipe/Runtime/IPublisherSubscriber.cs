@@ -1,4 +1,3 @@
-using MessagePipe.Internal;
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -7,14 +6,38 @@ namespace MessagePipe
 {
     // handler
 
-    public interface IMessageHandler<T>
+    public interface IMessageHandler<TMessage>
     {
-        void Handle(T message);
+        void Handle(TMessage message);
     }
 
-    public interface IAsyncMessageHandler<T>
+    public interface IAsyncMessageHandler<TMessage>
     {
-        UniTask HandleAsync(T message, CancellationToken cancellationToken);
+        UniTask HandleAsync(TMessage message, CancellationToken cancellationToken);
+    }
+
+    // Keyless
+
+    public interface IPublisher<TMessage>
+    {
+        void Publish(TMessage message);
+    }
+
+    public interface ISubscriber<TMessage>
+    {
+        public IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
+    }
+
+    public interface IAsyncPublisher<TMessage>
+    {
+        void Publish(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        UniTask PublishAsync(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        UniTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
+    }
+
+    public interface IAsyncSubscriber<TMessage>
+    {
+        public IDisposable Subscribe(IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
     }
 
     // Keyed
@@ -28,7 +51,7 @@ namespace MessagePipe
     public interface ISubscriber<TKey, TMessage>
         where TKey : notnull
     {
-        public IDisposable Subscribe(TKey key, IMessageHandler<TMessage> handler, params MessageHandlerFilter[] filters);
+        public IDisposable Subscribe(TKey key, IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
     }
 
     public interface IAsyncPublisher<TKey, TMessage>
@@ -42,30 +65,6 @@ namespace MessagePipe
     public interface IAsyncSubscriber<TKey, TMessage>
         where TKey : notnull
     {
-        public IDisposable Subscribe(TKey key, IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter[] filters);
-    }
-
-    // Keyless
-
-    public interface IPublisher<TMessage>
-    {
-        void Publish(TMessage message);
-    }
-
-    public interface ISubscriber<TMessage>
-    {
-        public IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter[] filters);
-    }
-
-    public interface IAsyncPublisher<TMessage>
-    {
-        void Publish(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
-        UniTask PublishAsync(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
-        UniTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
-    }
-
-    public interface IAsyncSubscriber<TMessage>
-    {
-        public IDisposable Subscribe(IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter[] filters);
+        public IDisposable Subscribe(TKey key, IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
     }
 }

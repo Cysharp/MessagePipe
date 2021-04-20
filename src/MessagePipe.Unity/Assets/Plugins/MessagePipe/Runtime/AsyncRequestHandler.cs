@@ -12,57 +12,37 @@ namespace MessagePipe
 
     public sealed class AsyncRequestHandler<TRequest, TResponse> : IAsyncRequestHandler<TRequest, TResponse>
     {
-        Func<TRequest, CancellationToken, UniTask<TResponse>> handler;
+        readonly IAsyncRequestHandlerCore<TRequest, TResponse> handler;
 
-        public AsyncRequestHandler(IAsyncRequestHandlerCore<TRequest, TResponse> handler, MessagePipeOptions options, FilterCache<AsyncRequestHandlerFilterAttribute, AsyncRequestHandlerFilter> filterCache, IServiceProvider provider)
+        public AsyncRequestHandler(IAsyncRequestHandlerCore<TRequest, TResponse> handler, FilterAttachedAsyncRequestHandlerFactory handlerFactory)
         {
-            var handlerFilters = filterCache.GetOrAddFilters(handler.GetType(), provider);
-            var globalFilters = options.GetGlobalAsyncRequestHandlerFilters(provider);
-
-            Func<TRequest, CancellationToken, UniTask<TResponse>> next = handler.InvokeAsync;
-            if (handlerFilters.Length != 0 || globalFilters.Length != 0)
-            {
-                foreach (var f in ArrayUtil.Concat(handlerFilters, globalFilters).OrderByDescending(x => x.Order))
-                {
-                    next = new AsyncRequestHandlerFilterRunner<TRequest, TResponse>(f, next).GetDelegate();
-                }
-            }
-
-            this.handler = next;
+            this.handler = handlerFactory.CreateAsyncRequestHandler<TRequest, TResponse>(handler);
         }
 
         public UniTask<TResponse> InvokeAsync(TRequest request, CancellationToken cancellationToken = default)
         {
-            return handler(request, cancellationToken);
+            return handler.InvokeAsync(request, cancellationToken);
         }
     }
 
     public sealed class AsyncRequestAllHandler<TRequest, TResponse> : IAsyncRequestAllHandler<TRequest, TResponse>
     {
-        Func<TRequest, CancellationToken, UniTask<TResponse>>[] handlers;
+        readonly IAsyncRequestHandlerCore<TRequest, TResponse>[] handlers;
         readonly AsyncPublishStrategy defaultAsyncPublishStrategy;
 
-        public AsyncRequestAllHandler(IEnumerable<IAsyncRequestHandlerCore<TRequest, TResponse>> handlers, MessagePipeOptions options, FilterCache<AsyncRequestHandlerFilterAttribute, AsyncRequestHandlerFilter> filterCache, IServiceProvider provider)
+        public AsyncRequestAllHandler(IEnumerable<IAsyncRequestHandlerCore<TRequest, TResponse>> handlers, FilterAttachedAsyncRequestHandlerFactory handlerFactory, MessagePipeOptions options)
         {
-            var globalFilters = options.GetGlobalAsyncRequestHandlerFilters(provider);
-            this.defaultAsyncPublishStrategy = options.DefaultAsyncPublishStrategy;
+            var collection = (handlers as ICollection<IAsyncRequestHandlerCore<TRequest, TResponse>>) ?? handlers.ToArray();
 
-            this.handlers = new Func<TRequest, CancellationToken, UniTask<TResponse>>[handlers.Count()];
-            int currentIndex = 0;
-            foreach (var handler in handlers)
+            var array = new IAsyncRequestHandlerCore<TRequest, TResponse>[collection.Count];
+            var i = 0;
+            foreach (var item in collection)
             {
-                var handlerFilters = filterCache.GetOrAddFilters(handler.GetType(), provider);
-
-                Func<TRequest, CancellationToken, UniTask<TResponse>> next = handler.InvokeAsync;
-                if (handlerFilters.Length != 0 || globalFilters.Length != 0)
-                {
-                    foreach (var f in ArrayUtil.Concat(handlerFilters, globalFilters).OrderByDescending(x => x.Order))
-                    {
-                        next = new AsyncRequestHandlerFilterRunner<TRequest, TResponse>(f, next).GetDelegate();
-                    }
-                }
-                this.handlers[currentIndex++] = next;
+                array[i++] = handlerFactory.CreateAsyncRequestHandler(item);
             }
+
+            this.handlers = array;
+            this.defaultAsyncPublishStrategy = options.DefaultAsyncPublishStrategy;
         }
 
         public UniTask<TResponse[]> InvokeAllAsync(TRequest request, CancellationToken cancellationToken)
@@ -72,13 +52,12 @@ namespace MessagePipe
 
         public async UniTask<TResponse[]> InvokeAllAsync(TRequest request, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken)
         {
-            var responses = new TResponse[handlers.Length];
-
             if (publishStrategy == AsyncPublishStrategy.Sequential)
             {
+                var responses = new TResponse[handlers.Length];
                 for (int i = 0; i < handlers.Length; i++)
                 {
-                    responses[i] = await handlers[i].Invoke(request, cancellationToken);
+                    responses[i] = await handlers[i].InvokeAsync(request, cancellationToken);
                 }
                 return responses;
             }
@@ -107,7 +86,7 @@ namespace MessagePipe
         {
             for (int i = 0; i < handlers.Length; i++)
             {
-                yield return await handlers[i].Invoke(request, cancellationToken);
+                yield return await handlers[i].InvokeAsync(request, cancellationToken);
             }
         }
 

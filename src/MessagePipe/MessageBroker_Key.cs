@@ -21,7 +21,7 @@ namespace MessagePipe
             core.Publish(key, message);
         }
 
-        public IDisposable Subscribe(TKey key, IMessageHandler<TMessage> handler, params MessageHandlerFilter[] filters)
+        public IDisposable Subscribe(TKey key, IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters)
         {
             return core.Subscribe(key, handlerFactory.CreateMessageHandler(handler, filters));
         }

@@ -1,32 +1,15 @@
-using MessagePipe.Internal;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using Cysharp.Threading.Tasks;
 
 namespace MessagePipe
 {
     public sealed class RequestHandler<TRequest, TResponse> : IRequestHandler<TRequest, TResponse>
     {
-        readonly Func<TRequest, TResponse> handler;
+        readonly IRequestHandlerCore<TRequest, TResponse> handler;
 
-        public RequestHandler(IRequestHandlerCore<TRequest, TResponse> handler, MessagePipeOptions options, FilterCache<RequestHandlerFilterAttribute, RequestHandlerFilter> filterCache, IServiceProvider provider)
+        public RequestHandler(IRequestHandlerCore<TRequest, TResponse> handler, FilterAttachedRequestHandlerFactory handlerFactory)
         {
-            var handlerFilters = filterCache.GetOrAddFilters(handler.GetType(), provider);
-            var globalFilters = options.GetGlobalRequestHandlerFilters(provider);
-
-            Func<TRequest, TResponse> next = handler.Invoke;
-            if (handlerFilters.Length != 0 || globalFilters.Length != 0)
-            {
-                foreach (var f in ArrayUtil.Concat(handlerFilters, globalFilters).OrderByDescending(x => x.Order))
-                {
-                    next = new RequestHandlerFilterRunner<TRequest, TResponse>(f, next).GetDelegate();
-                }
-            }
-
-            this.handler = next;
+            this.handler = handlerFactory.CreateRequestHandler<TRequest, TResponse>(handler);
         }
 
         public TResponse Invoke(TRequest request)
@@ -37,29 +20,20 @@ namespace MessagePipe
 
     public sealed class RequestAllHandler<TRequest, TResponse> : IRequestAllHandler<TRequest, TResponse>
     {
-        readonly Func<TRequest, TResponse>[] handlers;
+        readonly IRequestHandlerCore<TRequest, TResponse>[] handlers;
 
-        public RequestAllHandler(IEnumerable<IRequestHandlerCore<TRequest, TResponse>> handlers, MessagePipeOptions options, FilterCache<RequestHandlerFilterAttribute, RequestHandlerFilter> filterCache, IServiceProvider provider)
+        public RequestAllHandler(IEnumerable<IRequestHandlerCore<TRequest, TResponse>> handlers, FilterAttachedRequestHandlerFactory handlerFactory)
         {
-            var globalFilters = options.GetGlobalRequestHandlerFilters(provider);
+            var collection = (handlers as ICollection<IRequestHandlerCore<TRequest, TResponse>>) ?? handlers.ToArray();
 
-            this.handlers = new Func<TRequest, TResponse>[handlers.Count()];
-            int currentIndex = 0;
-            foreach (var handler in handlers)
+            var array = new IRequestHandlerCore<TRequest, TResponse>[collection.Count];
+            var i = 0;
+            foreach (var item in collection)
             {
-                var handlerFilters = filterCache.GetOrAddFilters(handler.GetType(), provider);
-                Func<TRequest, TResponse> next = handler.Invoke;
-                if (handlerFilters.Length != 0 || globalFilters.Length != 0)
-                {
-                    foreach (var f in ArrayUtil.Concat(handlerFilters, globalFilters).OrderByDescending(x => x.Order))
-                    {
-                        next = new RequestHandlerFilterRunner<TRequest, TResponse>(f, next).GetDelegate();
-                    }
-                }
-
-                this.handlers[currentIndex++] = next;
+                array[i++] = handlerFactory.CreateRequestHandler(item);
             }
 
+            this.handlers = array;
         }
 
         public TResponse[] InvokeAll(TRequest request)

@@ -1,59 +1,79 @@
-﻿using MessagePipe.Internal;
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MessagePipe
 {
+    // Sync
+
     public sealed class FilterAttachedMessageHandlerFactory
     {
         readonly MessagePipeOptions options;
-        readonly FilterCache<MessageHandlerFilterAttribute, MessageHandlerFilter> filterCache;
+        readonly AttributeFilterProvider<MessageHandlerFilterAttribute> filterProvider;
         readonly IServiceProvider provider;
 
-        public FilterAttachedMessageHandlerFactory(MessagePipeOptions options, FilterCache<MessageHandlerFilterAttribute, MessageHandlerFilter> filterCache, IServiceProvider provider)
+        public FilterAttachedMessageHandlerFactory(MessagePipeOptions options, AttributeFilterProvider<MessageHandlerFilterAttribute> filterProvider, IServiceProvider provider)
         {
             this.options = options;
-            this.filterCache = filterCache;
+            this.filterProvider = filterProvider;
             this.provider = provider;
         }
 
-        public IMessageHandler<TMessage> CreateMessageHandler<TMessage>(IMessageHandler<TMessage> handler, MessageHandlerFilter[] filters)
+        public IMessageHandler<TMessage> CreateMessageHandler<TMessage>(IMessageHandler<TMessage> handler, MessageHandlerFilter<TMessage>[] filters)
         {
-            var handlerFilters = filterCache.GetOrAddFilters(handler.GetType(), provider);
-            var globalFilters = options.GetGlobalMessageHandlerFilters(provider);
+            var (globalLength, globalFilters) = options.GetGlobalMessageHandlerFilters(provider, typeof(TMessage));
+            var (handlerLength, handlerFilters) = filterProvider.GetAttributeFilters(handler.GetType(), provider);
 
-            if (filters.Length != 0 || handlerFilters.Length != 0 || globalFilters.Length != 0)
+            if (filters.Length != 0 || globalLength != 0 || handlerLength != 0)
             {
-                handler = new FilterAttachedMessageHandler<TMessage>(handler, ArrayUtil.Concat(filters, handlerFilters, globalFilters));
+                handler = new FilterAttachedMessageHandler<TMessage>(handler, globalFilters.Concat(handlerFilters).Concat(filters).Cast<MessageHandlerFilter<TMessage>>());
             }
 
             return handler;
         }
     }
 
-    public sealed class FilterAttachedAsyncMessageHandlerFactory
+    internal sealed class FilterAttachedMessageHandler<T> : IMessageHandler<T>
     {
-        readonly MessagePipeOptions options;
-        readonly FilterCache<AsyncMessageHandlerFilterAttribute, AsyncMessageHandlerFilter> filterCache;
-        readonly IServiceProvider provider;
+        Action<T> handler;
 
-        public FilterAttachedAsyncMessageHandlerFactory(MessagePipeOptions options, FilterCache<AsyncMessageHandlerFilterAttribute, AsyncMessageHandlerFilter> filterCache, IServiceProvider provider)
+        public FilterAttachedMessageHandler(IMessageHandler<T> body, IEnumerable<MessageHandlerFilter<T>> filters)
         {
-            this.options = options;
-            this.filterCache = filterCache;
-            this.provider = provider;
-        }
-
-        public IAsyncMessageHandler<TMessage> CreateAsyncMessageHandler<TMessage>(IAsyncMessageHandler<TMessage> handler, AsyncMessageHandlerFilter[] filters)
-        {
-            var handlerFilters = filterCache.GetOrAddFilters(handler.GetType(), provider);
-            var globalFilters = options.GetGlobalAsyncMessageHandlerFilters(provider);
-
-            if (filters.Length != 0 || handlerFilters.Length != 0 || globalFilters.Length != 0)
+            Action<T> next = body.Handle;
+            foreach (var f in filters.OrderByDescending(x => x.Order))
             {
-                handler = new FilterAttachedAsyncMessageHandler<TMessage>(handler, ArrayUtil.Concat(filters, handlerFilters, globalFilters));
+                next = new MessageHandlerFilterRunner<T>(f, next).GetDelegate();
             }
 
-            return handler;
+            this.handler = next;
+        }
+
+        public void Handle(T message)
+        {
+            handler(message);
+        }
+    }
+
+    internal sealed class MessageHandlerFilterRunner<T>
+    {
+        readonly MessageHandlerFilter<T> filter;
+        readonly Action<T> next;
+
+        public MessageHandlerFilterRunner(MessageHandlerFilter<T> filter, Action<T> next)
+        {
+            this.filter = filter;
+            this.next = next;
+        }
+
+        public Action<T> GetDelegate() => Handle;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void Handle(T message)
+        {
+            filter.Handle(message, next);
         }
     }
 }
