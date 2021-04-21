@@ -9,10 +9,10 @@
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <RootNamespace></RootNamespace>
-    <ProjectGuid>{29A5BE42-8F4C-4B5D-CA88-38175365084F}</ProjectGuid>
+    <ProjectGuid>{F1CA6C66-841D-F45F-BDEE-565F3682A621}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <AssemblyName>Assembly-CSharp-firstpass</AssemblyName>
+    <AssemblyName>Assembly-CSharp</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <BaseDirectory>.</BaseDirectory>
@@ -48,7 +48,7 @@
     <ProjectTypeGuids>{E097FAD1-6243-4DAD-9C02-E9B9EFC3FFC1};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <UnityProjectGenerator>Package</UnityProjectGenerator>
     <UnityProjectGeneratorVersion>2.0.7</UnityProjectGeneratorVersion>
-    <UnityProjectType>GamePlugins:3</UnityProjectType>
+    <UnityProjectType>Game:1</UnityProjectType>
     <UnityBuildTarget>StandaloneWindows:5</UnityBuildTarget>
     <UnityVersion>2020.2.7f1</UnityVersion>
   </PropertyGroup>
@@ -56,40 +56,10 @@
     <Analyzer Include="C:\Program Files (x86)\Microsoft Visual Studio Tools for Unity\16.0\Analyzers\Microsoft.Unity.Analyzers.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\AsyncMessageBroker.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\PredicateFilter.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\Internal\AsyncHandlerWhenAll.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\Internal\FastQueue.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\Internal\AsyncRequestHandlerWhenAll.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\Internal\TaskExtensions.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\FilterAttachedMessageHandlerFactory.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\Disposables.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\MessagePipeFilter.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\MessagePipeDiagnosticsInfo.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\AsyncRequestHandler.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\MessagePipeOptions.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\DisposableBag.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\IDistributedPubSub.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\AsyncMessageBroker_Key.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\IRequestHandler.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\RequestHandler.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\Internal\FreeList.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\ServiceCollectionExtensions.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\IPublisherSubscriber.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\Internal\ArrayUtil.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\MessageBroker.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\SubscriberExtensions.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\MessageBroker_Key.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\Unity\DependencyInjectionShims.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\Unity\TaskShims.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\FilterAttachedAsyncRequestHandlerFactory.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\IgnoreAutoRegistration.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\AttributeFilterProvider.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\Internal\TypeCollector.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\FilterAttachedAsyncMessageHandlerFactory.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\InMemoryDistributedPubSub.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\DistributedSubscriberExtensions.cs" />
-    <Compile Include="Assets\Plugins\MessagePipe\Runtime\FilterAttachedRequestHandlerFactory.cs" />
+    <Compile Include="Assets\Scenes\NewBehaviourScript.cs" />
+    <Compile Include="Assets\Scripts\GameLifetimeScope.cs" />
+    <Compile Include="Assets\Scripts\VContainer\TypeProxy.cs" />
+    <Compile Include="Assets\Scripts\VContainer\ContainerBuilderExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
@@ -778,6 +748,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="Assembly-CSharp-firstpass.csproj">
+      <Project>{29A5BE42-8F4C-4B5D-CA88-38175365084F}</Project>
+      <Name>Assembly-CSharp-firstpass</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />

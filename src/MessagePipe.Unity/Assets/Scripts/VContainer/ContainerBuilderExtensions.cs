@@ -20,7 +20,7 @@ namespace MessagePipe
             builder.RegisterInstance(options);
             builder.Register<IServiceProvider, ObjectResolverProxy>(Lifetime.Scoped);
             builder.Register<MessagePipeDiagnosticsInfo>(Lifetime.Singleton);
-            builder.Register<FilterCache<MessageHandlerFilterAttribute, MessageHandlerFilter>>(Lifetime.Singleton);
+            builder.Register<AttributeFilterProvider<MessageHandlerFilterAttribute>>(Lifetime.Singleton);
             builder.Register<FilterAttachedMessageHandlerFactory>(Lifetime.Singleton);
             builder.Register<FilterAttachedAsyncMessageHandlerFactory>(Lifetime.Singleton);
 
