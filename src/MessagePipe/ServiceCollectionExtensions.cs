@@ -35,7 +35,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton(typeof(FilterAttachedAsyncRequestHandlerFactory));
             foreach (var item in options.GetGlobalFilterTypes())
             {
-                services.TryAddTransient(item); // filter itself is Transient
+                services.AddTransient(item); // filter itself is Transient
             }
 
 #if !UNITY_2018_3_OR_NEWER
@@ -101,28 +101,28 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddMessageHandlerFilter<T>(this IServiceCollection services)
             where T : class, IMessageHandlerFilter
         {
-            services.TryAddTransient<T>();
+            services.AddTransient<T>();
             return services;
         }
 
         public static IServiceCollection AddAsyncMessageHandlerFilter<T>(this IServiceCollection services)
             where T : class, IAsyncMessageHandlerFilter
         {
-            services.TryAddTransient<T>();
+            services.AddTransient<T>();
             return services;
         }
 
         public static IServiceCollection AddRequestHandlerFilter<T>(this IServiceCollection services)
             where T : class, IRequestHandlerFilter
         {
-            services.TryAddTransient<T>();
+            services.AddTransient<T>();
             return services;
         }
 
         public static IServiceCollection AddAsyncRequestHandlerFilter<T>(this IServiceCollection services)
             where T : class, IAsyncRequestHandlerFilter
         {
-            services.TryAddTransient<T>();
+            services.AddTransient<T>();
             return services;
         }
 
@@ -241,25 +241,25 @@ namespace Microsoft.Extensions.DependencyInjection
                 {
                     if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(MessageHandlerFilter<>))
                     {
-                        services.TryAddTransient(objectType);
+                        services.AddTransient(objectType);
                         goto NEXT_TYPE;
                     }
 
                     if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(AsyncMessageHandlerFilter<>))
                     {
-                        services.TryAddTransient(objectType);
+                        services.AddTransient(objectType);
                         goto NEXT_TYPE;
                     }
 
                     if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(RequestHandlerFilter<,>))
                     {
-                        services.TryAddTransient(objectType);
+                        services.AddTransient(objectType);
                         goto NEXT_TYPE;
                     }
 
                     if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(AsyncRequestHandlerFilter<,>))
                     {
-                        services.TryAddTransient(objectType);
+                        services.AddTransient(objectType);
                         goto NEXT_TYPE;
                     }
                 }
@@ -268,18 +268,6 @@ namespace Microsoft.Extensions.DependencyInjection
                 continue;
             }
         }
-
-        static IEnumerable<Type> GetBaseTypes(this Type t)
-        {
-            if (t == null) yield break;
-            t = t.BaseType;
-            while (t != null)
-            {
-                yield return t;
-                t = t.BaseType;
-            }
-        }
-
 #endif
     }
 }

@@ -74,8 +74,11 @@ namespace MessagePipe
             var services = new ContainerBuilderProxy(builder);
 
             services.Add(typeof(IRequestHandlerCore<TRequest, TResponse>), typeof(THandler), lifetime);
-            services.Add(typeof(IRequestHandler<TRequest, TResponse>), typeof(RequestHandler<TRequest, TResponse>), lifetime);
-            services.Add(typeof(IRequestAllHandler<TRequest, TResponse>), typeof(RequestAllHandler<TRequest, TResponse>), lifetime);
+            if (!builder.Exists(typeof(IRequestHandler<TRequest, TResponse>), true))
+            {
+                services.Add(typeof(IRequestHandler<TRequest, TResponse>), typeof(RequestHandler<TRequest, TResponse>), lifetime);
+                services.Add(typeof(IRequestAllHandler<TRequest, TResponse>), typeof(RequestAllHandler<TRequest, TResponse>), lifetime);
+            }
 
             return builder;
         }
@@ -88,8 +91,11 @@ namespace MessagePipe
             var services = new ContainerBuilderProxy(builder);
 
             services.Add(typeof(IAsyncRequestHandlerCore<TRequest, TResponse>), typeof(THandler), lifetime);
-            services.Add(typeof(IAsyncRequestHandler<TRequest, TResponse>), typeof(AsyncRequestHandler<TRequest, TResponse>), lifetime);
-            services.Add(typeof(IAsyncRequestAllHandler<TRequest, TResponse>), typeof(AsyncRequestAllHandler<TRequest, TResponse>), lifetime);
+            if (!builder.Exists(typeof(IAsyncRequestHandler<TRequest, TResponse>), true))
+            {
+                services.Add(typeof(IAsyncRequestHandler<TRequest, TResponse>), typeof(AsyncRequestHandler<TRequest, TResponse>), lifetime);
+                services.Add(typeof(IAsyncRequestAllHandler<TRequest, TResponse>), typeof(AsyncRequestAllHandler<TRequest, TResponse>), lifetime);
+            }
 
             return builder;
         }
@@ -101,21 +107,21 @@ namespace MessagePipe
             return builder;
         }
 
-        public static IContainerBuilder AddAsyncMessageHandlerFilter<T>(this IContainerBuilder builder)
+        public static IContainerBuilder RegisterAsyncMessageHandlerFilter<T>(this IContainerBuilder builder)
             where T : class, IAsyncMessageHandlerFilter
         {
             builder.Register<T>(Lifetime.Transient);
             return builder;
         }
 
-        public static IContainerBuilder AddRequestHandlerFilter<T>(this IContainerBuilder builder)
+        public static IContainerBuilder RegisterRequestHandlerFilter<T>(this IContainerBuilder builder)
             where T : class, IRequestHandlerFilter
         {
             builder.Register<T>(Lifetime.Transient);
             return builder;
         }
 
-        public static IContainerBuilder AddAsyncRequestHandlerFilter<T>(this IContainerBuilder builder)
+        public static IContainerBuilder RegisterAsyncRequestHandlerFilter<T>(this IContainerBuilder builder)
             where T : class, IAsyncRequestHandlerFilter
         {
             builder.Register<T>(Lifetime.Transient);

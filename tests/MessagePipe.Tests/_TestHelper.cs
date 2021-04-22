@@ -27,7 +27,7 @@ namespace MessagePipe.Tests
             return sc.BuildServiceProvider();
         }
 
-        public static IServiceProvider BuildServiceProvider2(Action<MessagePipeOptions> configure, Action<ServiceCollection> configureService)
+        public static IServiceProvider BuildServiceProvider3(Action<MessagePipeOptions> configure, Action<ServiceCollection> configureService)
         {
             var sc = new ServiceCollection();
             sc.AddMessagePipe(configure);

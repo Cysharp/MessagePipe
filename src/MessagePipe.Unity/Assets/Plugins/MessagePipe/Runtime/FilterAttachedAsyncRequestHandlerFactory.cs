@@ -25,7 +25,7 @@ namespace MessagePipe
 
         public IAsyncRequestHandlerCore<TRequest, TResponse> CreateAsyncRequestHandler<TRequest, TResponse>(IAsyncRequestHandlerCore<TRequest, TResponse> handler)
         {
-            var (globalLength, globalFilters) = options.GetGlobalAsyncRequestHandlerFilters(provider, typeof(TRequest));
+            var (globalLength, globalFilters) = options.GetGlobalAsyncRequestHandlerFilters(provider, typeof(TRequest), typeof(TResponse));
             var (handlerLength, handlerFilters) = filterProvider.GetAttributeFilters(handler.GetType(), provider);
 
             if (globalLength != 0 || handlerLength != 0)

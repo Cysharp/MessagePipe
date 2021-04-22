@@ -29,6 +29,6 @@ namespace MessagePipe
     {
         public void AddSingleton<T>(T instance);
         public void AddSingleton(Type type);
-        public void TryAddTransient(Type type);
+        public void AddTransient(Type type);
     }
 }

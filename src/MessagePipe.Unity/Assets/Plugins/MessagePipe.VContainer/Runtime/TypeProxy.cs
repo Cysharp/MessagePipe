@@ -12,12 +12,9 @@ namespace MessagePipe
             this.builder = builder;
         }
 
-        public void TryAddTransient(Type type)
+        public void AddTransient(Type type)
         {
-            if (!builder.Exists(type))
-            {
-                builder.Register(type, Lifetime.Transient);
-            }
+            builder.Register(type, Lifetime.Transient);
         }
 
         public void AddSingleton<T>(T instance)

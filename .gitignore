@@ -120,3 +120,14 @@ nuget/*.unitypackage
 src/MessagePipe.Unity/Library/*
 src/MessagePipe.Unity/Temp/*
 src/MessagePipe.Unity/Logs/*
+src/MessagePipe.Unity/Assembly-CSharp.csproj
+
+src/MessagePipe.Unity/MessagePipe.csproj
+
+src/MessagePipe.Unity/MessagePipe.Unity.sln
+
+src/MessagePipe.Unity/MessagePipe.VContainer.csproj
+
+src/MessagePipe.Unity/RuntimeUnitTestToolkit.csproj
+
+src/MessagePipe.Unity/Tests.csproj

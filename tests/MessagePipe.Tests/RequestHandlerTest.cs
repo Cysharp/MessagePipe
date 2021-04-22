@@ -51,6 +51,7 @@ namespace __MessagePipe.Tests
                 Value = anyValue;
             }
         }
+
         class PingPongHandler : IRequestHandler<Ping, Pong>
         {
             public Pong Invoke(Ping request)

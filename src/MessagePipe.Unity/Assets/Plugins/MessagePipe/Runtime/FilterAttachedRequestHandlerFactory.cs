@@ -22,7 +22,7 @@ namespace MessagePipe
 
         public IRequestHandlerCore<TRequest, TResponse> CreateRequestHandler<TRequest, TResponse>(IRequestHandlerCore<TRequest, TResponse> handler)
         {
-            var (globalLength, globalFilters) = options.GetGlobalRequestHandlerFilters(provider, typeof(TRequest));
+            var (globalLength, globalFilters) = options.GetGlobalRequestHandlerFilters(provider, typeof(TRequest), typeof(TResponse));
             var (handlerLength, handlerFilters) = filterProvider.GetAttributeFilters(handler.GetType(), provider);
 
             if (globalLength != 0 || handlerLength != 0)

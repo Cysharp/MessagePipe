@@ -1,10 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using MessagePipe.Internal;
 #if !UNITY_2018_3_OR_NEWER
 using Microsoft.Extensions.DependencyInjection;
 #endif
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-
 namespace MessagePipe
 {
     public enum AsyncPublishStrategy
@@ -35,28 +36,6 @@ namespace MessagePipe
         }
     }
 
-    internal readonly struct FilterDefinition
-    {
-        public readonly Type FilterType;
-        public readonly int Order;
-        /// <summary>if null, open generics.</summary>
-        public readonly Type MessageType;
-
-        public FilterDefinition(Type filterType, int order)
-        {
-            FilterType = filterType;
-            Order = order;
-            if (!filterType.IsConstructedGenericType)
-            {
-                MessageType = null;
-            }
-            else
-            {
-                MessageType = filterType.GetGenericArguments()[0];
-            }
-        }
-    }
-
     public sealed class MessagePipeOptions
     {
         /// <summary>PublishAsync</summary>
@@ -82,6 +61,8 @@ namespace MessagePipe
             this.HandlingSubscribeDisposedPolicy = HandlingSubscribeDisposedPolicy.Ignore;
 #if !UNITY_2018_3_OR_NEWER
             this.EnableAutoRegistration = true;
+            this.autoregistrationAssemblies = null;
+            this.autoregistrationTypes = null;
 #endif
         }
 
@@ -133,19 +114,23 @@ namespace MessagePipe
 
         List<FilterDefinition> messageHandlerFilters = new List<FilterDefinition>();
 
+#if !UNITY_2018_3_OR_NEWER
+
         /// <summary>
         /// If register open generics(typeof(MyFilter&lt;&gt;)) to register all message types.
         /// </summary>
         public void AddGlobalMessageHandlerFilter(Type type, int order = 0)
         {
             ValidateFilterType(type, typeof(IMessageHandlerFilter));
-            messageHandlerFilters.Add(new FilterDefinition(type, order));
+            messageHandlerFilters.Add(new FilterDefinition(type, order, typeof(MessageHandlerFilter<>)));
         }
+
+#endif
 
         public void AddGlobalMessageHandlerFilter<T>(int order = 0)
             where T : IMessageHandlerFilter
         {
-            messageHandlerFilters.Add(new FilterDefinition(typeof(T), order));
+            messageHandlerFilters.Add(new FilterDefinition(typeof(T), order, typeof(MessageHandlerFilter<>)));
         }
 
         internal (int count, IEnumerable<IMessageHandlerFilter>) GetGlobalMessageHandlerFilters(IServiceProvider provider, Type messageType)
@@ -157,19 +142,23 @@ namespace MessagePipe
 
         List<FilterDefinition> asyncMessageHandlerFilters = new List<FilterDefinition>();
 
+#if !UNITY_2018_3_OR_NEWER
+
         /// <summary>
         /// If register open generics(typeof(MyFilter&lt;&gt;)) to register all message types.
         /// </summary>
         public void AddGlobalAsyncMessageHandlerFilter(Type type, int order = 0)
         {
             ValidateFilterType(type, typeof(IAsyncMessageHandlerFilter));
-            asyncMessageHandlerFilters.Add(new FilterDefinition(type, order));
+            asyncMessageHandlerFilters.Add(new FilterDefinition(type, order, typeof(AsyncMessageHandlerFilter<>)));
         }
+
+#endif
 
         public void AddGlobalAsyncMessageHandlerFilter<T>(int order = 0)
             where T : IAsyncMessageHandlerFilter
         {
-            asyncMessageHandlerFilters.Add(new FilterDefinition(typeof(T), order));
+            asyncMessageHandlerFilters.Add(new FilterDefinition(typeof(T), order, typeof(AsyncMessageHandlerFilter<>)));
         }
 
         internal (int count, IEnumerable<IAsyncMessageHandlerFilter>) GetGlobalAsyncMessageHandlerFilters(IServiceProvider provider, Type messageType)
@@ -181,29 +170,35 @@ namespace MessagePipe
 
         List<FilterDefinition> requestHandlerFilters = new List<FilterDefinition>();
 
+#if !UNITY_2018_3_OR_NEWER
+
         /// <summary>
         /// If register open generics(typeof(MyFilter&lt;&gt;)) to register all message types.
         /// </summary>
         public void AddGlobalRequestHandlerFilter(Type type, int order = 0)
         {
             ValidateFilterType(type, typeof(IRequestHandlerFilter));
-            requestHandlerFilters.Add(new FilterDefinition(type, order));
+            requestHandlerFilters.Add(new FilterDefinition(type, order, typeof(RequestHandlerFilter<,>)));
         }
+
+#endif
 
         public void AddGlobalRequestHandlerFilter<T>(int order = 0)
             where T : IRequestHandlerFilter
         {
-            requestHandlerFilters.Add(new FilterDefinition(typeof(T), order));
+            requestHandlerFilters.Add(new FilterDefinition(typeof(T), order, typeof(RequestHandlerFilter<,>)));
         }
 
-        internal (int, IEnumerable<IRequestHandlerFilter>) GetGlobalRequestHandlerFilters(IServiceProvider provider, Type requestType)
+        internal (int, IEnumerable<IRequestHandlerFilter>) GetGlobalRequestHandlerFilters(IServiceProvider provider, Type requestType, Type responseType)
         {
-            return (requestHandlerFilters.Count, CreateFilters<IRequestHandlerFilter>(requestHandlerFilters, provider, requestType));
+            return (requestHandlerFilters.Count, CreateFilters<IRequestHandlerFilter>(requestHandlerFilters, provider, requestType, responseType));
         }
 
         //  AsyncRequestHandlerFilter
 
         List<FilterDefinition> asyncRequestHandlerFilters = new List<FilterDefinition>();
+
+#if !UNITY_2018_3_OR_NEWER
 
         /// <summary>
         /// If register open generics(typeof(MyFilter&lt;&gt;)) to register all message types.
@@ -211,18 +206,20 @@ namespace MessagePipe
         public void AddGlobalAsyncRequestHandlerFilter(Type type, int order = 0)
         {
             ValidateFilterType(type, typeof(IAsyncRequestHandlerFilter));
-            asyncRequestHandlerFilters.Add(new FilterDefinition(type, order));
+            asyncRequestHandlerFilters.Add(new FilterDefinition(type, order, typeof(AsyncRequestHandlerFilter<,>)));
         }
+
+#endif
 
         public void AddGlobalAsyncRequestHandlerFilter<T>(int order = 0)
             where T : IAsyncRequestHandlerFilter
         {
-            asyncRequestHandlerFilters.Add(new FilterDefinition(typeof(T), order));
+            asyncRequestHandlerFilters.Add(new FilterDefinition(typeof(T), order, typeof(AsyncRequestHandlerFilter<,>)));
         }
 
-        internal (int, IEnumerable<IAsyncRequestHandlerFilter>) GetGlobalAsyncRequestHandlerFilters(IServiceProvider provider, Type requestType)
+        internal (int, IEnumerable<IAsyncRequestHandlerFilter>) GetGlobalAsyncRequestHandlerFilters(IServiceProvider provider, Type requestType, Type responseType)
         {
-            return (asyncRequestHandlerFilters.Count, CreateFilters<IAsyncRequestHandlerFilter>(asyncRequestHandlerFilters, provider, requestType));
+            return (asyncRequestHandlerFilters.Count, CreateFilters<IAsyncRequestHandlerFilter>(asyncRequestHandlerFilters, provider, requestType, responseType));
         }
 
         static IEnumerable<T> CreateFilters<T>(List<FilterDefinition> filterDefinitions, IServiceProvider provider, Type messageType)
@@ -239,11 +236,40 @@ namespace MessagePipe
             {
                 var def = filterDefinitions[i];
                 var filterType = def.FilterType;
-                if (def.MessageType == null)
+                if (def.IsOpenGenerics)
                 {
                     filterType = filterType.MakeGenericType(messageType);
                 }
                 else if (def.MessageType != messageType)
+                {
+                    continue;
+                }
+
+                var filter = (T)provider.GetRequiredService(filterType);
+                filter.Order = def.Order;
+                yield return filter;
+            }
+        }
+
+        static IEnumerable<T> CreateFilters<T>(List<FilterDefinition> filterDefinitions, IServiceProvider provider, Type requestType, Type responseType)
+            where T : IMessagePipeFilter
+        {
+            if (filterDefinitions.Count == 0) return Array.Empty<T>();
+            return CreateFiltersCore<T>(filterDefinitions, provider, requestType, responseType);
+        }
+
+        static IEnumerable<T> CreateFiltersCore<T>(List<FilterDefinition> filterDefinitions, IServiceProvider provider, Type requestType, Type responseType)
+            where T : IMessagePipeFilter
+        {
+            for (int i = 0; i < filterDefinitions.Count; i++)
+            {
+                var def = filterDefinitions[i];
+                var filterType = def.FilterType;
+                if (def.IsOpenGenerics)
+                {
+                    filterType = filterType.MakeGenericType(requestType, responseType);
+                }
+                else if (!(def.RequestType == requestType && def.ResponseType == responseType))
                 {
                     continue;
                 }
