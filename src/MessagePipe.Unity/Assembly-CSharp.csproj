@@ -56,9 +56,7 @@
     <Analyzer Include="C:\Program Files (x86)\Microsoft Visual Studio Tools for Unity\16.0\Analyzers\Microsoft.Unity.Analyzers.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\VContainer\TypeProxy.cs" />
     <Compile Include="Assets\Scenes\NewBehaviourScript.cs" />
-    <Compile Include="Assets\Scripts\VContainer\ContainerBuilderExtensions.cs" />
     <Compile Include="Assets\Scripts\GameLifetimeScope.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -757,9 +755,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Assembly-CSharp-firstpass.csproj">
-      <Project>{29A5BE42-8F4C-4B5D-CA88-38175365084F}</Project>
-      <Name>Assembly-CSharp-firstpass</Name>
+    <ProjectReference Include="MessagePipe.csproj">
+      <Project>{18FB3D53-85EC-9A9A-DDF3-605E5663AC63}</Project>
+      <Name>MessagePipe</Name>
+    </ProjectReference>
+    <ProjectReference Include="MessagePipe.VContainer.csproj">
+      <Project>{BA0567E0-2D74-BD23-8AAE-22B2B23623CA}</Project>
+      <Name>MessagePipe.VContainer</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

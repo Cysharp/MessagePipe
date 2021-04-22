@@ -50,6 +50,11 @@ namespace MessagePipe
     {
         static async Task Main(string[] args)
         {
+            var c = new ServiceCollection();
+            var p = c.BuildServiceProvider();
+            var p2 = p.GetRequiredService<IServiceProvider>();
+
+
             args = new[] { "moremore" };
 
             await Host.CreateDefaultBuilder()

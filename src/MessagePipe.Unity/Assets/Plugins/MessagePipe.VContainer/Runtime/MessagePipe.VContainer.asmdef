@@ -1,0 +1,17 @@
+{
+    "name": "MessagePipe.VContainer",
+    "rootNamespace": "MessagePipe",
+    "references": [
+        "VContainer",
+        "MessagePipe"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

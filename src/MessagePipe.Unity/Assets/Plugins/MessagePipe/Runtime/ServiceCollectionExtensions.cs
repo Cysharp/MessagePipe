@@ -1,8 +1,8 @@
-#if !UNITY_2018_3_OR_NEWER
-
 using MessagePipe;
 using MessagePipe.Internal;
+#if !UNITY_2018_3_OR_NEWER
 using Microsoft.Extensions.DependencyInjection.Extensions;
+#endif
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +21,25 @@ namespace Microsoft.Extensions.DependencyInjection
             var options = new MessagePipeOptions();
             configure(options);
             services.AddSingleton(options); // add as singleton instance
+            services.AddSingleton(typeof(MessagePipeDiagnosticsInfo));
+
+            // filters.
+            // attribute and order is deterministic at compile, so use Singleton lifetime of cache.
+            services.AddSingleton(typeof(AttributeFilterProvider<MessageHandlerFilterAttribute>));
+            services.AddSingleton(typeof(AttributeFilterProvider<AsyncMessageHandlerFilterAttribute>));
+            services.AddSingleton(typeof(AttributeFilterProvider<RequestHandlerFilterAttribute>));
+            services.AddSingleton(typeof(AttributeFilterProvider<AsyncRequestHandlerFilterAttribute>));
+            services.AddSingleton(typeof(FilterAttachedMessageHandlerFactory));
+            services.AddSingleton(typeof(FilterAttachedAsyncMessageHandlerFactory));
+            services.AddSingleton(typeof(FilterAttachedRequestHandlerFactory));
+            services.AddSingleton(typeof(FilterAttachedAsyncRequestHandlerFactory));
+            foreach (var item in options.GetGlobalFilterTypes())
+            {
+                services.TryAddTransient(item); // filter itself is Transient
+            }
+
+#if !UNITY_2018_3_OR_NEWER
+            // open generics implemntations(.NET Only)
 
             var lifetime = options.InstanceLifetime; // lifetime is Singleton or Scoped
 
@@ -52,24 +71,6 @@ namespace Microsoft.Extensions.DependencyInjection
             services.Add(typeof(IRequestAllHandler<,>), typeof(RequestAllHandler<,>), lifetime);
             services.Add(typeof(IAsyncRequestAllHandler<,>), typeof(AsyncRequestAllHandler<,>), lifetime);
 
-            // filters.
-            // attribute and order is deterministic at compile, so use Singleton lifetime of cache.
-            services.AddSingleton(typeof(AttributeFilterProvider<MessageHandlerFilterAttribute>));
-            services.AddSingleton(typeof(AttributeFilterProvider<AsyncMessageHandlerFilterAttribute>));
-            services.AddSingleton(typeof(AttributeFilterProvider<RequestHandlerFilterAttribute>));
-            services.AddSingleton(typeof(AttributeFilterProvider<AsyncRequestHandlerFilterAttribute>));
-            services.AddSingleton(typeof(FilterAttachedMessageHandlerFactory));
-            services.AddSingleton(typeof(FilterAttachedAsyncMessageHandlerFactory));
-            services.AddSingleton(typeof(FilterAttachedRequestHandlerFactory));
-            services.AddSingleton(typeof(FilterAttachedAsyncRequestHandlerFactory));
-            foreach (var item in options.GetGlobalFilterTypes())
-            {
-                services.TryAddTransient(item); // filter itself is Transient
-            }
-
-            // others.
-            services.AddSingleton(typeof(MessagePipeDiagnosticsInfo));
-
             // auto registration is .NET only.
             if (options.EnableAutoRegistration)
             {
@@ -90,8 +91,12 @@ namespace Microsoft.Extensions.DependencyInjection
                 }
             }
 
+#endif
+
             return services;
         }
+
+#if !UNITY_2018_3_OR_NEWER
 
         public static IServiceCollection AddMessageHandlerFilter<T>(this IServiceCollection services)
             where T : class, IMessageHandlerFilter
@@ -259,7 +264,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     }
                 }
 
-            NEXT_TYPE:
+                NEXT_TYPE:
                 continue;
             }
         }
@@ -274,7 +279,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 t = t.BaseType;
             }
         }
-    }
-}
 
 #endif
+    }
+}

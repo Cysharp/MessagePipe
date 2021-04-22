@@ -27,6 +27,8 @@ namespace MessagePipe
 
     public interface IServiceCollection
     {
+        public void AddSingleton<T>(T instance);
+        public void AddSingleton(Type type);
         public void TryAddTransient(Type type);
     }
 }

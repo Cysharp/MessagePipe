@@ -3,7 +3,7 @@ using VContainer;
 
 namespace MessagePipe
 {
-    public sealed class ContainerBuilderProxy : IServiceCollection
+    internal struct ContainerBuilderProxy : IServiceCollection
     {
         readonly IContainerBuilder builder;
 
@@ -24,11 +24,26 @@ namespace MessagePipe
         {
             builder.RegisterInstance<T>(instance);
         }
+
+        public void AddSingleton(Type type)
+        {
+            builder.Register(type, Lifetime.Singleton);
+        }
+
+        public void Add(Type type, Lifetime lifetime)
+        {
+            builder.Register(type, lifetime);
+        }
+
+        public void Add(Type serviceType, Type implementationType, Lifetime lifetime)
+        {
+            builder.Register(implementationType, lifetime).As(serviceType);
+        }
     }
 
     public sealed class ObjectResolverProxy : IServiceProvider
     {
-        readonly IObjectResolver resolver;
+        IObjectResolver resolver;
 
         public ObjectResolverProxy(IObjectResolver resolver)
         {
