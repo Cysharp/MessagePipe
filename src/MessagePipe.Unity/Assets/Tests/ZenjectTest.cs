@@ -1,21 +1,24 @@
-using Cysharp.Threading.Tasks;
-using MessagePipe;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
+using Zenject;
+using MessagePipe;
+using Cysharp.Threading.Tasks;
 using UnityEngine.TestTools;
-using VContainer;
+using System.Collections;
 
-public class VContainerTest
+public class ZenjectTest
 {
     [Test]
     public void SimpelePush()
     {
-        using var resolver = TestHelper.BuildVContainer((options, builder) =>
+        var resolver = TestHelper.BuildZenject((options, builder) =>
         {
-            builder.RegisterMessageBroker<int>(options);
+            builder.BindMessageBroker<int>(options);
         });
 
         var pub = resolver.Resolve<IPublisher<int>>();
@@ -37,12 +40,13 @@ public class VContainerTest
         CollectionAssert.AreEqual(list, new[] { 99 });
     }
 
+
     [UnityTest]
     public IEnumerator SimpleAsyncPush() => UniTask.ToCoroutine(async () =>
     {
-        using var resolver = TestHelper.BuildVContainer((options, builder) =>
+        var resolver = TestHelper.BuildZenject((options, builder) =>
         {
-            builder.RegisterMessageBroker<int>(options);
+            builder.BindMessageBroker<int>(options);
         });
 
         var pub = resolver.Resolve<IAsyncPublisher<int>>();
@@ -64,20 +68,21 @@ public class VContainerTest
         CollectionAssert.AreEqual(list, new[] { 99 });
     });
 
+
     [Test]
     public void WithFilter()
     {
         var store = new DataStore();
 
-        using var resolver = TestHelper.BuildVContainer(options =>
-        {
-            options.AddGlobalMessageHandlerFilter<MyFilter<int>>(1200);
-        }, (options, builder) =>
-        {
-            builder.RegisterMessageBroker<int>(options);
-            builder.RegisterMessageHandlerFilter<MyFilter<int>>();
-            builder.RegisterInstance(store);
-        });
+        var resolver = TestHelper.BuildZenject(options =>
+       {
+           options.AddGlobalMessageHandlerFilter<MyFilter<int>>(1200);
+       }, (options, builder) =>
+       {
+           builder.BindMessageBroker<int>(options);
+           builder.BindMessageHandlerFilter<MyFilter<int>>();
+           builder.BindInstance(store);
+       });
 
         var pub = resolver.Resolve<IPublisher<int>>();
         var sub1 = resolver.Resolve<ISubscriber<int>>();
@@ -101,14 +106,14 @@ public class VContainerTest
     {
         var store = new DataStore();
 
-        using var resolver = TestHelper.BuildVContainer(options =>
-        {
-            options.AddGlobalRequestHandlerFilter<MyRequestHandlerFilter>(-1799);
-        }, (options, builder) =>
-        {
-            builder.RegisterInstance(store);
-            builder.RegisterRequestHandler<int, int, MyRequestHandler>(options);
-        });
+        var resolver = TestHelper.BuildZenject(options =>
+       {
+           options.AddGlobalRequestHandlerFilter<MyRequestHandlerFilter>(-1799);
+       }, (options, builder) =>
+       {
+           builder.BindInstance(store);
+           builder.BindRequestHandler<int, int, MyRequestHandler>(options);
+       });
 
         var handler = resolver.Resolve<IRequestHandler<int, int>>();
 
@@ -129,23 +134,23 @@ public class VContainerTest
     {
         var store = new DataStore();
 
-        using var resolver = TestHelper.BuildVContainer(options =>
-        {
+        var resolver = TestHelper.BuildZenject(options =>
+       {
             // options.InstanceLifetime = InstanceLifetime.Scoped;
             options.AddGlobalRequestHandlerFilter<MyRequestHandlerFilter>(-1799);
-        }, (options, builder) =>
-        {
-            builder.RegisterInstance(store);
-            builder.RegisterRequestHandler<int, int, MyRequestHandler>(options);
-            builder.RegisterRequestHandler<int, int, MyRequestHandler2>(options);
-        });
+       }, (options, builder) =>
+       {
+           builder.BindInstance(store);
+           builder.BindRequestHandler<int, int, MyRequestHandler>(options);
+           builder.BindRequestHandler<int, int, MyRequestHandler2>(options);
+       });
 
         var handler = resolver.Resolve<IRequestAllHandler<int, int>>();
 
         var result = handler.InvokeAll(1999);
-        CollectionAssert.AreEqual(result, new[] { 19990, 199900 });
+        CollectionAssert.AreEqual(new[] { 19990, 199900 }, result);
 
-        CollectionAssert.AreEqual(store.Logs, new[]
+        CollectionAssert.AreEqual(new[]
         {
             "Order:-1799",
             "Order:999",
@@ -153,8 +158,6 @@ public class VContainerTest
             "Invoke:1999",
             "Order:-1799",
             "Invoke2:1999",
-        });
+        }, store.Logs);
     }
-
-
 }

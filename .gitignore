@@ -131,3 +131,7 @@ src/MessagePipe.Unity/MessagePipe.VContainer.csproj
 src/MessagePipe.Unity/RuntimeUnitTestToolkit.csproj
 
 src/MessagePipe.Unity/Tests.csproj
+
+src/MessagePipe.Unity/Assembly-CSharp-firstpass.csproj
+
+src/MessagePipe.Unity/MessagePipe.Zenject.csproj

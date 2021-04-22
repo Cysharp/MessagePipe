@@ -1,7 +1,7 @@
 ﻿using System;
 using VContainer;
 
-namespace MessagePipe
+namespace MessagePipe.VContainer
 {
     internal struct ContainerBuilderProxy : IServiceCollection
     {
@@ -15,6 +15,14 @@ namespace MessagePipe
         public void AddTransient(Type type)
         {
             builder.Register(type, Lifetime.Transient);
+        }
+
+        public void TryAddTransient(Type type)
+        {
+            if (!builder.Exists(type, true))
+            {
+                builder.Register(type, Lifetime.Transient);
+            }
         }
 
         public void AddSingleton<T>(T instance)

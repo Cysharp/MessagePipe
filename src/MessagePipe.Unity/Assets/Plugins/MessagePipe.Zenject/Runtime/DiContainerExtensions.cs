@@ -1,39 +1,44 @@
-﻿using System;
-using VContainer;
+using System;
+using Zenject;
 using Microsoft.Extensions.DependencyInjection;
-using MessagePipe.VContainer;
+using MessagePipe.Zenject;
 
 namespace MessagePipe
 {
-    public static class ContainerBuilderExtensions
+    public static class DiContainerExtensions
     {
         // original is ServiceCollectionExtensions, trimed openegenerics register.
 
-        public static MessagePipeOptions RegisterMessagePipe(this IContainerBuilder builder)
+        public static MessagePipeOptions BindMessagePipe(this DiContainer builder)
         {
-            return RegisterMessagePipe(builder, _ => { });
+            return BindMessagePipe(builder, _ => { });
         }
 
-        public static MessagePipeOptions RegisterMessagePipe(this IContainerBuilder builder, Action<MessagePipeOptions> configure)
+        public static MessagePipeOptions BindMessagePipe(this DiContainer builder, Action<MessagePipeOptions> configure)
         {
             MessagePipeOptions options = null;
-            var proxy = new ContainerBuilderProxy(builder);
+            var proxy = new DiContainerProxy(builder);
             proxy.AddMessagePipe(x =>
-             {
-                 configure(x);
-                 options = x;
-             });
+            {
+                configure(x);
+                options = x;
 
-            builder.Register<IServiceProvider, ObjectResolverProxy>(Lifetime.Scoped);
+                // Zenject 6 does not allow regsiter multiple singleton, it causes annoying error.
+                // https://github.com/modesttree/Zenject#upgrade-guide-for-zenject-6
+                // so force use Scoped.
+                options.InstanceLifetime = InstanceLifetime.Scoped;
+            });
+
+            builder.Bind<IServiceProvider>().To<ObjectResolverProxy>().AsCached();
 
             return options;
         }
 
         /// <summary>Register IPublisher[TMessage] and ISubscriber[TMessage](includes Async) to container builder.</summary>
-        public static IContainerBuilder RegisterMessageBroker<TMessage>(this IContainerBuilder builder, MessagePipeOptions options)
+        public static DiContainer BindMessageBroker<TMessage>(this DiContainer builder, MessagePipeOptions options)
         {
-            var lifetime = GetLifetime(options);
-            var services = new ContainerBuilderProxy(builder);
+            var lifetime = options.InstanceLifetime;
+            var services = new DiContainerProxy(builder);
 
             // keyless PubSub
             services.Add(typeof(MessageBrokerCore<TMessage>), lifetime);
@@ -49,10 +54,10 @@ namespace MessagePipe
         }
 
         /// <summary>Register IPublisher[TKey, TMessage] and ISubscriber[TKey, TMessage](includes Async) to container builder.</summary>
-        public static IContainerBuilder RegisterMessageBroker<TKey, TMessage>(this IContainerBuilder builder, MessagePipeOptions options)
+        public static DiContainer BindMessageBroker<TKey, TMessage>(this DiContainer builder, MessagePipeOptions options)
         {
-            var lifetime = GetLifetime(options);
-            var services = new ContainerBuilderProxy(builder);
+            var lifetime = options.InstanceLifetime;
+            var services = new DiContainerProxy(builder);
 
             // keyed PubSub
             services.Add(typeof(MessageBrokerCore<TKey, TMessage>), lifetime);
@@ -68,82 +73,75 @@ namespace MessagePipe
         }
 
         /// <summary>Register IRequestHandler[TRequest, TResponse](includes All) to container builder.</summary>
-        public static IContainerBuilder RegisterRequestHandler<TRequest, TResponse, THandler>(this IContainerBuilder builder, MessagePipeOptions options)
+        public static DiContainer BindRequestHandler<TRequest, TResponse, THandler>(this DiContainer builder, MessagePipeOptions options)
             where THandler : IRequestHandler
         {
-            var lifetime = GetLifetime(options);
-            var services = new ContainerBuilderProxy(builder);
+            var lifetime = options.InstanceLifetime;
+            var services = new DiContainerProxy(builder);
 
             services.Add(typeof(IRequestHandlerCore<TRequest, TResponse>), typeof(THandler), lifetime);
-            if (!builder.Exists(typeof(IRequestHandler<TRequest, TResponse>), true))
+            if (!builder.HasBinding<IRequestHandler<TRequest, TResponse>>())
             {
                 services.Add(typeof(IRequestHandler<TRequest, TResponse>), typeof(RequestHandler<TRequest, TResponse>), lifetime);
                 services.Add(typeof(IRequestAllHandler<TRequest, TResponse>), typeof(RequestAllHandler<TRequest, TResponse>), lifetime);
             }
-
             return builder;
         }
 
         /// <summary>Register IAsyncRequestHandler[TRequest, TResponse](includes All) to container builder.</summary>
-        public static IContainerBuilder RegisterAsyncRequestHandler<TRequest, TResponse, THandler>(this IContainerBuilder builder, MessagePipeOptions options)
+        public static DiContainer BindAsyncRequestHandler<TRequest, TResponse, THandler>(this DiContainer builder, MessagePipeOptions options)
             where THandler : IAsyncRequestHandler
         {
-            var lifetime = GetLifetime(options);
-            var services = new ContainerBuilderProxy(builder);
+            var lifetime = options.InstanceLifetime;
+            var services = new DiContainerProxy(builder);
 
             services.Add(typeof(IAsyncRequestHandlerCore<TRequest, TResponse>), typeof(THandler), lifetime);
-            if (!builder.Exists(typeof(IAsyncRequestHandler<TRequest, TResponse>), true))
+            if (!builder.HasBinding<IAsyncRequestHandler<TRequest, TResponse>>())
             {
                 services.Add(typeof(IAsyncRequestHandler<TRequest, TResponse>), typeof(AsyncRequestHandler<TRequest, TResponse>), lifetime);
                 services.Add(typeof(IAsyncRequestAllHandler<TRequest, TResponse>), typeof(AsyncRequestAllHandler<TRequest, TResponse>), lifetime);
             }
-
             return builder;
         }
 
-        public static IContainerBuilder RegisterMessageHandlerFilter<T>(this IContainerBuilder builder)
+        public static DiContainer BindMessageHandlerFilter<T>(this DiContainer builder)
             where T : class, IMessageHandlerFilter
         {
-            if (!builder.Exists(typeof(T), true))
+            if (!builder.HasBinding<T>())
             {
-                builder.Register<T>(Lifetime.Transient);
+                builder.Bind<T>().AsTransient();
             }
             return builder;
         }
 
-        public static IContainerBuilder RegisterAsyncMessageHandlerFilter<T>(this IContainerBuilder builder)
+        public static DiContainer BindAsyncMessageHandlerFilter<T>(this DiContainer builder)
             where T : class, IAsyncMessageHandlerFilter
         {
-            if (!builder.Exists(typeof(T), true))
+            if (!builder.HasBinding<T>())
             {
-                builder.Register<T>(Lifetime.Transient);
+                builder.Bind<T>().AsTransient();
             }
             return builder;
         }
 
-        public static IContainerBuilder RegisterRequestHandlerFilter<T>(this IContainerBuilder builder)
+        public static DiContainer BindRequestHandlerFilter<T>(this DiContainer builder)
             where T : class, IRequestHandlerFilter
         {
-            if (!builder.Exists(typeof(T), true))
+            if (!builder.HasBinding<T>())
             {
-                builder.Register<T>(Lifetime.Transient);
+                builder.Bind<T>().AsTransient();
             }
             return builder;
         }
 
-        public static IContainerBuilder RegisterAsyncRequestHandlerFilter<T>(this IContainerBuilder builder)
+        public static DiContainer BindAsyncRequestHandlerFilter<T>(this DiContainer builder)
             where T : class, IAsyncRequestHandlerFilter
         {
-            if (!builder.Exists(typeof(T), true))
+            if (!builder.HasBinding<T>())
             {
-                builder.Register<T>(Lifetime.Transient);
+                builder.Bind<T>().AsTransient();
             }
             return builder;
-        }
-
-        static Lifetime GetLifetime(MessagePipeOptions options)
-        {
-            return options.InstanceLifetime == InstanceLifetime.Scoped ? Lifetime.Scoped : Lifetime.Singleton;
         }
     }
 }

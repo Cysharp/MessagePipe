@@ -35,7 +35,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton(typeof(FilterAttachedAsyncRequestHandlerFactory));
             foreach (var item in options.GetGlobalFilterTypes())
             {
-                services.AddTransient(item); // filter itself is Transient
+                services.TryAddTransient(item); // filter itself is Transient
             }
 
 #if !UNITY_2018_3_OR_NEWER
@@ -101,28 +101,28 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddMessageHandlerFilter<T>(this IServiceCollection services)
             where T : class, IMessageHandlerFilter
         {
-            services.AddTransient<T>();
+            services.TryAddTransient<T>();
             return services;
         }
 
         public static IServiceCollection AddAsyncMessageHandlerFilter<T>(this IServiceCollection services)
             where T : class, IAsyncMessageHandlerFilter
         {
-            services.AddTransient<T>();
+            services.TryAddTransient<T>();
             return services;
         }
 
         public static IServiceCollection AddRequestHandlerFilter<T>(this IServiceCollection services)
             where T : class, IRequestHandlerFilter
         {
-            services.AddTransient<T>();
+            services.TryAddTransient<T>();
             return services;
         }
 
         public static IServiceCollection AddAsyncRequestHandlerFilter<T>(this IServiceCollection services)
             where T : class, IAsyncRequestHandlerFilter
         {
-            services.AddTransient<T>();
+            services.TryAddTransient<T>();
             return services;
         }
 
@@ -241,25 +241,25 @@ namespace Microsoft.Extensions.DependencyInjection
                 {
                     if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(MessageHandlerFilter<>))
                     {
-                        services.AddTransient(objectType);
+                        services.TryAddTransient(objectType);
                         goto NEXT_TYPE;
                     }
 
                     if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(AsyncMessageHandlerFilter<>))
                     {
-                        services.AddTransient(objectType);
+                        services.TryAddTransient(objectType);
                         goto NEXT_TYPE;
                     }
 
                     if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(RequestHandlerFilter<,>))
                     {
-                        services.AddTransient(objectType);
+                        services.TryAddTransient(objectType);
                         goto NEXT_TYPE;
                     }
 
                     if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(AsyncRequestHandlerFilter<,>))
                     {
-                        services.AddTransient(objectType);
+                        services.TryAddTransient(objectType);
                         goto NEXT_TYPE;
                     }
                 }

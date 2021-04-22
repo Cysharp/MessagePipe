@@ -9,7 +9,9 @@
         "MessagePipe.VContainer",
         "UniTask",
         "UniTask.Linq",
-        "RuntimeUnitTestToolkit"
+        "RuntimeUnitTestToolkit",
+        "Zenject",
+        "MessagePipe.Zenject"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
