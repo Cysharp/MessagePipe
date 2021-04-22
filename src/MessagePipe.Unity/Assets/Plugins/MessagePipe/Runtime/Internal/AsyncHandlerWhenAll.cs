@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace MessagePipe.Internal
 {
@@ -12,15 +12,15 @@ namespace MessagePipe.Internal
         public static readonly Action CompletedContinuation = () => { };
     }
 
-    internal class AsyncHandlerWhenAll<T> : ICriticalNotifyCompletion
+    internal partial class AsyncHandlerWhenAll<T> : ICriticalNotifyCompletion
     {
         readonly int taskCount = 0;
 
         int completedCount = 0;
-        ExceptionDispatchInfo exception;
+        ExceptionDispatchInfo? exception;
         Action continuation = ContinuationSentinel.AvailableContinuation;
 
-        public AsyncHandlerWhenAll(IAsyncMessageHandler<T>[] handlers, T message, CancellationToken cancellationtoken)
+        public AsyncHandlerWhenAll(IAsyncMessageHandler<T>?[] handlers, T message, CancellationToken cancellationtoken)
         {
             taskCount = handlers.Length;
 
@@ -32,10 +32,19 @@ namespace MessagePipe.Internal
                 }
                 else
                 {
-                    UniTask task;
                     try
                     {
-                        task = item.HandleAsync(message, cancellationtoken);
+                        var awaiter = item.HandleAsync(message, cancellationtoken).GetAwaiter();
+                        if (awaiter.IsCompleted)
+                        {
+                            awaiter.GetResult();
+                            goto SUCCESSFULLY;
+                        }
+                        else
+                        {
+                            AwaiterNode.RegisterUnsafeOnCompleted(this, awaiter);
+                            continue;
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -44,25 +53,10 @@ namespace MessagePipe.Internal
                         return;
                     }
 
-                    HandleTask(task);
+                SUCCESSFULLY:
+                    IncrementSuccessfully();
                 }
             }
-        }
-
-        async void HandleTask(UniTask task)
-        {
-            try
-            {
-                await task.ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                exception = ExceptionDispatchInfo.Capture(ex);
-                TryInvokeContinuation();
-                return;
-            }
-
-            IncrementSuccessfully();
         }
 
         void IncrementSuccessfully()

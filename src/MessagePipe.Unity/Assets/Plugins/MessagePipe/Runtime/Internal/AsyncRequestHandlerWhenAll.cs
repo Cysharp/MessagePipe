@@ -1,15 +1,15 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace MessagePipe.Internal
 {
-    internal class AsyncRequestHandlerWhenAll<TRequest, TResponse> : ICriticalNotifyCompletion
+    internal partial class AsyncRequestHandlerWhenAll<TRequest, TResponse> : ICriticalNotifyCompletion
     {
         int completedCount = 0;
-        ExceptionDispatchInfo exception;
+        ExceptionDispatchInfo? exception;
         Action continuation = ContinuationSentinel.AvailableContinuation;
 
         readonly TResponse[] result;
@@ -20,10 +20,19 @@ namespace MessagePipe.Internal
 
             for (int i = 0; i < handlers.Length; i++)
             {
-                UniTask<TResponse> task;
                 try
                 {
-                    task = handlers[i].InvokeAsync(request, cancellationtoken);
+                    var awaiter = handlers[i].InvokeAsync(request, cancellationtoken).GetAwaiter();
+                    if (awaiter.IsCompleted)
+                    {
+                        result[i] = awaiter.GetResult();
+                        goto SUCCESSFULLY;
+                    }
+                    else
+                    {
+                        AwaiterNode.RegisterUnsafeOnCompleted(this, awaiter, i);
+                        continue;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -31,25 +40,10 @@ namespace MessagePipe.Internal
                     TryInvokeContinuation();
                     return;
                 }
-                HandleTask(task, i);
-            }
-        }
 
-        async void HandleTask(UniTask<TResponse> task, int index)
-        {
-            TResponse response;
-            try
-            {
-                response = await task.ConfigureAwait(false);
+                SUCCESSFULLY:
+                IncrementSuccessfully();
             }
-            catch (Exception ex)
-            {
-                exception = ExceptionDispatchInfo.Capture(ex);
-                TryInvokeContinuation();
-                return;
-            }
-            result[index] = response;
-            IncrementSuccessfully();
         }
 
         void IncrementSuccessfully()

@@ -12,7 +12,7 @@ namespace MessagePipe.Internal
         public static readonly Action CompletedContinuation = () => { };
     }
 
-    internal class AsyncHandlerWhenAll<T> : ICriticalNotifyCompletion
+    internal partial class AsyncHandlerWhenAll<T> : ICriticalNotifyCompletion
     {
         readonly int taskCount = 0;
 
@@ -32,10 +32,19 @@ namespace MessagePipe.Internal
                 }
                 else
                 {
-                    ValueTask task;
                     try
                     {
-                        task = item.HandleAsync(message, cancellationtoken);
+                        var awaiter = item.HandleAsync(message, cancellationtoken).GetAwaiter();
+                        if (awaiter.IsCompleted)
+                        {
+                            awaiter.GetResult();
+                            goto SUCCESSFULLY;
+                        }
+                        else
+                        {
+                            AwaiterNode.RegisterUnsafeOnCompleted(this, awaiter);
+                            continue;
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -44,25 +53,10 @@ namespace MessagePipe.Internal
                         return;
                     }
 
-                    HandleTask(task);
+                SUCCESSFULLY:
+                    IncrementSuccessfully();
                 }
             }
-        }
-
-        async void HandleTask(ValueTask task)
-        {
-            try
-            {
-                await task.ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                exception = ExceptionDispatchInfo.Capture(ex);
-                TryInvokeContinuation();
-                return;
-            }
-
-            IncrementSuccessfully();
         }
 
         void IncrementSuccessfully()

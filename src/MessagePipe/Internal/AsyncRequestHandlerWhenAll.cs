@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MessagePipe.Internal
 {
-    internal class AsyncRequestHandlerWhenAll<TRequest, TResponse> : ICriticalNotifyCompletion
+    internal partial class AsyncRequestHandlerWhenAll<TRequest, TResponse> : ICriticalNotifyCompletion
     {
         int completedCount = 0;
         ExceptionDispatchInfo? exception;
@@ -20,10 +20,19 @@ namespace MessagePipe.Internal
 
             for (int i = 0; i < handlers.Length; i++)
             {
-                ValueTask<TResponse> task;
                 try
                 {
-                    task = handlers[i].InvokeAsync(request, cancellationtoken);
+                    var awaiter = handlers[i].InvokeAsync(request, cancellationtoken).GetAwaiter();
+                    if (awaiter.IsCompleted)
+                    {
+                        result[i] = awaiter.GetResult();
+                        goto SUCCESSFULLY;
+                    }
+                    else
+                    {
+                        AwaiterNode.RegisterUnsafeOnCompleted(this, awaiter, i);
+                        continue;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -31,25 +40,10 @@ namespace MessagePipe.Internal
                     TryInvokeContinuation();
                     return;
                 }
-                HandleTask(task, i);
-            }
-        }
 
-        async void HandleTask(ValueTask<TResponse> task, int index)
-        {
-            TResponse response;
-            try
-            {
-                response = await task.ConfigureAwait(false);
+                SUCCESSFULLY:
+                IncrementSuccessfully();
             }
-            catch (Exception ex)
-            {
-                exception = ExceptionDispatchInfo.Capture(ex);
-                TryInvokeContinuation();
-                return;
-            }
-            result[index] = response;
-            IncrementSuccessfully();
         }
 
         void IncrementSuccessfully()
