@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 namespace MessagePipe
 {
@@ -33,7 +33,7 @@ namespace MessagePipe
 
     public interface IAsyncRequestHandlerCore<in TRequest, TResponse> : IAsyncRequestHandler
     {
-        ValueTask<TResponse> InvokeAsync(TRequest request, CancellationToken cancellationToken = default);
+        UniTask<TResponse> InvokeAsync(TRequest request, CancellationToken cancellationToken = default);
     }
 
     public interface IAsyncRequestHandler<in TRequest, TResponse> : IAsyncRequestHandlerCore<TRequest, TResponse>
@@ -42,9 +42,9 @@ namespace MessagePipe
 
     public interface IAsyncRequestAllHandler<in TRequest, TResponse>
     {
-        ValueTask<TResponse[]> InvokeAllAsync(TRequest request, CancellationToken cancellationToken = default);
-        ValueTask<TResponse[]> InvokeAllAsync(TRequest request, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default);
-        IAsyncEnumerable<TResponse> InvokeAllLazyAsync(TRequest request, CancellationToken cancellationToken = default);
+        UniTask<TResponse[]> InvokeAllAsync(TRequest request, CancellationToken cancellationToken = default);
+        UniTask<TResponse[]> InvokeAllAsync(TRequest request, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default);
+        IUniTaskAsyncEnumerable<TResponse> InvokeAllLazyAsync(TRequest request, CancellationToken cancellationToken = default);
     }
 
 

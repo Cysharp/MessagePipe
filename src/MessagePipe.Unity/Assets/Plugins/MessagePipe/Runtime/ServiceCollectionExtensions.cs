@@ -1,4 +1,4 @@
-﻿#if !UNITY_2018_3_OR_NEWER
+#if !UNITY_2018_3_OR_NEWER
 
 using MessagePipe;
 using MessagePipe.Internal;
@@ -264,7 +264,7 @@ namespace Microsoft.Extensions.DependencyInjection
             }
         }
 
-        static IEnumerable<Type> GetBaseTypes(this Type? t)
+        static IEnumerable<Type> GetBaseTypes(this Type t)
         {
             if (t == null) yield break;
             t = t.BaseType;

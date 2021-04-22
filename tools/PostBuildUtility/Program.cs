@@ -29,6 +29,8 @@ namespace PostBuildUtility
             var replaceSet = new Dictionary<string, string>
             {
                 // to UniTask
+                {"ValueTaskAwaiter<TResponse>", "Cysharp.Threading.Tasks.UniTask<TResponse>.Awaiter" },
+                {"ValueTaskAwaiter", "Cysharp.Threading.Tasks.UniTask.Awaiter" },
                 {"ValueTask", "UniTask" },
                 {"System.Threading.Tasks", "Cysharp.Threading.Tasks" },
                 {"IAsyncEnumerable", "IUniTaskAsyncEnumerable" },
@@ -48,6 +50,9 @@ namespace PostBuildUtility
                 {"IAsyncMessageHandler<T>?", "IAsyncMessageHandler<T>" },
                 {"IAsyncMessageHandler<TMessage>?", "IAsyncMessageHandler<TMessage>" },
                 {"IMessageHandler<TMessage>?", "IMessageHandler<TMessage>" },
+                {"AwaiterNode?", "AwaiterNode" },
+                {"default!", "default" },
+                {"null!", "null" },
             };
 
             System.Console.WriteLine("Start to replace code, remove nullability and use UniTask.");

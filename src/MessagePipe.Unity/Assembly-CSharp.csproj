@@ -56,10 +56,10 @@
     <Analyzer Include="C:\Program Files (x86)\Microsoft Visual Studio Tools for Unity\16.0\Analyzers\Microsoft.Unity.Analyzers.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scenes\NewBehaviourScript.cs" />
-    <Compile Include="Assets\Scripts\GameLifetimeScope.cs" />
     <Compile Include="Assets\Scripts\VContainer\TypeProxy.cs" />
+    <Compile Include="Assets\Scenes\NewBehaviourScript.cs" />
     <Compile Include="Assets\Scripts\VContainer\ContainerBuilderExtensions.cs" />
+    <Compile Include="Assets\Scripts\GameLifetimeScope.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
@@ -683,20 +683,35 @@
     <Reference Include="Unity.InternalAPIEditorBridge.001">
       <HintPath>Library\ScriptAssemblies\Unity.InternalAPIEditorBridge.001.dll</HintPath>
     </Reference>
+    <Reference Include="UniTask.DOTween">
+      <HintPath>Library\ScriptAssemblies\UniTask.DOTween.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEditor.UI">
       <HintPath>Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Rider.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.Rider.Editor.dll</HintPath>
     </Reference>
+    <Reference Include="UniTask.Linq">
+      <HintPath>Library\ScriptAssemblies\UniTask.Linq.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="VContainer.Editor">
+      <HintPath>Library\ScriptAssemblies\VContainer.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="VContainer">
+      <HintPath>Library\ScriptAssemblies\VContainer.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Mathematics">
       <HintPath>Library\ScriptAssemblies\Unity.Mathematics.dll</HintPath>
     </Reference>
     <Reference Include="Unity.2D.IK.Runtime">
       <HintPath>Library\ScriptAssemblies\Unity.2D.IK.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="UniTask.TextMeshPro">
+      <HintPath>Library\ScriptAssemblies\UniTask.TextMeshPro.dll</HintPath>
     </Reference>
     <Reference Include="Unity.2D.Animation.Triangle.Runtime">
       <HintPath>Library\ScriptAssemblies\Unity.2D.Animation.Triangle.Runtime.dll</HintPath>
@@ -722,29 +737,23 @@
     <Reference Include="Unity.2D.Common.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.2D.Common.Editor.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.2D.SpriteShape.Runtime">
-      <HintPath>Library\ScriptAssemblies\Unity.2D.SpriteShape.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="UniTask.TextMeshPro">
-      <HintPath>Library\ScriptAssemblies\UniTask.TextMeshPro.dll</HintPath>
+    <Reference Include="UniTask">
+      <HintPath>Library\ScriptAssemblies\UniTask.dll</HintPath>
     </Reference>
     <Reference Include="UniTask.Addressables">
       <HintPath>Library\ScriptAssemblies\UniTask.Addressables.dll</HintPath>
     </Reference>
-    <Reference Include="UniTask.DOTween">
-      <HintPath>Library\ScriptAssemblies\UniTask.DOTween.dll</HintPath>
+    <Reference Include="Unity.2D.SpriteShape.Runtime">
+      <HintPath>Library\ScriptAssemblies\Unity.2D.SpriteShape.Runtime.dll</HintPath>
     </Reference>
-    <Reference Include="UniTask.Linq">
-      <HintPath>Library\ScriptAssemblies\UniTask.Linq.dll</HintPath>
+    <Reference Include="Unity.Sysroot.Linux_x86_64">
+      <HintPath>Library\ScriptAssemblies\Unity.Sysroot.Linux_x86_64.dll</HintPath>
     </Reference>
-    <Reference Include="UniTask">
-      <HintPath>Library\ScriptAssemblies\UniTask.dll</HintPath>
+    <Reference Include="Unity.Toolchain.Win-x86_64-Linux-x86_64">
+      <HintPath>Library\ScriptAssemblies\Unity.Toolchain.Win-x86_64-Linux-x86_64.dll</HintPath>
     </Reference>
-    <Reference Include="VContainer.Editor">
-      <HintPath>Library\ScriptAssemblies\VContainer.Editor.dll</HintPath>
-    </Reference>
-    <Reference Include="VContainer">
-      <HintPath>Library\ScriptAssemblies\VContainer.dll</HintPath>
+    <Reference Include="Unity.SysrootPackage.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.SysrootPackage.Editor.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

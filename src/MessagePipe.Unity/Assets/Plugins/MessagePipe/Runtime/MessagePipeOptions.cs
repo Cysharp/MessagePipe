@@ -1,4 +1,4 @@
-﻿#if !UNITY_2018_3_OR_NEWER
+#if !UNITY_2018_3_OR_NEWER
 using Microsoft.Extensions.DependencyInjection;
 #endif
 using System;
@@ -40,7 +40,7 @@ namespace MessagePipe
         public readonly Type FilterType;
         public readonly int Order;
         /// <summary>if null, open generics.</summary>
-        public readonly Type? MessageType;
+        public readonly Type MessageType;
 
         public FilterDefinition(Type filterType, int order)
         {
@@ -89,8 +89,8 @@ namespace MessagePipe
 
         // auto-registration
 
-        internal Assembly[]? autoregistrationAssemblies;
-        internal Type[]? autoregistrationTypes;
+        internal Assembly[] autoregistrationAssemblies;
+        internal Type[] autoregistrationTypes;
 
         public void SetAutoRegistrationSearchAssemblies(params Assembly[] assemblies)
         {

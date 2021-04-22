@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 namespace MessagePipe.Internal
 {
@@ -17,10 +17,10 @@ namespace MessagePipe.Internal
         readonly int taskCount = 0;
 
         int completedCount = 0;
-        ExceptionDispatchInfo? exception;
+        ExceptionDispatchInfo exception;
         Action continuation = ContinuationSentinel.AvailableContinuation;
 
-        public AsyncHandlerWhenAll(IAsyncMessageHandler<T>?[] handlers, T message, CancellationToken cancellationtoken)
+        public AsyncHandlerWhenAll(IAsyncMessageHandler<T>[] handlers, T message, CancellationToken cancellationtoken)
         {
             taskCount = handlers.Length;
 

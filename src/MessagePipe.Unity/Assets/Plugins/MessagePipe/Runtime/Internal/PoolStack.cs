@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -11,7 +11,7 @@ namespace MessagePipe.Internal
     internal interface IPoolStackNode<T>
         where T : class
     {
-        ref T? NextNode { get; }
+        ref T NextNode { get; }
     }
 
     // mutable struct, don't mark readonly.
@@ -21,12 +21,12 @@ namespace MessagePipe.Internal
     {
         int gate;
         int size;
-        T? root;
+        T root;
 
         public int Size => size;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryPop(out T? result)
+        public bool TryPop(out T result)
         {
             if (Interlocked.CompareExchange(ref gate, 1, 0) == 0)
             {
@@ -44,7 +44,7 @@ namespace MessagePipe.Internal
 
                 Volatile.Write(ref gate, 0);
             }
-            result = default!;
+            result = default;
             return false;
         }
 
