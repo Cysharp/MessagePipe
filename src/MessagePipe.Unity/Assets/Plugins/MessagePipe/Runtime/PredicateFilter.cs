@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace MessagePipe
 {
@@ -33,13 +33,13 @@ namespace MessagePipe
             this.Order = int.MinValue; // predicate filter first.
         }
 
-        public override UniTask HandleAsync(T message, CancellationToken cancellationToken, Func<T, CancellationToken, UniTask> next)
+        public override ValueTask HandleAsync(T message, CancellationToken cancellationToken, Func<T, CancellationToken, ValueTask> next)
         {
             if (predicate(message))
             {
                 return next(message, cancellationToken);
             }
-            return default(UniTask);
+            return default(ValueTask);
         }
     }
 }

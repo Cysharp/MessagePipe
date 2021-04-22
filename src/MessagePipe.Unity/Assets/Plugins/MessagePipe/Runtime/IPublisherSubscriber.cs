@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace MessagePipe
 {
@@ -13,7 +13,7 @@ namespace MessagePipe
 
     public interface IAsyncMessageHandler<TMessage>
     {
-        UniTask HandleAsync(TMessage message, CancellationToken cancellationToken);
+        ValueTask HandleAsync(TMessage message, CancellationToken cancellationToken);
     }
 
     // Keyless
@@ -31,8 +31,8 @@ namespace MessagePipe
     public interface IAsyncPublisher<TMessage>
     {
         void Publish(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
-        UniTask PublishAsync(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
-        UniTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
+        ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
     }
 
     public interface IAsyncSubscriber<TMessage>
@@ -58,8 +58,8 @@ namespace MessagePipe
         where TKey : notnull
     {
         void Publish(TKey key, TMessage message, CancellationToken cancellationToken = default(CancellationToken));
-        UniTask PublishAsync(TKey key, TMessage message, CancellationToken cancellationToken = default(CancellationToken));
-        UniTask PublishAsync(TKey key, TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
+        ValueTask PublishAsync(TKey key, TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        ValueTask PublishAsync(TKey key, TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
     }
 
     public interface IAsyncSubscriber<TKey, TMessage>

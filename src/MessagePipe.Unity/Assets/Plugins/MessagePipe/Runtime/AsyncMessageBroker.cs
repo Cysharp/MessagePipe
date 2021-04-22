@@ -1,8 +1,8 @@
-using MessagePipe.Internal;
+﻿using MessagePipe.Internal;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace MessagePipe
 {
@@ -22,12 +22,12 @@ namespace MessagePipe
             core.Publish(message, cancellationToken);
         }
 
-        public UniTask PublishAsync(TMessage message, CancellationToken cancellationToken)
+        public ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken)
         {
             return core.PublishAsync(message, cancellationToken);
         }
 
-        public UniTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken)
+        public ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken)
         {
             return core.PublishAsync(message, publishStrategy, cancellationToken);
         }
@@ -66,13 +66,13 @@ namespace MessagePipe
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UniTask PublishAsync(TMessage message, CancellationToken cancellationToken)
+        public ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken)
         {
             return PublishAsync(message, defaultAsyncPublishStrategy, cancellationToken);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public async UniTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken)
+        public async ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken)
         {
             var array = handlers.GetValues();
             if (publishStrategy == AsyncPublishStrategy.Sequential)

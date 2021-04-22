@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace MessagePipe.Internal
 {
@@ -6,7 +6,7 @@ namespace MessagePipe.Internal
     {
 #if !UNITY_2018_3_OR_NEWER
 
-        internal static async void Forget(this UniTask task)
+        internal static async void Forget(this ValueTask task)
         {
             await task;
         }

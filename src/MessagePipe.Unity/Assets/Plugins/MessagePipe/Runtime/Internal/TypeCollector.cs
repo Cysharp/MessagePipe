@@ -1,4 +1,4 @@
-#if !UNITY_2018_3_OR_NEWER
+﻿#if !UNITY_2018_3_OR_NEWER
 
 using System;
 using System.Collections.Generic;

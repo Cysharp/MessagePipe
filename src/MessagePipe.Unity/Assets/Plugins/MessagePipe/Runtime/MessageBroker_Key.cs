@@ -1,4 +1,4 @@
-using MessagePipe.Internal;
+﻿using MessagePipe.Internal;
 using System;
 using System.Collections.Generic;
 
@@ -46,7 +46,7 @@ namespace MessagePipe
 
         public void Publish(TKey key, TMessage message)
         {
-            IMessageHandler<TMessage>[] handlers;
+            IMessageHandler<TMessage>?[] handlers;
             lock (gate)
             {
                 if (!handlerGroup.TryGetValue(key, out var holder))
@@ -104,7 +104,7 @@ namespace MessagePipe
                 this.core = core;
             }
 
-            public IMessageHandler<TMessage>[] GetHandlers() => handlers.GetValues();
+            public IMessageHandler<TMessage>?[] GetHandlers() => handlers.GetValues();
 
             public IDisposable Subscribe(TKey key, IMessageHandler<TMessage> handler)
             {

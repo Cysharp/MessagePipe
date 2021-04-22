@@ -1,4 +1,4 @@
-using MessagePipe.Internal;
+﻿using MessagePipe.Internal;
 using System;
 using System.Runtime.CompilerServices;
 
