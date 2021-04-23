@@ -31,6 +31,9 @@ Host.CreateDefaultBuilder()
     })
 ```
 
+// TODO: MVC, ConsoleAppFramework, MAUI, etc...
+
+
 Get the `IPublisher<T>` for publisher, Get the `ISubscribe<T>` for subscriber.
 
 
@@ -91,7 +94,31 @@ Publish/Subscribe
 ---
 
 
+keyed(topic) and keyless interface.
+
+
+
+
+```csharp
+public interface IPublisher<TMessage>
+{
+    void Publish(TMessage message);
+}
+
+public interface ISubscriber<TMessage>
+{
+    public IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
+}
+```
+
+
+with key
+
+
+
 with predicate.
+
+
 
 
 Request/Response/All
@@ -228,16 +255,54 @@ Managing Subscription
 ---
 
 
+see #diagnostics section.
+
+
+> Weak reference, which is widely used in WPF, is an anti-pattern. All subscriptions should be managed explicitly, and `DisposableBag` (`CompositeDisposable`) can help with that.
+
+
+
+
+
+
 MessagePipe.Redis / IDistributedPubSub
 ---
 
-
+// inmemory provider
 
 
 
 MessagePipeOptions
 ---
 
+
+```csharp
+public sealed class MessagePipeOptions
+{
+    AsyncPublishStrategy DefaultAsyncPublishStrategy;
+    HandlingSubscribeDisposedPolicy HandlingSubscribeDisposedPolicy;
+    InstanceLifetime InstanceLifetime;
+    bool EnableAutoRegistration;
+    bool EnableCaptureStackTrace;
+
+    void AddGlobal***Filter<T>();
+}
+
+public enum AsyncPublishStrategy
+{
+    Sequential, Parallel
+}
+
+public enum InstanceLifetime
+{
+    Singleton, Scoped
+}
+
+public enum HandlingSubscribeDisposedPolicy
+{
+    Ignore, Throw
+}
+```
 
 // AutoRegistration
 
