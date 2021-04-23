@@ -40,10 +40,10 @@ jobs:
     if: "((github.event_name == 'push' && github.repository_owner == 'Cysharp') || startsWith(github.event.pull_request.head.label, 'Cysharp:'))"
     strategy:
       matrix:
-        unity: ["2020.2.7f1"]
+        unity: ["2019.4.25f1"]
         include:
-          - unity: 2020.2.7f1
-            license: UNITY_LICENSE_2020
+          - unity: 2019.4.25f1
+            license: UNITY_LICENSE_2019
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
