@@ -11,7 +11,6 @@ public static class TestHelper
         var options = builder.RegisterMessagePipe(configure);
         use(options, builder);
 
-        builder.RegisterContainer(); // for unittest purpose
         return builder.Build();
     }
 
@@ -21,7 +20,6 @@ public static class TestHelper
         var options = builder.RegisterMessagePipe();
         use(options, builder);
 
-        builder.RegisterContainer(); // for unittest purpose
         return builder.Build();
     }
 

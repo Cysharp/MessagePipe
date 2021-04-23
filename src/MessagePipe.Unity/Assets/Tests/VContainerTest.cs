@@ -75,6 +75,7 @@ public class VContainerTest
         }, (options, builder) =>
         {
             builder.RegisterMessageBroker<int>(options);
+            
             builder.RegisterMessageHandlerFilter<MyFilter<int>>();
             builder.RegisterInstance(store);
         });

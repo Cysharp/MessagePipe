@@ -213,7 +213,7 @@
       "dependencies": {
         "com.unity.nuget.mono-cecil": "1.10.1"
       },
-      "hash": "4b5d8ba4428d9993d51415f4551bc087c1ad9163"
+      "hash": "04c22dc81b4c8b0ccfc133050f23a08b9fc0934e"
     },
     "com.unity.modules.ai": {
       "version": "1.0.0",

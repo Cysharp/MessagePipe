@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -21,6 +22,60 @@ namespace MessagePipe.Sandbox.ConsoleApp
 
             lastValue = message;
             next(message);
+        }
+    }
+
+
+    public class LockFilter<T> : MessageHandlerFilter<T>
+    {
+        readonly object gate = new object();
+
+        public override void Handle(T message, Action<T> next)
+        {
+            lock (gate)
+            {
+                next(message);
+            }
+        }
+    }
+
+    public class IgnoreErrorFilter<T> : MessageHandlerFilter<T>
+    {
+        readonly ILogger<IgnoreErrorFilter<T>> logger;
+
+        public IgnoreErrorFilter(ILogger<IgnoreErrorFilter<T>> logger)
+        {
+            this.logger = logger;
+        }
+
+        public override void Handle(T message, Action<T> next)
+        {
+            try
+            {
+                next(message);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, ""); // error logged, but do not propagate
+            }
+        }
+    }
+
+
+
+    public class DelayFilter<T> : AsyncMessageHandlerFilter<T>
+    {
+        readonly TimeSpan delaySpan;
+
+        public DelayFilter(TimeSpan delaySpan)
+        {
+            this.delaySpan = delaySpan;
+        }
+
+        public override async ValueTask HandleAsync(T message, CancellationToken cancellationToken, Func<T, CancellationToken, ValueTask> next)
+        {
+            await Task.Delay(delaySpan, cancellationToken);
+            await next(message, cancellationToken);
         }
     }
 }

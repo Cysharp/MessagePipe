@@ -12,6 +12,38 @@ public class GameLifetimeScope : LifetimeScope
 
         builder.RegisterEntryPoint<MessagePipeDemo>(Lifetime.Singleton);
     }
+
+    // Register IPublisher<T>/ISubscriber<T> and global filter.
+    static void RegisterMessageBroker<T>(IContainerBuilder builder, MessagePipeOptions options)
+    {
+        builder.RegisterMessageBroker<T>(options);
+
+        // setup for global filters.
+        options.AddGlobalMessageHandlerFilter<MyMessageHandlerFilter<T>>();
+    }
+
+    static void RegisterRequest<TRequest, TResponse, THandler>(IContainerBuilder builder, MessagePipeOptions options)
+        where THandler : IRequestHandler
+    {
+        builder.RegisterRequestHandler<TRequest, TResponse, THandler>(options);
+        options.AddGlobalRequestHandlerFilter<MyRequestHandlerFilter<TRequest, TResponse>>();
+    }
+}
+
+public class MyMessageHandlerFilter<T> : MessageHandlerFilter<T>
+{
+    public override void Handle(T message, System.Action<T> next)
+    {
+        throw new System.NotImplementedException();
+    }
+}
+
+public class MyRequestHandlerFilter<TReq, TRes> : RequestHandlerFilter<TReq, TRes>
+{
+    public override TRes Invoke(TReq request, System.Func<TReq, TRes> next)
+    {
+        throw new System.NotImplementedException();
+    }
 }
 
 public class MessagePipeDemo : VContainer.Unity.IStartable
