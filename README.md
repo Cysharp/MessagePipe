@@ -91,6 +91,8 @@ Publish/Subscribe
 ---
 
 
+with predicate.
+
 
 Request/Response/All
 ---
@@ -106,7 +108,7 @@ sync(`MessageHandlerFilter<T>`) and async(`AsyncMessageHandlerFilter<>T`) and re
 
 
 
-
+These are idea showcase of filter.
 
 ```csharp
 public class ChangedValueFilter<T> : MessageHandlerFilter<T>
@@ -184,6 +186,26 @@ public class IgnoreErrorFilter<T> : MessageHandlerFilter<T>
 ```
 
 ```csharp
+public class DispatcherFilter<T> : MessageHandlerFilter<T>
+{
+    readonly Dispatcher dispatcher;
+
+    public DispatcherFilter(Dispatcher dispatcher)
+    {
+        this.dispatcher = dispatcher;
+    }
+
+    public override void Handle(T message, Action<T> next)
+    {
+        dispatcher.BeginInvoke(() =>
+        {
+            next(message);
+        });
+    }
+}
+```
+
+```csharp
 public class DelayFilter<T> : AsyncMessageHandlerFilter<T>
 {
     readonly TimeSpan delaySpan;
@@ -223,6 +245,9 @@ MessagePipeOptions
 Diagnostics
 ---
 
+
+Integration with other DI library
+---
 
 
 
