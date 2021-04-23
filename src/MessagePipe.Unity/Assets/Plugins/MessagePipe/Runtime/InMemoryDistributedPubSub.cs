@@ -8,7 +8,7 @@ using Cysharp.Threading.Tasks;
 namespace MessagePipe
 {
     public sealed class InMemoryDistributedPublisher<TKey, TMessage> : IDistributedPublisher<TKey, TMessage>
-        where TKey : notnull
+        
     {
         readonly IAsyncPublisher<TKey, TMessage> publisher;
 
@@ -24,7 +24,7 @@ namespace MessagePipe
     }
 
     public sealed class InMemoryDistributedSubscriber<TKey, TMessage> : IDistributedSubscriber<TKey, TMessage>
-        where TKey : notnull
+        
     {
         readonly IAsyncSubscriber<TKey, TMessage> subscriber;
 

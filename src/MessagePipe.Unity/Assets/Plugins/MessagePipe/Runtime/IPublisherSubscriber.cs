@@ -25,7 +25,7 @@ namespace MessagePipe
 
     public interface ISubscriber<TMessage>
     {
-        public IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
+        IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
     }
 
     public interface IAsyncPublisher<TMessage>
@@ -37,25 +37,25 @@ namespace MessagePipe
 
     public interface IAsyncSubscriber<TMessage>
     {
-        public IDisposable Subscribe(IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
+        IDisposable Subscribe(IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
     }
 
     // Keyed
 
     public interface IPublisher<TKey, TMessage>
-        where TKey : notnull
+        
     {
         void Publish(TKey key, TMessage message);
     }
 
     public interface ISubscriber<TKey, TMessage>
-        where TKey : notnull
+        
     {
-        public IDisposable Subscribe(TKey key, IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
+        IDisposable Subscribe(TKey key, IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
     }
 
     public interface IAsyncPublisher<TKey, TMessage>
-        where TKey : notnull
+        
     {
         void Publish(TKey key, TMessage message, CancellationToken cancellationToken = default(CancellationToken));
         UniTask PublishAsync(TKey key, TMessage message, CancellationToken cancellationToken = default(CancellationToken));
@@ -63,8 +63,8 @@ namespace MessagePipe
     }
 
     public interface IAsyncSubscriber<TKey, TMessage>
-        where TKey : notnull
+        
     {
-        public IDisposable Subscribe(TKey key, IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
+        IDisposable Subscribe(TKey key, IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
     }
 }

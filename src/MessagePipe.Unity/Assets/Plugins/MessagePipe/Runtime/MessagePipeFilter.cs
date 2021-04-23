@@ -6,8 +6,8 @@ namespace MessagePipe
 {
     public interface IMessagePipeFilterAttribute
     {
-        public Type Type { get; }
-        public int Order { get; }
+        Type Type { get; }
+        int Order { get; }
     }
 
     public interface IMessagePipeFilter

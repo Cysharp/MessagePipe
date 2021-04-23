@@ -13,10 +13,10 @@ public class VContainerTest
     [Test]
     public void SimpelePush()
     {
-        using var resolver = TestHelper.BuildVContainer((options, builder) =>
-        {
-            builder.RegisterMessageBroker<int>(options);
-        });
+        var resolver = TestHelper.BuildVContainer((options, builder) =>
+       {
+           builder.RegisterMessageBroker<int>(options);
+       });
 
         var pub = resolver.Resolve<IPublisher<int>>();
         var sub1 = resolver.Resolve<ISubscriber<int>>();
@@ -40,10 +40,10 @@ public class VContainerTest
     [UnityTest]
     public IEnumerator SimpleAsyncPush() => UniTask.ToCoroutine(async () =>
     {
-        using var resolver = TestHelper.BuildVContainer((options, builder) =>
-        {
-            builder.RegisterMessageBroker<int>(options);
-        });
+        var resolver = TestHelper.BuildVContainer((options, builder) =>
+       {
+           builder.RegisterMessageBroker<int>(options);
+       });
 
         var pub = resolver.Resolve<IAsyncPublisher<int>>();
         var sub1 = resolver.Resolve<IAsyncSubscriber<int>>();
@@ -69,16 +69,16 @@ public class VContainerTest
     {
         var store = new DataStore();
 
-        using var resolver = TestHelper.BuildVContainer(options =>
-        {
-            options.AddGlobalMessageHandlerFilter<MyFilter<int>>(1200);
-        }, (options, builder) =>
-        {
-            builder.RegisterMessageBroker<int>(options);
-            
-            builder.RegisterMessageHandlerFilter<MyFilter<int>>();
-            builder.RegisterInstance(store);
-        });
+        var resolver = TestHelper.BuildVContainer(options =>
+       {
+           options.AddGlobalMessageHandlerFilter<MyFilter<int>>(1200);
+       }, (options, builder) =>
+       {
+           builder.RegisterMessageBroker<int>(options);
+
+           builder.RegisterMessageHandlerFilter<MyFilter<int>>();
+           builder.RegisterInstance(store);
+       });
 
         var pub = resolver.Resolve<IPublisher<int>>();
         var sub1 = resolver.Resolve<ISubscriber<int>>();
@@ -102,14 +102,14 @@ public class VContainerTest
     {
         var store = new DataStore();
 
-        using var resolver = TestHelper.BuildVContainer(options =>
-        {
-            options.AddGlobalRequestHandlerFilter<MyRequestHandlerFilter>(-1799);
-        }, (options, builder) =>
-        {
-            builder.RegisterInstance(store);
-            builder.RegisterRequestHandler<int, int, MyRequestHandler>(options);
-        });
+        var resolver = TestHelper.BuildVContainer(options =>
+       {
+           options.AddGlobalRequestHandlerFilter<MyRequestHandlerFilter>(-1799);
+       }, (options, builder) =>
+       {
+           builder.RegisterInstance(store);
+           builder.RegisterRequestHandler<int, int, MyRequestHandler>(options);
+       });
 
         var handler = resolver.Resolve<IRequestHandler<int, int>>();
 
@@ -130,16 +130,16 @@ public class VContainerTest
     {
         var store = new DataStore();
 
-        using var resolver = TestHelper.BuildVContainer(options =>
-        {
+        var resolver = TestHelper.BuildVContainer(options =>
+       {
             // options.InstanceLifetime = InstanceLifetime.Scoped;
             options.AddGlobalRequestHandlerFilter<MyRequestHandlerFilter>(-1799);
-        }, (options, builder) =>
-        {
-            builder.RegisterInstance(store);
-            builder.RegisterRequestHandler<int, int, MyRequestHandler>(options);
-            builder.RegisterRequestHandler<int, int, MyRequestHandler2>(options);
-        });
+       }, (options, builder) =>
+       {
+           builder.RegisterInstance(store);
+           builder.RegisterRequestHandler<int, int, MyRequestHandler>(options);
+           builder.RegisterRequestHandler<int, int, MyRequestHandler2>(options);
+       });
 
         var handler = resolver.Resolve<IRequestAllHandler<int, int>>();
 

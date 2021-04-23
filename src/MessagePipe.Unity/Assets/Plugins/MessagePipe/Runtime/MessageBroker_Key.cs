@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace MessagePipe
 {
     public sealed class MessageBroker<TKey, TMessage> : IPublisher<TKey, TMessage>, ISubscriber<TKey, TMessage>
-        where TKey : notnull
+        
     {
         readonly MessageBrokerCore<TKey, TMessage> core;
         readonly FilterAttachedMessageHandlerFactory handlerFactory;
@@ -28,7 +28,7 @@ namespace MessagePipe
     }
 
     public sealed class MessageBrokerCore<TKey, TMessage> : IDisposable
-        where TKey : notnull
+        
     {
         readonly Dictionary<TKey, HandlerHolder> handlerGroup;
         readonly MessagePipeDiagnosticsInfo diagnotics;

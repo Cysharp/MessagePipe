@@ -50,7 +50,7 @@ namespace MessagePipe
                     .ToLookup(x =>
                     {
                         var split = x.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-                        var skips = split.SkipWhile(x => x.TrimStart().Contains(" MessagePipe."));
+                        var skips = split.SkipWhile(y => y.TrimStart().Contains(" MessagePipe."));
                         return skips.First().TrimStart().Substring(3); // remove "at ".
                     });
             }

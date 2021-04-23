@@ -7,7 +7,7 @@ using Cysharp.Threading.Tasks;
 namespace MessagePipe
 {
     public sealed class AsyncMessageBroker<TKey, TMessage> : IAsyncPublisher<TKey, TMessage>, IAsyncSubscriber<TKey, TMessage>
-        where TKey : notnull
+        
     {
         readonly AsyncMessageBrokerCore<TKey, TMessage> core;
         readonly FilterAttachedAsyncMessageHandlerFactory handlerFactory;
@@ -40,7 +40,7 @@ namespace MessagePipe
     }
 
     public sealed class AsyncMessageBrokerCore<TKey, TMessage> : IDisposable
-        where TKey : notnull
+        
     {
         readonly Dictionary<TKey, HandlerHolder> handlerGroup;
         readonly MessagePipeDiagnosticsInfo diagnotics;

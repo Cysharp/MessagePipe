@@ -29,7 +29,7 @@ namespace MessagePipe.Internal
                 {
                     result = new AwaiterNode();
                 }
-                result!.parent = parent;
+                result.parent = parent;
                 result.awaiter = awaiter;
 
                 result.awaiter.UnsafeOnCompleted(result.continuation);
