@@ -14,7 +14,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\MessagePipe\MessagePipe.csproj" />
+        <ProjectReference Include="..\..\src\MessagePipe\MessagePipe.csproj" />
+        <!--<ProjectReference Include="..\..\src\MessagePipe.Analyzer\MessagePipe.Analyzer\MessagePipe.Analyzer.csproj"
+                          PrivateAssets="all"
+                          ReferenceOutputAssembly="false"
+                          OutputItemType="Analyzer" />-->
     </ItemGroup>
 
 </Project>

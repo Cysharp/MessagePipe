@@ -202,12 +202,12 @@ namespace MessagePipe.Benchmark
                     //     xs[i].Invoke();
                     //    }
                     //}),
-                    Measure("MessagePipe(f1)", () => filter1.Publish(m)),
-                    Measure("MessagePipe(f2)", () => filter2.Publish(m)),
-                    Measure("MessagePipe(key)", () => keyed.Publish(key, m)),
-                    await MeasureAsync("MessagePipe(async-s)",  () =>  asyncP.PublishAsync(m, AsyncPublishStrategy.Sequential)),
-                    await MeasureAsync("MessagePipe(async-p)",  () => asyncP.PublishAsync(m, AsyncPublishStrategy.Parallel)),
-                    Measure("MessagePipe(async-f)", () => asyncP.Publish(m)),
+                    //Measure("MessagePipe(f1)", () => filter1.Publish(m)),
+                    //Measure("MessagePipe(f2)", () => filter2.Publish(m)),
+                    //Measure("MessagePipe(key)", () => keyed.Publish(key, m)),
+                    //await MeasureAsync("MessagePipe(async-s)",  () =>  asyncP.PublishAsync(m, AsyncPublishStrategy.Sequential)),
+                    //await MeasureAsync("MessagePipe(async-p)",  () => asyncP.PublishAsync(m, AsyncPublishStrategy.Parallel)),
+                    //Measure("MessagePipe(async-f)", () => asyncP.Publish(m)),
             };
             }
 

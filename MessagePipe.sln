@@ -23,7 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{7946AB0F
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PostBuildUtility", "tools\PostBuildUtility\PostBuildUtility.csproj", "{7C720CA5-C5F6-4B23-B4DD-4E98FF22111F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePipe.Redis.Tests", "tests\MessagePipe.Redis.Tests\MessagePipe.Redis.Tests.csproj", "{0C4DDD4B-8DCE-48EB-B309-39132313C3AB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePipe.Redis.Tests", "tests\MessagePipe.Redis.Tests\MessagePipe.Redis.Tests.csproj", "{0C4DDD4B-8DCE-48EB-B309-39132313C3AB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_items", "_items", "{33ADB827-BA73-4B6A-AA57-13C74AB9183D}"
 	ProjectSection(SolutionItems) = preProject

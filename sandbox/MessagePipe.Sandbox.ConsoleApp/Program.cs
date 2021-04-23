@@ -55,6 +55,7 @@ namespace MessagePipe
             var p2 = p.GetRequiredService<IServiceProvider>();
 
 
+
             args = new[] { "moremore" };
 
             await Host.CreateDefaultBuilder()
@@ -191,6 +192,8 @@ namespace MessagePipe
             keylessP.Publish(new MyMessage() { MyProperty = "tako" });
             keylessP.Publish(new MyMessage() { MyProperty = "yaki" });
 
+
+            keylessS.AsObservable();
 
 
             d.Dispose();
