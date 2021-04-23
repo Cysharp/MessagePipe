@@ -53,6 +53,8 @@ namespace PostBuildUtility
                 {"AwaiterNode?", "AwaiterNode" },
                 {"default!", "default" },
                 {"null!", "null" },
+                {"result!", "result" },
+                {"where TKey : notnull", ""},
             };
 
             System.Console.WriteLine("Start to replace code, remove nullability and use UniTask.");
