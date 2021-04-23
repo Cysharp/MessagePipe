@@ -35,3 +35,63 @@ jobs:
       - run: dotnet build ./tools/PostBuildUtility/ -c Debug
       - run: dotnet build -c Debug
       - run: dotnet test -c Debug --no-build < /dev/null
+
+  build-unity:
+    if: "((github.event_name == 'push' && github.repository_owner == 'Cysharp') || startsWith(github.event.pull_request.head.label, 'Cysharp:'))"
+    strategy:
+      matrix:
+        unity: ["2019.3.9f1", "2019.4.13f1", "2020.1.12f1"]
+        include:
+          - unity: 2019.3.9f1
+            license: UNITY_LICENSE_2019
+          - unity: 2019.4.13f1
+            license: UNITY_LICENSE_2019
+          - unity: 2020.1.12f1
+            license: UNITY_LICENSE_2020
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # Execute scripts: RuntimeUnitTestToolkit
+      # /opt/Unity/Editor/Unity -quit -batchmode -nographics -silent-crashes -logFile -projectPath . -executeMethod UnitTestBuilder.BuildUnitTest /headless /ScriptBackend mono /BuildTarget StandaloneLinux64
+      - name: Build UnitTest(Linux64, mono)
+        uses: game-ci/unity-builder@v2.0-alpha-6
+        env:
+          UNITY_LICENSE: ${{ secrets[matrix.license] }}
+        with:
+          projectPath: src/MessagePipe.Unity
+          unityVersion: ${{ matrix.unity }}
+          targetPlatform: StandaloneLinux64
+          buildMethod: UnitTestBuilder.BuildUnitTest
+          customParameters: /headless /ScriptBackend mono
+          versioning: None
+      - name: Execute UnitTest
+        run: ./src/MessagePipe.Unity/bin/UnitTest/StandaloneLinux64_Mono2x/test
+
+      # Execute scripts: Export Package
+      #  /opt/Unity/Editor/Unity -quit -batchmode -nographics -silent-crashes -logFile -projectPath . -executeMethod PackageExporter.Export
+      - name: Export unitypackage
+        uses: game-ci/unity-builder@v2.0-alpha-6
+        env:
+          UNITY_LICENSE: ${{ secrets[matrix.license] }}
+        with:
+          projectPath: src/MessagePipe.Unity
+          unityVersion: ${{ matrix.unity }}
+          targetPlatform: StandaloneLinux64
+          buildMethod: PackageExporter.Export
+          versioning: None
+
+      - name: check all .meta is commited
+        run: |
+          if git ls-files --others --exclude-standard -t | grep --regexp='[.]meta$'; then
+            echo "Detected .meta file generated. Do you forgot commit a .meta file?"
+            exit 1
+          else
+            echo "Great, all .meta files are commited."
+          fi
+        working-directory: src/MessagePipe.Unity
+
+      # Store artifacts.
+      - uses: actions/upload-artifact@v2
+        with:
+          name: MessagePipe.unitypackage-${{ matrix.unity }}.zip
+          path: ./src/MessagePipe.Unity/*.unitypackage

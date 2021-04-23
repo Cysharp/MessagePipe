@@ -1,0 +1,11 @@
+{
+    "name": "com.cysharp.messagepipe",
+    "displayName": "MessagePipe",
+    "version": "1.0.0",
+    "unity": "2018.4",
+    "description": "High performance messaging pipeline.",
+    "keywords": [ "pubsub", "event", "Scripting", "DI" ],
+    "license": "MIT",
+    "category": "Scripting",
+    "dependencies": {}
+}

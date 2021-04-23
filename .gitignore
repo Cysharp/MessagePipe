@@ -135,3 +135,5 @@ src/MessagePipe.Unity/Tests.csproj
 src/MessagePipe.Unity/Assembly-CSharp-firstpass.csproj
 
 src/MessagePipe.Unity/MessagePipe.Zenject.csproj
+
+src/MessagePipe.Unity/Assembly-CSharp-Editor.csproj
