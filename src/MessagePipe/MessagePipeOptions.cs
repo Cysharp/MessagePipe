@@ -10,8 +10,7 @@ namespace MessagePipe
 {
     public enum AsyncPublishStrategy
     {
-        Sequential,
-        Parallel
+        Parallel, Sequential
     }
 
     public enum InstanceLifetime

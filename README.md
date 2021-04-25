@@ -32,22 +32,22 @@ using Microsoft.Extensions.DependencyInjection;
 Host.CreateDefaultBuilder()
     .ConfigureServices((ctx, services) =>
     {
-        services.AddMessagePipe(options => { });
+        services.AddMessagePipe(); // AddMessagePipe(options => { }) for configure options
     })
 ```
 
-Get the `IPublisher<T>` for publisher, Get the `ISubscribe<T>` for subscriber. `T` can be any type, primitive(int, string, etc...), struct, class, enum, etc.
+Get the `IPublisher<T>` for publisher, Get the `ISubscribe<T>` for subscriber, like a `Logger<T>`. `T` can be any type, primitive(int, string, etc...), struct, class, enum, etc.
 
 ```csharp
 using MessagePipe;
 
 public struct MyEvent { }
 
-public class PageA
+public class SceneA
 {
     readonly IPublisher<MyEvent> publisher;
     
-    public PageA(IPublisher<MyEvent> publisher)
+    public SceneA(IPublisher<MyEvent> publisher)
     {
         this.publisher = publisher;
     }
@@ -58,12 +58,12 @@ public class PageA
     }
 }
 
-public class PageB
+public class SceneB
 {
     readonly ISubscriber<MyEvent> subscriber;
     readonly IDisposable disposable;
 
-    public PageB(ISubscriber<MyEvent> subscriber)
+    public SceneB(ISubscriber<MyEvent> subscriber)
     {
         var bag = DisposableBag.CreateBuilder(); // composite disposable for manage subscription
         
@@ -74,12 +74,115 @@ public class PageB
 
     void Close()
     {
-        disposable.Dispose(); // unsubscribe event
+        disposable.Dispose(); // unsubscribe event, all subscription **must** Dispose when completed
     }
 }
 ```
 
-It is similar to event, but decoupled by type as key. The return value of Subscribe is `IDisposable`, which makes it easier to unsubscribe than event. You can release many subscriptions at once by `DisposableBag`(`CompositeDisposable`). See the [Managing Subscription](#managing-subscription) section for more details.
+It is similar to event, but decoupled by type as key. The return value of Subscribe is `IDisposable`, which makes it easier to unsubscribe than event. You can release many subscriptions at once by `DisposableBag`(`CompositeDisposable`). See the [Managing Subscription and Diagnostics](#managing-subscription-and-diagnostics) section for more details.
+
+The publisher/subscriber(internally we called MessageBroker) is managed by DI, it is possible to have different broker for each scope. Also, all subscriptions are unsubscribed when the scope is disposed, which prevents subscription leaks.
+
+> Default is singleton, you can configure `MessagePipeOptions.InstanceLifetime` to `Singleton` or `Scoped`.
+
+`IPublisher<T>/ISubscriber<T>` is keyless(type only) however MessagePipe has similar interface `IPublisher<TKey, TMessage>/ISubscriber<TKey, TMessage>` that is keyed(topic) interface.
+
+For example, our real usecase,  // TODO sentence.
+// TODO: Image
+
+```csharp
+// MagicOnion(similar as SignalR, realtime event framework for .NET and Unity)
+public class UnityConnectionHub : StreamingHubBase<IUnityConnectionHub, IUnityConnectionHubReceiver>, IUnityConnectionHub
+{
+    readonly IPublisher<Guid, UnitEventData> eventPublisher;
+    readonly IPublisher<Guid, ConnectionClose> closePublisher;
+    Guid id;
+
+    public UnityConnectionHub(IPublisher<Guid, UnitEventData> eventPublisher, IPublisher<Guid, ConnectionClose> closePublisher)
+    {
+        this.eventPublisher = eventPublisher;
+        this.closePublisher = closePublisher;
+    }
+
+    override async ValueTask OnConnected()
+    {
+        this.id = Guid.Parse(Context.Headers["id"]);
+    }
+
+    override async ValueTask OnDisconnected()
+    {
+        this.closePublisher.Publish(id, new ConnectionClose()); // publish to browser(Blazor)
+    }
+
+    // called from Client(Unity)
+    public Task<UnityEventData> SendEventAsync(UnityEventData data)
+    {
+        this.eventPublisher.Publish(id, data); // publish to browser(Blazor)
+    }
+}
+
+// Blazor
+public partial class BlazorPage : ComponentBase, IDisposable
+{
+    [Parameter]
+    public Guid ID { get; set; }
+
+    [Inject]
+    ISubscriber<Guid, UnitEventData> UnityEventSubscriber { get; set; }
+
+    [Inject]
+    ISubscriber<Guid, ConnectionClose> ConnectionCloseSubscriber { get; set; }
+
+    IDisposable subscription;
+
+    protected override void OnInitialized()
+    {
+        // receive event from MagicOnion(that is from Unity)
+        var d1 = UnityEventSubscriber.Subscribe(ID, x =>
+        {
+            // do anything...
+        });
+
+        var d2 = ConnectionCloseSubscriber.Subscribe(ID, _ =>
+        {
+            // show disconnected thing to view...
+            subscription?.Dispose(); // and unsubscribe events.
+        });
+
+        subscription = DisposableBag.Create(d1, d2); // combine disposable.
+    }
+    
+    public void Dispose()
+    {
+        // unsubscribe event when browser is closed.
+        subscription?.Dispose();
+    }
+}
+```
+
+> The main difference of Reactive Extensions' Subject is has no `OnCompleted`. OnCompleted may or may not be used, making it very difficult to determine the intent to the observer(subscriber). Also, we usually subscribe to multiple events from the same (different event type)publisher, and it is difficult to handle duplicate OnCompleted in that case. For this reason, MessagePipe only provides a simple Publish(OnNext). If you want to convey completion, please receive a separate event and perform dedicated processing there.
+
+
+
+
+
+
+TODO: mediator
+https://docs.microsoft.com/ja-jp/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/microservice-application-layer-implementation-web-api#implement-the-command-and-command-handler-patterns
+
+
+
+
+async, await all.
+
+
+
+
+request/response.
+
+
+
+filter
 
 
 
@@ -115,13 +218,22 @@ with key
 
 
 
-with predicate.
 
 
 
 
 Request/Response/All
 ---
+
+
+
+Subscribe Extensions
+---
+
+with predicate
+AsObservable
+
+
 
 
 
@@ -250,7 +362,7 @@ public class DelayFilter<T> : AsyncMessageHandlerFilter<T>
 ```
 
 
-Managing Subscription
+Managing Subscription and Diagnostics
 ---
 
 better than event.
@@ -260,7 +372,7 @@ TODO: example of Blazor.
 
 
 
-see #diagnostics section.
+
 
 
 > Weak reference, which is widely used in WPF, is an anti-pattern. All subscriptions should be managed explicitly, and `DisposableBag` (`CompositeDisposable`) can help with that.
@@ -279,16 +391,19 @@ MessagePipe.Redis / IDistributedPubSub
 
 MessagePipeOptions
 ---
+You can configure MessagePipe behaviour by `MessagePipeOptions`.
+
+
 
 
 ```csharp
 public sealed class MessagePipeOptions
 {
-    AsyncPublishStrategy DefaultAsyncPublishStrategy;
-    HandlingSubscribeDisposedPolicy HandlingSubscribeDisposedPolicy;
-    InstanceLifetime InstanceLifetime;
-    bool EnableAutoRegistration;
-    bool EnableCaptureStackTrace;
+    AsyncPublishStrategy DefaultAsyncPublishStrategy; // default is Parallel
+    HandlingSubscribeDisposedPolicy HandlingSubscribeDisposedPolicy; // default is Ignore
+    InstanceLifetime InstanceLifetime; // default is Singleton
+    bool EnableAutoRegistration;  // default is true
+    bool EnableCaptureStackTrace; // default is false
 
     void AddGlobal***Filter<T>();
 }
@@ -309,28 +424,38 @@ public enum HandlingSubscribeDisposedPolicy
 }
 ```
 
-// AutoRegistration
+### AsyncPublishStrategy
+
+### HandlingSubscribeDisposedPolicy
+
+### InstanceLifetime
+
+### EnableAutoRegistration
 
 
-Diagnostics
----
+### EnableCaptureStackTrace
+
+
+### AddGlobal***Filter
 
 
 Integration with other DI library
 ---
-
-
+All(popular) DI libraries has `Microsoft.Extensions.DependencyInjection` bridge so configure by MS.E.DI and use bridge if you want.
 
 Compare with Channels
 ---
-
-
+[System.Threading.Channels](https://docs.microsoft.com/en-us/dotnet/api/system.threading.channels)(for Unity, `UniTask.Channels`) uses Queue internal, the producer is not affected by the performance of the consumer, and the consumer can control the flow rate(back pressure). This is a different use than MessagePipe's Pub/Sub.
 
 Unity
 ---
-For Unity, you can choose [VContainer](https://github.com/hadashiA/VContainer/) or [Zenject](https://github.com/modesttree/Zenject) for runtime.
+You need to install Core library and choose [VContainer](https://github.com/hadashiA/VContainer/) or [Zenject](https://github.com/modesttree/Zenject) for runtime. You can install via UPM git URL package or asset package(MessagePipe.*.unitypackage) available in [MessagePipe/releases](https://github.com/Cysharp/MessagePipe/releases) page.
 
-// TODO: Install path
+* Core `https://github.com/Cysharp/MessagePipe.git?path=src/MessagePipe.Unity/Assets/Plugins/MessagePipe`
+* VContainer `https://github.com/Cysharp/MessagePipe.git?path=src/MessagePipe.Unity/Assets/Plugins/MessagePipe.VContainer`
+* Zenject `https://github.com/Cysharp/MessagePipe.git?path=src/MessagePipe.Unity/Assets/Plugins/MessagePipe.Zenject`
+
+Andalso, requires [UniTask](https://github.com/Cysharp/UniTask) to install.
 
 Unity version does not have open generics support(for IL2CPP) and does not support auto registration. Therefore, all required types need to be manually registered.
 
