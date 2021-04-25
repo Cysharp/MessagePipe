@@ -121,7 +121,7 @@ namespace MessagePipe
         public void AddGlobalMessageHandlerFilter(Type type, int order = 0)
         {
             ValidateFilterType(type, typeof(IMessageHandlerFilter));
-            messageHandlerFilters.Add(new FilterDefinition(type, order, typeof(MessageHandlerFilter<>)));
+            messageHandlerFilters.Add(new MessageHandlerFilterDefinition(type, order, typeof(MessageHandlerFilter<>)));
         }
 
 #endif
@@ -129,7 +129,7 @@ namespace MessagePipe
         public void AddGlobalMessageHandlerFilter<T>(int order = 0)
             where T : IMessageHandlerFilter
         {
-            messageHandlerFilters.Add(new FilterDefinition(typeof(T), order, typeof(MessageHandlerFilter<>)));
+            messageHandlerFilters.Add(new MessageHandlerFilterDefinition(typeof(T), order, typeof(MessageHandlerFilter<>)));
         }
 
         internal (int count, IEnumerable<IMessageHandlerFilter>) GetGlobalMessageHandlerFilters(IServiceProvider provider, Type messageType)
@@ -149,7 +149,7 @@ namespace MessagePipe
         public void AddGlobalAsyncMessageHandlerFilter(Type type, int order = 0)
         {
             ValidateFilterType(type, typeof(IAsyncMessageHandlerFilter));
-            asyncMessageHandlerFilters.Add(new FilterDefinition(type, order, typeof(AsyncMessageHandlerFilter<>)));
+            asyncMessageHandlerFilters.Add(new MessageHandlerFilterDefinition(type, order, typeof(AsyncMessageHandlerFilter<>)));
         }
 
 #endif
@@ -157,7 +157,7 @@ namespace MessagePipe
         public void AddGlobalAsyncMessageHandlerFilter<T>(int order = 0)
             where T : IAsyncMessageHandlerFilter
         {
-            asyncMessageHandlerFilters.Add(new FilterDefinition(typeof(T), order, typeof(AsyncMessageHandlerFilter<>)));
+            asyncMessageHandlerFilters.Add(new MessageHandlerFilterDefinition(typeof(T), order, typeof(AsyncMessageHandlerFilter<>)));
         }
 
         internal (int count, IEnumerable<IAsyncMessageHandlerFilter>) GetGlobalAsyncMessageHandlerFilters(IServiceProvider provider, Type messageType)
@@ -177,7 +177,7 @@ namespace MessagePipe
         public void AddGlobalRequestHandlerFilter(Type type, int order = 0)
         {
             ValidateFilterType(type, typeof(IRequestHandlerFilter));
-            requestHandlerFilters.Add(new FilterDefinition(type, order, typeof(RequestHandlerFilter<,>)));
+            requestHandlerFilters.Add(new RequestHandlerFilterDefinition(type, order, typeof(RequestHandlerFilter<,>)));
         }
 
 #endif
@@ -185,7 +185,7 @@ namespace MessagePipe
         public void AddGlobalRequestHandlerFilter<T>(int order = 0)
             where T : IRequestHandlerFilter
         {
-            requestHandlerFilters.Add(new FilterDefinition(typeof(T), order, typeof(RequestHandlerFilter<,>)));
+            requestHandlerFilters.Add(new RequestHandlerFilterDefinition(typeof(T), order, typeof(RequestHandlerFilter<,>)));
         }
 
         internal (int, IEnumerable<IRequestHandlerFilter>) GetGlobalRequestHandlerFilters(IServiceProvider provider, Type requestType, Type responseType)
@@ -205,7 +205,7 @@ namespace MessagePipe
         public void AddGlobalAsyncRequestHandlerFilter(Type type, int order = 0)
         {
             ValidateFilterType(type, typeof(IAsyncRequestHandlerFilter));
-            asyncRequestHandlerFilters.Add(new FilterDefinition(type, order, typeof(AsyncRequestHandlerFilter<,>)));
+            asyncRequestHandlerFilters.Add(new RequestHandlerFilterDefinition(type, order, typeof(AsyncRequestHandlerFilter<,>)));
         }
 
 #endif
@@ -213,7 +213,7 @@ namespace MessagePipe
         public void AddGlobalAsyncRequestHandlerFilter<T>(int order = 0)
             where T : IAsyncRequestHandlerFilter
         {
-            asyncRequestHandlerFilters.Add(new FilterDefinition(typeof(T), order, typeof(AsyncRequestHandlerFilter<,>)));
+            asyncRequestHandlerFilters.Add(new RequestHandlerFilterDefinition(typeof(T), order, typeof(AsyncRequestHandlerFilter<,>)));
         }
 
         internal (int, IEnumerable<IAsyncRequestHandlerFilter>) GetGlobalAsyncRequestHandlerFilters(IServiceProvider provider, Type requestType, Type responseType)
@@ -233,7 +233,8 @@ namespace MessagePipe
         {
             for (int i = 0; i < filterDefinitions.Count; i++)
             {
-                var def = filterDefinitions[i];
+                var def = filterDefinitions[i] as MessageHandlerFilterDefinition;
+                if (def == null) continue;
                 var filterType = def.FilterType;
                 if (def.IsOpenGenerics)
                 {
@@ -262,7 +263,8 @@ namespace MessagePipe
         {
             for (int i = 0; i < filterDefinitions.Count; i++)
             {
-                var def = filterDefinitions[i];
+                var def = filterDefinitions[i] as RequestHandlerFilterDefinition;
+                if (def == null) continue;
                 var filterType = def.FilterType;
                 if (def.IsOpenGenerics)
                 {

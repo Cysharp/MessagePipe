@@ -1,5 +1,6 @@
 ﻿using ConsoleAppFramework;
 using MessagePipe.Sandbox.ConsoleApp;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -61,6 +62,8 @@ namespace MessagePipe
             await Host.CreateDefaultBuilder()
                 .ConfigureServices((ctx, x) =>
                 {
+                    
+
                     x.AddMessagePipe(options =>
                     {
                         options.InstanceLifetime = InstanceLifetime.Singleton;

@@ -15,7 +15,7 @@ namespace MessagePipe
         where TAttribute : IMessagePipeFilterAttribute
     {
         // cache attribute defines.
-        readonly ConcurrentDictionary<Type, FilterDefinition[]> cache = new ConcurrentDictionary<Type, FilterDefinition[]>();
+        readonly ConcurrentDictionary<Type, AttributeFilterDefinition[]> cache = new ConcurrentDictionary<Type, AttributeFilterDefinition[]>();
 
         public (int, IEnumerable<IMessagePipeFilter>) GetAttributeFilters(Type handlerType, IServiceProvider provider)
         {
@@ -29,18 +29,18 @@ namespace MessagePipe
             var filterAttributes = handlerType.GetCustomAttributes(typeof(IMessagePipeFilterAttribute), true).OfType<TAttribute>().ToArray();
             if (filterAttributes.Length == 0)
             {
-                cache[handlerType] = Array.Empty<FilterDefinition>();
+                cache[handlerType] = Array.Empty<AttributeFilterDefinition>();
                 return (0, Array.Empty<IMessagePipeFilter>());
             }
             else
             {
-                var array = filterAttributes.Cast<TAttribute>().Select(x => new FilterDefinition(x.Type, x.Order)).ToArray();
+                var array = filterAttributes.Cast<TAttribute>().Select(x => new AttributeFilterDefinition(x.Type, x.Order)).ToArray();
                 var filterDefinitions = cache.GetOrAdd(handlerType, array);
                 return (filterDefinitions.Length, CreateFilters(filterDefinitions, provider));
             }
         }
 
-        static IEnumerable<IMessagePipeFilter> CreateFilters(FilterDefinition[] filterDefinitions, IServiceProvider provider)
+        static IEnumerable<IMessagePipeFilter> CreateFilters(AttributeFilterDefinition[] filterDefinitions, IServiceProvider provider)
         {
             foreach (var filterDefinition in filterDefinitions)
             {

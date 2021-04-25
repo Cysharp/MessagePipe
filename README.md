@@ -364,6 +364,10 @@ public class DelayFilter<T> : AsyncMessageHandlerFilter<T>
 
 Managing Subscription and Diagnostics
 ---
+Subscribe returns `IDisposable`; when call `Dispose` then unsubscribe. The returned `IDisposable` value must be handled. If it is ignored, it will leak.
+
+
+
 
 better than event.
 
@@ -375,10 +379,17 @@ TODO: example of Blazor.
 
 
 
-> Weak reference, which is widely used in WPF, is an anti-pattern. All subscriptions should be managed explicitly, and `DisposableBag` (`CompositeDisposable`) can help with that.
 
 
 
+
+
+> Weak reference, which is widely used in WPF, is an anti-pattern. All subscriptions should be managed explicitly.
+
+
+
+
+, and `DisposableBag` (`CompositeDisposable`) can help with that.
 
 
 
@@ -391,15 +402,30 @@ MessagePipe.Redis / IDistributedPubSub
 
 MessagePipeOptions
 ---
-You can configure MessagePipe behaviour by `MessagePipeOptions`.
+You can configure MessagePipe behaviour by `MessagePipeOptions` in `AddMessagePipe(Action<MMessagePipeOptions> configure)`.
 
+```csharp
+Host.CreateDefaultBuilder()
+    .ConfigureServices((ctx, services) =>
+    {
+        // var config = ctx.Configuration.Get<MyConfig>(); // optional: get settings from configuration(use it for options configure)
 
+        services.AddMessagePipe(options =>
+        {
+            options.InstanceLifetime = InstanceLifetime.Scoped;
+            options.EnableCaptureStackTrace = true;
+        });
+    })
+```
 
+Option has these properties(and method).
 
 ```csharp
 public sealed class MessagePipeOptions
 {
     AsyncPublishStrategy DefaultAsyncPublishStrategy; // default is Parallel
+    HandlingSubscribeDisposedPolicy HandlingSubscribeDisposedPolic; // default is Ignore
+    HandlingSubscribeDisposedPolicy HandlingSubscribeDisposedPolicy; // default is Ignore
     HandlingSubscribeDisposedPolicy HandlingSubscribeDisposedPolicy; // default is Ignore
     InstanceLifetime InstanceLifetime; // default is Singleton
     bool EnableAutoRegistration;  // default is true
@@ -425,6 +451,34 @@ public enum HandlingSubscribeDisposedPolicy
 ```
 
 ### AsyncPublishStrategy
+
+```csharp
+public interface IAsyncPublisher<TMessage>
+{
+    // using Default AsyncPublishStrategy
+    ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
+    // snip others...
+}
+
+public interface IAsyncPublisher<TKey, TMessage>
+    where TKey : notnull
+{
+    // using Default AsyncPublishStrategy
+    ValueTask PublishAsync(TKey key, TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask PublishAsync(TKey key, TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
+    // snip others...
+}
+
+public interface IAsyncRequestAllHandler<in TRequest, TResponse>
+{
+    // using Default AsyncPublishStrategy
+    ValueTask<TResponse[]> InvokeAllAsync(TRequest request, CancellationToken cancellationToken = default);
+    ValueTask<TResponse[]> InvokeAllAsync(TRequest request, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default);
+    // snip others...
+}
+```
+
 
 ### HandlingSubscribeDisposedPolicy
 
@@ -476,7 +530,6 @@ public class GameLifetimeScope : LifetimeScope
 
         // RegisterHandlerFilter: Register for filter, also exists RegisterAsyncMessageHandlerFilter, Register(Async)RequestHandlerFilter
         builder.RegisterMessageHandlerFilter<MyFilter<int>>();
-
 
         builder.RegisterEntryPoint<MessagePipeDemo>(Lifetime.Singleton);
     }
