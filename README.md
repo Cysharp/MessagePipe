@@ -9,9 +9,11 @@ MessagePipe is a high-performance in-memory/distributed messaging pipeline for .
 * broadcast/response(+many)
 * in-memory/distributed
 
-![](https://user-images.githubusercontent.com/46207/115984364-bf431000-a5e1-11eb-8ddf-efd8adcc71b1.png)
+MessagePipe is faster than standard C# event and 78 times faster than Prism's EventAggregator.
 
-also allocation is better.
+![](https://user-images.githubusercontent.com/46207/115984507-5d36da80-a5e2-11eb-9942-66602906f499.png)
+
+Of course, memory allocation per publish operation is less(zero).
 
 ![](https://user-images.githubusercontent.com/46207/115814615-62542800-a430-11eb-9041-1f31c1ac8464.png)
 
@@ -21,7 +23,7 @@ For .NET, use NuGet. For Unity, please read [Unity](#unity) section.
 
 > PM> Install-Package [MessagePipe](https://www.nuget.org/packages/MessagePipe)
 
-MessagePipe is built on top of a `Microsoft.Extensions.DependencyInjection`(for Unity, `VContainer` or `Zenject`) so set up via `ConfigureServices`.
+MessagePipe is built on top of a `Microsoft.Extensions.DependencyInjection`(for Unity, `VContainer` or `Zenject`) so set up via `ConfigureServices` in [.NET Generic Host](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/generic-host). Generic Host is widely used in .NET such as ASP.NET Core, [MagicOnion](https://github.com/Cysharp/MagicOnion/), [ConsoleAppFramework](https://github.com/Cysharp/ConsoleAppFramework/), MAUI, WPF(with external support), etc so easy to setup.
 
 ```csharp
 using MessagePipe;
@@ -34,13 +36,7 @@ Host.CreateDefaultBuilder()
     })
 ```
 
-// TODO: MVC, ConsoleAppFramework, MAUI, etc...
-
-
-Get the `IPublisher<T>` for publisher, Get the `ISubscribe<T>` for subscriber.
-
-
- `T`
+Get the `IPublisher<T>` for publisher, Get the `ISubscribe<T>` for subscriber. `T` can be any type, primitive(int, string, etc...), struct, class, enum, etc.
 
 ```csharp
 using MessagePipe;
@@ -83,7 +79,7 @@ public class PageB
 }
 ```
 
-
+It is similar to event, but decoupled by type as key. The return value of Subscribe is `IDisposable`, which makes it easier to unsubscribe than event. You can release many subscriptions at once by `DisposableBag`(`CompositeDisposable`). See the [Managing Subscription](#managing-subscription) section for more details.
 
 
 
