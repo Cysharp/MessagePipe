@@ -9,8 +9,11 @@ MessagePipe is a high-performance in-memory/distributed messaging pipeline for .
 * broadcast/response(+many)
 * in-memory/distributed
 
-/* TODO:Graph */
+![](https://user-images.githubusercontent.com/46207/115984364-bf431000-a5e1-11eb-8ddf-efd8adcc71b1.png)
 
+also allocation is better.
+
+![](https://user-images.githubusercontent.com/46207/115814615-62542800-a430-11eb-9041-1f31c1ac8464.png)
 
 Getting Started
 ---
@@ -254,6 +257,12 @@ public class DelayFilter<T> : AsyncMessageHandlerFilter<T>
 Managing Subscription
 ---
 
+better than event.
+
+TODO: example of Blazor.
+
+
+
 
 see #diagnostics section.
 
@@ -312,6 +321,11 @@ Diagnostics
 
 
 Integration with other DI library
+---
+
+
+
+Compare with Channels
 ---
 
 
@@ -389,9 +403,6 @@ void Configure(DiContainer builder)
 
     // BindHandlerFilter: Bind for filter, also exists BindAsyncMessageHandlerFilter, Bind(Async)RequestHandlerFilter
     builder.BindMessageHandlerFilter<MyFilter<int>>();
-
-
-    builder.BindEntryPoint<MessagePipeDemo>(Lifetime.Singleton);
 }
 ```
 
