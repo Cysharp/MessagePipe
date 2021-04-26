@@ -13,9 +13,9 @@ namespace MessagePipe.Benchmark
     {
         static async Task Main(string[] args)
         {
-            // await new PublishOps().MeasureAllAsync();
+            await new PublishOps().MeasureAllAsync();
 
-            BenchmarkSwitcher.FromAssembly(Assembly.GetEntryAssembly()).Run(args);
+            //BenchmarkSwitcher.FromAssembly(Assembly.GetEntryAssembly()).Run(args);
             await Task.Yield();
         }
     }

@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Zenject;
+using Microsoft.Toolkit.Mvvm.Messaging;
 
 #if WinBenchmark
 using GalaSoft.MvvmLight.Messaging;
@@ -20,8 +21,41 @@ using GalaSoft.MvvmLight.Messaging;
 
 namespace MessagePipe.Benchmark
 {
+    public class LambdaRef
+    {
+        public Action<Message> Delegate;
+
+        public LambdaRef()
+        {
+            Delegate = Empty;
+        }
+
+        public void Empty(Message _)
+        {
+        }
+
+    }
+
+    public class LambdaRef2
+    {
+        public MessageHandler<object, Message> Delegate;
+
+        public LambdaRef2()
+        {
+            Delegate = Empty;
+        }
+
+        public void Empty(object __, Message _)
+        {
+        }
+
+    }
+
     public class PublishOps
     {
+        LambdaRef lambdaRef = new LambdaRef();
+        LambdaRef2 lambdaRef2 = new LambdaRef2();
+
         IPublisher<Message> p;
         Message m;
         Subject<Message> subject;
@@ -44,6 +78,9 @@ namespace MessagePipe.Benchmark
         PlainAction[] simpleArray;
         IInvoke[] interfaceArray;
         Action[] actionDelegate;
+
+        Microsoft.Toolkit.Mvvm.Messaging.StrongReferenceMessenger toolkitStrong;
+        Microsoft.Toolkit.Mvvm.Messaging.WeakReferenceMessenger toolkitWeak;
 
 #if WinBenchmark
         Messenger mvvmLight;
@@ -94,6 +131,8 @@ namespace MessagePipe.Benchmark
             mvvmLightStrong = new Messenger();
 #endif
 
+            toolkitStrong = new Microsoft.Toolkit.Mvvm.Messaging.StrongReferenceMessenger();
+            toolkitWeak = new Microsoft.Toolkit.Mvvm.Messaging.WeakReferenceMessenger();
 
 
 
@@ -105,7 +144,7 @@ namespace MessagePipe.Benchmark
             for (int i = 0; i < 8; i++)
             {
                 s.Subscribe(new EmptyMessageHandler());
-                prism.Subscribe(_ => { });
+                prism.Subscribe(lambdaRef.Delegate);
                 prismStrong.Subscribe(_ => { }, true);
                 ev += _ => { };
                 subject.Subscribe(_ => { });
@@ -129,6 +168,9 @@ namespace MessagePipe.Benchmark
                 interfaceArray[i] = new PlainAction();
 
                 asyncS.Subscribe((_, c) => default(ValueTask));
+
+                toolkitStrong.Register<Message>(new object(), lambdaRef2.Delegate);
+                toolkitWeak.Register<Message>(new object(), lambdaRef2.Delegate);
             }
 
             signalBus.Subscribe<Message>(m => { });
@@ -139,7 +181,6 @@ namespace MessagePipe.Benchmark
             signalBus.Subscribe<Message>(m => { });
             signalBus.Subscribe<Message>(m => { });
             signalBus.Subscribe<Message>(m => { });
-
 
         }
 
@@ -177,6 +218,8 @@ namespace MessagePipe.Benchmark
                     #endif
                             
                     Measure("Easy.MessageHub", () => easyMsgHub.Publish(m)),
+                    Measure("MS.Toolkit.Strong", () => toolkitStrong.Send(m)),
+                    Measure("MS.Toolkit.Weak", () => toolkitWeak.Send(m)),
 
                     //Measure("Array", () =>
                     //{

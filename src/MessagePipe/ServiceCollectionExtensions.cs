@@ -23,6 +23,7 @@ namespace MessagePipe
             configure(options);
             services.AddSingleton(options); // add as singleton instance
             services.AddSingleton(typeof(MessagePipeDiagnosticsInfo));
+            services.AddSingleton(typeof(EventFactory));
 
             // filters.
             // attribute and order is deterministic at compile, so use Singleton lifetime of cache.
@@ -265,7 +266,7 @@ namespace MessagePipe
                     }
                 }
 
-                NEXT_TYPE:
+            NEXT_TYPE:
                 continue;
             }
         }
