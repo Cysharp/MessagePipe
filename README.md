@@ -87,7 +87,7 @@ The publisher/subscriber(internally we called MessageBroker) is managed by DI, i
 
 `IPublisher<T>/ISubscriber<T>` is keyless(type only) however MessagePipe has similar interface `IPublisher<TKey, TMessage>/ISubscriber<TKey, TMessage>` that is keyed(topic) interface.
 
-For example, our real usecase, There is an application that connects Unity and MagicOnion (a real-time communication framework like SignalR) and delivers it via a browser by Blazor. At that time, we needed something to connect Blazor's page (Browser lifecycle) and MagicOnion's Hub (Connection lifecycle) to transmit data. We also need to distribute the connections by their IDs.
+For example, our real usecase, There is an application that connects Unity and [MagicOnion](https://github.com/Cysharp/MagicOnion/) (a real-time communication framework like SignalR) and delivers it via a browser by Blazor. At that time, we needed something to connect Blazor's page (Browser lifecycle) and MagicOnion's Hub (Connection lifecycle) to transmit data. We also need to distribute the connections by their IDs.
 
 `Browser <-> Blazor <- [MessagePipe] -> MagicOnion <-> Unity`
 
