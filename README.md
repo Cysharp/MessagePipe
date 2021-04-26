@@ -575,7 +575,7 @@ If you monitor SubscribeCount, you can check leak of subscription.
 ```csharp
 public class MonitorTimer : IDisposable
 {
-    CancellationTokenSource cts;
+    CancellationTokenSource cts = new CancellationTokenSource();
 
     public MonitorTimer(MessagePipeDiagnosticsInfo diagnosticsInfo)
     {
