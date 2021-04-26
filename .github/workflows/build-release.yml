@@ -115,7 +115,7 @@ jobs:
       - run: dotnet pack ./src/MessagePipe/MessagePipe.csproj -c Release --no-build -p:Version=${{ env.GIT_TAG }} -o ./publish
       - run: dotnet pack ./src/MessagePipe.Redis/MessagePipe.Redis.csproj -c Release --no-build -p:Version=${{ env.GIT_TAG }} -o ./publish
       # Store artifacts.
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v2
         with:
           name: nuget
           path: ./publish/
