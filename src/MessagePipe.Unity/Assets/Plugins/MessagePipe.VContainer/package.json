@@ -1,7 +1,7 @@
 {
     "name": "com.cysharp.messagepipe.vcontainer",
     "displayName": "MessagePipe.VContainer",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "unity": "2018.4",
     "description": "MessagePipe Runtime support for VContainer.",
     "keywords": [ "pubsub", "event", "Scripting", "DI" ],
