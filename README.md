@@ -416,6 +416,8 @@ These are idea showcase of filter.
 ```csharp
 public class PredicateFilter<T> : MessageHandlerFilter<T>
 {
+    private readonly Func<T, bool> predicate;
+
     public PredicateFilter(Func<T, bool> predicate)
     {
         this.predicate = predicate;
