@@ -1,11 +1,12 @@
 ﻿using MessagePipe;
 using MessagePipe.Redis;
+using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace MessagePipe
 {
     public static class ServiceCollectionRedisExtensions
     {

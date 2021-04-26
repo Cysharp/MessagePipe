@@ -1,6 +1,5 @@
 using System;
 using Zenject;
-using Microsoft.Extensions.DependencyInjection;
 using MessagePipe.Zenject;
 
 namespace MessagePipe

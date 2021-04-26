@@ -87,8 +87,11 @@ The publisher/subscriber(internally we called MessageBroker) is managed by DI, i
 
 `IPublisher<T>/ISubscriber<T>` is keyless(type only) however MessagePipe has similar interface `IPublisher<TKey, TMessage>/ISubscriber<TKey, TMessage>` that is keyed(topic) interface.
 
-For example, our real usecase,  // TODO sentence.
-// TODO: Image
+For example, our real usecase, There is an application that connects Unity and MagicOnion (a real-time communication framework like SignalR) and delivers it via a browser by Blazor. At that time, we needed something to connect Blazor's page (Browser lifecycle) and MagicOnion's Hub (Connection lifecycle) to transmit data. We also need to distribute the connections by their IDs.
+
+`Browser <-> Blazor <- [MessagePipe] -> MagicOnion <-> Unity`
+
+We solved this with the following code.
 
 ```csharp
 // MagicOnion(similar as SignalR, realtime event framework for .NET and Unity)
@@ -162,46 +165,14 @@ public partial class BlazorPage : ComponentBase, IDisposable
 
 > The main difference of Reactive Extensions' Subject is has no `OnCompleted`. OnCompleted may or may not be used, making it very difficult to determine the intent to the observer(subscriber). Also, we usually subscribe to multiple events from the same (different event type)publisher, and it is difficult to handle duplicate OnCompleted in that case. For this reason, MessagePipe only provides a simple Publish(OnNext). If you want to convey completion, please receive a separate event and perform dedicated processing there.
 
-
-
-
-
-
-TODO: mediator
-https://docs.microsoft.com/ja-jp/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/microservice-application-layer-implementation-web-api#implement-the-command-and-command-handler-patterns
-
-
-
-
-async, await all.
-
-
-
-
-request/response.
-
-
-
-filter
-
-
-
-
-
-
-
-
+In addition to standard Pub/Sub, MessagePipe supports async handlers, mediator patterns with handlers that accept return values, and filters for pre-and-post execution customization.
 
 Publish/Subscribe
 ---
-
-
-keyed(topic) and keyless interface.
-
-
-
+Publish/Subscribe interface has keyed(topic) and keyless, sync and async interface.
 
 ```csharp
+// keyless-sync
 public interface IPublisher<TMessage>
 {
     void Publish(TMessage message);
@@ -211,31 +182,186 @@ public interface ISubscriber<TMessage>
 {
     public IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
 }
+
+// keyless-async
+public interface IAsyncPublisher<TMessage>
+{
+    // async interface's publish is fire-and-forget
+    void Publish(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
+}
+
+public interface IAsyncSubscriber<TMessage>
+{
+    IDisposable Subscribe(IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
+}
+
+// keyed-sync
+public interface IPublisher<TKey, TMessage>
+    where TKey : notnull
+{
+    void Publish(TKey key, TMessage message);
+}
+
+public interface ISubscriber<TKey, TMessage>
+    where TKey : notnull
+{
+    IDisposable Subscribe(TKey key, IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
+}
+
+// keyed-async
+public interface IAsyncPublisher<TKey, TMessage>
+    where TKey : notnull
+{
+    void Publish(TKey key, TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask PublishAsync(TKey key, TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask PublishAsync(TKey key, TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
+}
+
+public interface IAsyncSubscriber<TKey, TMessage>
+    where TKey : notnull
+{
+    IDisposable Subscribe(TKey key, IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
+}
 ```
 
+All are available in the form of `IPublisher/Subscribe<T>` in the DI. async handler can await all subscribers completed by `await PublishAsync`. Asynchronous methods can work sequentially or in parallel, depending on `AsyncPublishStrategy` (defaults is `Parallel`, can be changed by `MessagePipeOptions` or by specifying at publish time). If you don't need to wait, you can call `void Publish` to act as fire-and-forget.
 
-with key
+The before and after of execution can be changed by passing a custom filter. See the [Filter](#filter) section for details.
 
-
-
-
-
-
+If an error occurs, it will be propagated to the caller and subsequent subscribers will be stopped. This behavior can be changed by writing a filter to ignore errors.
 
 Request/Response/All
 ---
+Similar as [MediatR](https://github.com/jbogard/MediatR), implement support of mediator pattern.
 
+```csharp
+public interface IRequestHandler<in TRequest, out TResponse>
+{
+    TResponse Invoke(TRequest request);
+}
 
+public interface IAsyncRequestHandler<in TRequest, TResponse>
+{
+    ValueTask<TResponse> InvokeAsync(TRequest request, CancellationToken cancellationToken = default);
+}
+```
+
+For example, declare handler for Ping type.
+
+```csharp
+public readonly struct Ping { }
+public readonly struct Pong { }
+
+public class PingPongHandler : IRequestHandler<Ping, Pong>
+{
+    public Pong Invoke(Ping request)
+    {
+        Console.WriteLine("Ping called.");
+        return new Pong();
+    }
+}
+```
+
+You can get handler like this.
+
+```csharp
+class FooController
+{
+    IRequestHandler<Ping, Pong> requestHandler;
+
+    // automatically instantiate PingPongHandler.
+    public FooController(IRequestHandler<Ping, Pong> requestHandler)
+    {
+        this.requestHandler = requestHandler;
+    }
+
+    public void Run()
+    {
+        var pong = this.requestHandler.Invoke(new Ping());
+        Console.WriteLine("PONG");
+    }
+}
+```
+
+For more complex implementation patterns, [this Microsoft documentation](https://docs.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/microservice-application-layer-implementation-web-api#implement-the-command-process-pipeline-with-a-mediator-pattern-mediatr) is applicable.
+
+Declare many request handlers, you can use `IRequestAllHandler`, `IAsyncRequestAllHandler` instead of single handler.
+
+```csharp
+public interface IRequestAllHandler<in TRequest, out TResponse>
+{
+    TResponse[] InvokeAll(TRequest request);
+    IEnumerable<TResponse> InvokeAllLazy(TRequest request);
+}
+
+public interface IAsyncRequestAllHandler<in TRequest, TResponse>
+{
+    ValueTask<TResponse[]> InvokeAllAsync(TRequest request, CancellationToken cancellationToken = default);
+    ValueTask<TResponse[]> InvokeAllAsync(TRequest request, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<TResponse> InvokeAllLazyAsync(TRequest request, CancellationToken cancellationToken = default);
+}
+```
+
+```csharp
+public class PingPongHandler1 : IRequestHandler<Ping, Pong>
+{
+    public Pong Invoke(Ping request)
+    {
+        Console.WriteLine("Ping1 called.");
+        return new Pong();
+    }
+}
+
+public class PingPongHandler2 : IRequestHandler<Ping, Pong>
+{
+    public Pong Invoke(Ping request)
+    {
+        Console.WriteLine("Ping1 called.");
+        return new Pong();
+    }
+}
+
+class BarController
+{
+    IRequestAllHandler<Ping, Pong> requestAllHandler;
+
+    public FooController(IRequestAllHandler<Ping, Pong> requestAllHandler)
+    {
+        this.requestAllHandler = requestAllHandler;
+    }
+
+    public void Run()
+    {
+        var pongs = this.requestAllHandler.InvokeAll(new Ping());
+        Console.WriteLine("PONG COUNT:" + pongs.Length);
+    }
+}
+```
 
 Subscribe Extensions
 ---
+`ISubscriber`(`IAsyncSubscriber`) interface requires `IMessageHandler<T>` to handle message.
 
-with predicate
-AsObservable
+```csharp
+public interface ISubscriber<TMessage>
+{
+    IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
+}
+```
 
+However, the extension method allows you to write `Action<T>` directly.
 
+```csharp
+public static IDisposable Subscribe<TMessage>(this ISubscriber<TMessage> subscriber, Action<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters)
+public static IDisposable Subscribe<TMessage>(this ISubscriber<TMessage> subscriber, Action<TMessage> handler, Func<TMessage, bool> predicate, params MessageHandlerFilter<TMessage>[] filters)
+public static IObservable<TMessage> AsObservable<TMessage>(this ISubscriber<TMessage> subscriber, params MessageHandlerFilter<TMessage>[] filters)
+```
 
+Also, the `Func<TMessage, bool>` overload can filter messages by predicate (internally implemented with PredicateFilter, where Order is int.MinValue and is always checked first).
 
+`AsObservable` can convert message pipeline to `IObservable<T>`, it can handle by Reactive Extensions(in Unity, you can use `UniRx`).
 
 Filter
 ---
@@ -282,6 +408,8 @@ Host.CreateDefaultBuilder()
         });
     });
 ```
+
+use the filter by attribute, you can use these attributes: `[MessageHandlerFilter(type, order)]`, `[AsyncMessageHandlerFilter(type, order)]`, `[RequestHandlerFilter(type, order)]`, `[AsyncRequestHandlerFilter(type, order)]`.
 
 These are idea showcase of filter.
 

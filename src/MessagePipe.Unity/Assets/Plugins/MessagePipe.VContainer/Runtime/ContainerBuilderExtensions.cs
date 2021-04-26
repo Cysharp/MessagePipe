@@ -1,6 +1,5 @@
 ﻿using System;
 using VContainer;
-using Microsoft.Extensions.DependencyInjection;
 using MessagePipe.VContainer;
 
 namespace MessagePipe

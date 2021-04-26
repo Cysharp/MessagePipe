@@ -1,13 +1,14 @@
 ﻿using MessagePipe;
 using MessagePipe.Internal;
 #if !UNITY_2018_3_OR_NEWER
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 #endif
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace MessagePipe
 {
     public static class ServiceCollectionExtensions
     {

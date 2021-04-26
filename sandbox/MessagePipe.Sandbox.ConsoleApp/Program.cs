@@ -373,6 +373,8 @@ namespace MessagePipe
         }
     }
 
+    
+
     public class PingHandler : IRequestHandler<Ping, Pong>
     {
         public Pong Invoke(Ping request)
