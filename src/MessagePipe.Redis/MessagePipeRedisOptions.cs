@@ -17,13 +17,11 @@ namespace MessagePipe.Redis
     {
         public IConnectionMultiplexerFactory ConnectionMultiplexerFactory { get; }
         public IRedisSerializer RedisSerializer { get; set; }
-        public InstanceLifetime InstanceLifetime { get; set; }
 
         public MessagePipeRedisOptions(IConnectionMultiplexerFactory connectionMultiplexerFactory)
         {
             this.RedisSerializer = new MessagePackRedisSerializer();
             this.ConnectionMultiplexerFactory = connectionMultiplexerFactory;
-            this.InstanceLifetime = InstanceLifetime.Singleton;
         }
     }
 }

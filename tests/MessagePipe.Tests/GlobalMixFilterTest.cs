@@ -22,7 +22,8 @@ namespace MessagePipe.Tests
             var provider = TestHelper.BuildServiceProvider3(options =>
             {
                 options.EnableAutoRegistration = false;
-                options.AddGlobalMessageHandlerFilter<MyFilter<int>>(1200);
+                //options.AddGlobalMessageHandlerFilter<MyFilter<int>>(1200);
+                options.AddGlobalMessageHandlerFilter(typeof(MyFilter<>), 1200);
             }, builder =>
             {
                 builder.AddMessageHandlerFilter<MyFilter<int>>();

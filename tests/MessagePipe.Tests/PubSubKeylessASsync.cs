@@ -81,7 +81,7 @@ namespace __MessagePipe.Tests
                 Console.WriteLine("OK2?");
             });
 
-            // TODO:calclate time
+            // require to calc time for testing...
             var cts = new CancellationTokenSource();
             await p.PublishAsync("takoyaki", AsyncPublishStrategy.Sequential, cts.Token);
 

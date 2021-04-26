@@ -14,7 +14,7 @@ namespace MessagePipe
     /// <summary>
     /// Diagnostics info of in-memory(ISubscriber/IAsyncSubscriber) subscriptions.
     /// </summary>
-    public class MessagePipeDiagnosticsInfo
+    public sealed class MessagePipeDiagnosticsInfo
     {
         int subscribeCount;
         bool enableCaptureStackTrace;

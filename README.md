@@ -239,14 +239,11 @@ AsObservable
 
 Filter
 ---
+Filter system can hook before and after method invocation. It is implemented with the Middleware pattern, which allows you to write synchronous and asynchronous code with similar syntax. MessagePipe's filter kind are sync(`MessageHandlerFilter<T>`) and async(`AsyncMessageHandlerFilter<T>`) and request(`RequestHandlerFilter<TReq, TRes>`) and async request (`AsyncRequestHandlerFilter<TReq, TRes>`), you can inherit theres to implement filter.
 
+Filters can be specified in three places. Global(by `MessagePipeOptions.AddGlobalFilter`), per handler type, and per subscribe. The filters are sorted according to the Order specified in each of them, and are generated when subscribing.
 
-sync(`MessageHandlerFilter<T>`) and async(`AsyncMessageHandlerFilter<>T`) and request(`RequestHandlerFilter<TReq, TRes>`) and async request (`AsyncRequestHandlerFilter<TReq, TRes>`).
-
-
-
-
-These are idea showcase of filter.
+Since it is generated on a per-subscribe basis, the filter can have a state.
 
 ```csharp
 public class ChangedValueFilter<T> : MessageHandlerFilter<T>
@@ -264,7 +261,29 @@ public class ChangedValueFilter<T> : MessageHandlerFilter<T>
         next(message);
     }
 }
+
+// uses(per subscribe)
+subscribe.Subscribe(x => Console.WriteLine(x), new ChangedValueFilter<int>(){ Order = 100 });
+
+// add per handler type(use generics filter, write open generics)
+[MessageHandlerFilter(typeof(ChangedValueFilter<>), 100)]
+public class WriteLineHandler<T> : IMessageHandler<T>
+{
+    public void Handle(T message) => Console.WriteLine(message);
+}
+
+// add per global
+Host.CreateDefaultBuilder()
+    .ConfigureServices((ctx, services) =>
+    {
+        services.AddMessagePipe(options =>
+        {
+            options.AddGlobalMessageHandlerFilter(typeof(ChangedValueFilter<>), 100);
+        });
+    });
 ```
+
+These are idea showcase of filter.
 
 ```csharp
 public class PredicateFilter<T> : MessageHandlerFilter<T>
@@ -344,61 +363,171 @@ public class DispatcherFilter<T> : MessageHandlerFilter<T>
 ```
 
 ```csharp
-public class DelayFilter<T> : AsyncMessageHandlerFilter<T>
+public class DelayRequestFilter : AsyncRequestHandlerFilter<int, int>
 {
-    readonly TimeSpan delaySpan;
-
-    public DelayFilter(TimeSpan delaySpan)
+    public override async ValueTask<int> InvokeAsync(int request, CancellationToken cancellationToken, Func<int, CancellationToken, ValueTask<int>> next)
     {
-        this.delaySpan = delaySpan;
-    }
-
-    public override async ValueTask HandleAsync(T message, CancellationToken cancellationToken, Func<T, CancellationToken, ValueTask> next)
-    {
-        await Task.Delay(delaySpan, cancellationToken);
-        await next(message, cancellationToken);
+        await Task.Delay(TimeSpan.FromSeconds(request));
+        var response = await next(request, cancellationToken);
+        return response;
     }
 }
 ```
 
-
 Managing Subscription and Diagnostics
 ---
-Subscribe returns `IDisposable`; when call `Dispose` then unsubscribe. The returned `IDisposable` value must be handled. If it is ignored, it will leak.
+Subscribe returns `IDisposable`; when call `Dispose` then unsubscribe. A better reason than event is that it is easy to Unsubscribe. To manage multiple IDisposable, you can use `CompositeDisposable` in Rx(UniRx) or `DisposableBag` included in MessagePipe.
 
+```csharp
+IDisposable disposable;
 
+void OnInitialize(ISubscriber<int> subscriber)
+{
+    var d1 = subscriber.Subscribe(_ => { });
+    var d2 = subscriber.Subscribe(_ => { });
+    var d3 = subscriber.Subscribe(_ => { });
 
+    // static DisposableBag: DisposableBag.Create(1~7(optimized) or N);
+    disposable = DisposableBag.Create(d1, d2, d3);
+}
 
-better than event.
+void Close()
+{
+    // dispose all subscription
+    disposable?.Dispose();
+}
+```
 
-TODO: example of Blazor.
+```csharp
+IDisposable disposable;
 
+void OnInitialize(ISubscriber<int> subscriber)
+{
+    // use builder pattern, you can use subscription.AddTo(bag)
+    var bag = DisposableBag.CreateBuilder();
 
+    subscriber.Subscribe(_ => { }).AddTo(bag);
+    subscriber.Subscribe(_ => { }).AddTo(bag);
+    subscriber.Subscribe(_ => { }).AddTo(bag);
 
+    disposable = bag.Build(); // create final composite IDisposable
+}
 
+void Close()
+{
+    // dispose all subscription
+    disposable?.Dispose();
+}
+```
 
+The returned `IDisposable` value **must** be handled. If it is ignored, it will leak. However Weak reference, which is widely used in WPF, is an anti-pattern. All subscriptions should be managed explicitly.
 
+You can monitor subscription count by `MessagePipeDiagnosticsInfo`. It can get from service provider(or DI).
 
+```csharp
+public sealed class MessagePipeDiagnosticsInfo
+{
+    /// <summary>Get current subscribed count.</summary>
+    public int SubscribeCount { get; }
 
+    /// <summary>
+    /// When MessagePipeOptions.EnableCaptureStackTrace is enabled, list all stacktrace on subscribe.
+    /// </summary>
+    public string[] GetCapturedStackTraces();
 
+    /// <summary>
+    /// When MessagePipeOptions.EnableCaptureStackTrace is enabled, groped by caller of subscribe.
+    /// </summary>
+    public ILookup<string, string> GroupedByCaller { get; }
+}
+```
 
+If you monitor SubscribeCount, you can check leak of subscription.
 
+```csharp
+public class MonitorTimer : IDisposable
+{
+    CancellationTokenSource cts;
 
-> Weak reference, which is widely used in WPF, is an anti-pattern. All subscriptions should be managed explicitly.
+    public MonitorTimer(MessagePipeDiagnosticsInfo diagnosticsInfo)
+    {
+        RunTimer(diagnosticsInfo);
+    }
 
+    async void RunTimer(MessagePipeDiagnosticsInfo diagnosticsInfo)
+    {
+        while (!cts.IsCancellationRequested)
+        {
+            // show SubscribeCount
+            Console.WriteLine("SubscribeCount:" + diagnosticsInfo.SubscribeCount);
+            await Task.Delay(TimeSpan.FromSeconds(5), cts.Token);
+        }
+    }
 
+    public void Dispose()
+    {
+        cts.Cancel();
+    }
+}
+```
 
+Also, by enabling MessagePipeOptions.EnableCaptureStackTrace (disabled by default), the location of the subscribed location can be displayed, making it easier to find the location of the leak if it exists.
 
-, and `DisposableBag` (`CompositeDisposable`) can help with that.
+Check the Count of GroupedByCaller, and if any of them show abnormal values, then the stack trace is where it occurs, and you probably ignore Subscription.
 
-
-
-MessagePipe.Redis / IDistributedPubSub
+IDistributedPubSub / MessagePipe.Redis
 ---
+For the distributed(networked) Pub/Sub, you can use `IDistributedPublisher<TKey, TMessage>`, `IDistributedSubscriber<TKey, TMessage>` instead of `IAsyncPublisher`.
 
-// inmemory provider
+```csharp
+public interface IDistributedPublisher<TKey, TMessage>
+{
+    ValueTask PublishAsync(TKey key, TMessage message, CancellationToken cancellationToken = default);
+}
 
+public interface IDistributedSubscriber<TKey, TMessage>
+{
+    // and also without filter overload.
+    public ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler, MessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken = default);
+    public ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IAsyncMessageHandler<TMessage> handler, AsyncMessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken = default);
+}
+```
 
+`IAsyncPublisher` means in-memory Pub/Sub. Since processing over the network is fundamentally different, you need to use a different interface to avoid confusion.
+
+Redis is available as a standard network provider.
+
+> PM> Install-Package [MessagePipe.Redis](https://www.nuget.org/packages/MessagePipe.Redis)
+
+use `AddMessagePipeRedis` to enable redis provider.
+
+```csharp
+Host.CreateDefaultBuilder()
+    .ConfigureServices((ctx, services) =>
+    {
+        services.AddMessagePipe();
+        services.AddMessagePipeRedis(IConnectionMultiplexer | IConnectionMultiplexerFactory, configure);
+    })
+```
+
+`IConnectionMultiplexer` overload, you can pass [StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis)'s `ConnectionMultiplexer` directly. Implement own `IConnectionMultiplexerFactory` to allow for per-key distribution and use from connection pools.
+
+`MessagePipeRedisOptions`, you can configure serialization.
+
+```csharp
+public sealed class MessagePipeRedisOptions
+{
+    public IRedisSerializer RedisSerializer { get; set; }
+}
+
+public interface IRedisSerializer
+{
+    byte[] Serialize<T>(T value);
+    T Deserialize<T>(byte[] value);
+}
+```
+
+In default uses [MessagePack for C#](https://github.com/neuecc/MessagePack-CSharp)'s `ContractlessStandardResolver`. You can change to use other `MessagePackSerializerOptions` by `new MessagePackRedisSerializer(options)` or implement own serializer wrapper.
 
 MessagePipeOptions
 ---
@@ -425,18 +554,18 @@ public sealed class MessagePipeOptions
 {
     AsyncPublishStrategy DefaultAsyncPublishStrategy; // default is Parallel
     HandlingSubscribeDisposedPolicy HandlingSubscribeDisposedPolic; // default is Ignore
-    HandlingSubscribeDisposedPolicy HandlingSubscribeDisposedPolicy; // default is Ignore
-    HandlingSubscribeDisposedPolicy HandlingSubscribeDisposedPolicy; // default is Ignore
     InstanceLifetime InstanceLifetime; // default is Singleton
     bool EnableAutoRegistration;  // default is true
     bool EnableCaptureStackTrace; // default is false
 
+    void SetAutoRegistrationSearchAssemblies(params Assembly[] assemblies);
+    void SetAutoRegistrationSearchTypes(params Type[] types);
     void AddGlobal***Filter<T>();
 }
 
 public enum AsyncPublishStrategy
 {
-    Sequential, Parallel
+    Parallel, Sequential
 }
 
 public enum InstanceLifetime
@@ -450,14 +579,16 @@ public enum HandlingSubscribeDisposedPolicy
 }
 ```
 
-### AsyncPublishStrategy
+### DefaultAsyncPublishStrategy
+
+`IAsyncPublisher` has `PublishAsync` method. If AsyncPublishStrategy.Sequential, await each subscribers. If Parallel, uses WhenAll.
 
 ```csharp
 public interface IAsyncPublisher<TMessage>
 {
     // using Default AsyncPublishStrategy
-    ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
-    ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken = default);
+    ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default);
     // snip others...
 }
 
@@ -465,8 +596,8 @@ public interface IAsyncPublisher<TKey, TMessage>
     where TKey : notnull
 {
     // using Default AsyncPublishStrategy
-    ValueTask PublishAsync(TKey key, TMessage message, CancellationToken cancellationToken = default(CancellationToken));
-    ValueTask PublishAsync(TKey key, TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask PublishAsync(TKey key, TMessage message, CancellationToken cancellationToken = default);
+    ValueTask PublishAsync(TKey key, TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default);
     // snip others...
 }
 
@@ -479,19 +610,67 @@ public interface IAsyncRequestAllHandler<in TRequest, TResponse>
 }
 ```
 
+`MessagePipeOptions.DefaultAsyncPublishStrategy`'s default is `Parallel`.
 
 ### HandlingSubscribeDisposedPolicy
 
+When `ISubscriber.Subscribe` after MessageBroker(publisher/subscriber manager) is disposed(for example, scope is disposed), choose `Ignore`(returns empty `IDisposable`) or `Throw` exception. Default is `Ignore`.
+
 ### InstanceLifetime
 
-### EnableAutoRegistration
+Configure MessageBroker(publisher/subscriber manager)'s lifetime of DI cotainer. You can choose `Singleton` or `Scoped`. Default is `Singleton`. When choose `Scoped`, each messagebrokers manage different subscribers and when scope is disposed, unsubscribe all managing subscribers.
 
+### EnableAutoRegistration/SetAutoRegistrationSearchAssemblies/SetAutoRegistrationSearchTypes
+
+Register `IRequestHandler`, `IAsyncHandler` and filters to DI container automatically on startup. Default is `true` and default search target is CurrentDomain's all assemblies and types. However, this sometimes fails to detect the assembly being stripped. In that case, you can enable the search by explicitly adding it to `SetAutoRegistrationSearchAssemblies` or `SetAutoRegistrationSearchTypes`.
 
 ### EnableCaptureStackTrace
 
+See the details [Managing Subscription and Diagnostics](#managing-subscription-and-diagnostics) section, if `true` then capture stacktrace on Subscribe. It is useful for debugging but performance will be degraded. Default is `false` and recommended to enable only debug.
 
 ### AddGlobal***Filter
 
+Add global filter, for example logging filter will be useful.
+
+```csharp
+public class LoggingFilter<T> : MessageHandlerFilter<T>
+{
+    readonly ILogger<LoggingFilter<T>> logger;
+
+    public LoggingFilter(ILogger<LoggingFilter<T>> logger)
+    {
+        this.logger = logger;
+    }
+
+    public override void Handle(T message, Action<T> next)
+    {
+        try
+        {
+            logger.LogDebug("before invoke.");
+            next(message);
+            logger.LogDebug("invoke completed.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "error");
+        }
+    }
+}
+```
+
+To enable all types, use open generics.
+
+```csharp
+Host.CreateDefaultBuilder()
+    .ConfigureServices((ctx, services) =>
+    {
+        services.AddMessagePipe(options =>
+        {
+            // use typeof(Filter<>, order);
+            options.AddGlobalMessageHandlerFilter(typeof(LoggingFilter<>), -10000);
+        });
+    });
+```
 
 Integration with other DI library
 ---

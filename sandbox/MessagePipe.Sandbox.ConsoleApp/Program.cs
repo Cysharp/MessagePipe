@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using ZLogger;
 
@@ -62,7 +63,7 @@ namespace MessagePipe
             await Host.CreateDefaultBuilder()
                 .ConfigureServices((ctx, x) =>
                 {
-                    
+
 
                     x.AddMessagePipe(options =>
                     {
@@ -502,4 +503,46 @@ namespace MessagePipe
 
 
 
+    public class MonitorTimer : IDisposable
+    {
+        CancellationTokenSource cts;
+
+        public MonitorTimer(MessagePipeDiagnosticsInfo diagnosticsInfo)
+        {
+            RunTimer(diagnosticsInfo);
+        }
+
+        async void RunTimer(MessagePipeDiagnosticsInfo diagnosticsInfo)
+        {
+            while (!cts.IsCancellationRequested)
+            {
+                // show SubscribeCount
+                Console.WriteLine(diagnosticsInfo.SubscribeCount);
+                await Task.Delay(TimeSpan.FromSeconds(5), cts.Token);
+            }
+        }
+
+        public void Dispose()
+        {
+            cts.Cancel();
+        }
+    }
+
+
+    [MessageHandlerFilter(typeof(ChangedValueFilter<>))]
+    public class WriteLineHandler<T> : IMessageHandler<T>
+    {
+        public void Handle(T message) => Console.WriteLine(message);
+    }
+
+
+    public class DelayRequestFilter : AsyncRequestHandlerFilter<int, int>
+    {
+        public override async ValueTask<int> InvokeAsync(int request, CancellationToken cancellationToken, Func<int, CancellationToken, ValueTask<int>> next)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(request));
+            var response = await next(request, cancellationToken);
+            return response;
+        }
+    }
 }
