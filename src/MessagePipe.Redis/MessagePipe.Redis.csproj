@@ -19,11 +19,11 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <SignAssembly>true</SignAssembly>
         <AssemblyOriginatorKeyFile>../../opensource.snk</AssemblyOriginatorKeyFile>
-        <PackageIcon>../MessagePipe/Icon.png</PackageIcon>
+        <PackageIcon>Icon.png</PackageIcon>
     </PropertyGroup>
 
     <ItemGroup>
-        <None Include="../MessagePipe/Icon.png" Pack="true" PackagePath="/" />
+        <None Include="Icon.png" Pack="true" PackagePath="/" />
     </ItemGroup>
 
     <ItemGroup>
