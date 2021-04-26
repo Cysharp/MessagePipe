@@ -119,6 +119,7 @@ jobs:
         with:
           name: nuget
           path: ./publish/
+          if-no-files-found: error
 
   build-unity:
     needs: [update-packagejson]
@@ -162,7 +163,8 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: MessagePipe.Unity.${{ env.GIT_TAG }}.unitypackage
-          path: ./src/MessagePipe.Unity/MessagePipe.Unity.${{ env.GIT_TAG }}.unitypackage
+          path: ./src/MessagePipe.Unity/MessagePipe*.${{ env.GIT_TAG }}.unitypackage
+          if-no-files-found: error
 
   create-release:
     if: github.event.inputs.dry_run == 'false'
@@ -198,8 +200,24 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./MessagePipe.Unity.${{ env.GIT_TAG }}.unitypackage/MessagePipe.Unity.${{ env.GIT_TAG }}.unitypackage
-          asset_name: MessagePipe.Unity.${{ env.GIT_TAG }}.unitypackage
+          asset_path: ./MessagePipe.Unity.${{ env.GIT_TAG }}.unitypackage/MessagePipe.${{ env.GIT_TAG }}.unitypackage
+          asset_name: MessagePipe.${{ env.GIT_TAG }}.unitypackage
+          asset_content_type: application/octet-stream
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./MessagePipe.Unity.${{ env.GIT_TAG }}.unitypackage/MessagePipe.VContainer.${{ env.GIT_TAG }}.unitypackage
+          asset_name: MessagePipe.${{ env.GIT_TAG }}.unitypackage
+          asset_content_type: application/octet-stream
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./MessagePipe.Unity.${{ env.GIT_TAG }}.unitypackage/MessagePipe.Zenject.${{ env.GIT_TAG }}.unitypackage
+          asset_name: MessagePipe.${{ env.GIT_TAG }}.unitypackage
           asset_content_type: application/octet-stream
 
   cleanup:
