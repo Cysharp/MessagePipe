@@ -90,6 +90,16 @@ jobs:
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
       NUGET_XMLDOC_MODE: skip
+    services:
+      redis:
+        image: redis
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
     steps:
       - run: echo ${{ needs.update-packagejson.outputs.sha }}
       - uses: actions/checkout@v2
@@ -102,7 +112,8 @@ jobs:
       - run: dotnet build ./tools/PostBuildUtility/ -c Release
       - run: dotnet build -c Release -p:Version=${{ env.GIT_TAG }}
       - run: dotnet test -c Release --no-build
-      - run: dotnet pack ./src/UniTask.NetCore/UniTask.NetCore.csproj -c Release --no-build -p:Version=${{ env.GIT_TAG }} -o ./publish
+      - run: dotnet pack ./src/MessagePipe/MessagePipe.csproj -c Release --no-build -p:Version=${{ env.GIT_TAG }} -o ./publish
+      - run: dotnet pack ./src/MessagePipe.Redis/MessagePipe.Redis.csproj -c Release --no-build -p:Version=${{ env.GIT_TAG }} -o ./publish
       # Store artifacts.
       - uses: actions/upload-artifact@v1
         with:
@@ -131,7 +142,7 @@ jobs:
         env:
           UNITY_LICENSE: ${{ secrets[matrix.license] }}
         with:
-          projectPath: src/UniTask
+          projectPath: src/MessagePipe.Unity
           unityVersion: ${{ matrix.unity }}
           targetPlatform: StandaloneLinux64
           buildMethod: PackageExporter.Export
@@ -145,13 +156,13 @@ jobs:
           else
             echo "Great, all .meta files are commited."
           fi
-        working-directory: src/UniTask
+        working-directory: src/MessagePipe.Unity
 
       # Store artifacts.
       - uses: actions/upload-artifact@v2
         with:
-          name: UniTask.${{ env.GIT_TAG }}.unitypackage
-          path: ./src/UniTask/UniTask.${{ env.GIT_TAG }}.unitypackage
+          name: MessagePipe.Unity.${{ env.GIT_TAG }}.unitypackage
+          path: ./src/MessagePipe.Unity/MessagePipe.Unity.${{ env.GIT_TAG }}.unitypackage
 
   create-release:
     if: github.event.inputs.dry_run == 'false'
@@ -187,8 +198,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./UniTask.${{ env.GIT_TAG }}.unitypackage/UniTask.${{ env.GIT_TAG }}.unitypackage
-          asset_name: UniTask.${{ env.GIT_TAG }}.unitypackage
+          asset_path: ./MessagePipe.Unity.${{ env.GIT_TAG }}.unitypackage/MessagePipe.Unity.${{ env.GIT_TAG }}.unitypackage
+          asset_name: MessagePipe.Unity.${{ env.GIT_TAG }}.unitypackage
           asset_content_type: application/octet-stream
 
   cleanup:
