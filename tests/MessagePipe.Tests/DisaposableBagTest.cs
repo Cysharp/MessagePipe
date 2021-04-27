@@ -1,5 +1,7 @@
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
@@ -139,6 +141,30 @@ namespace MessagePipe.Tests
                 bag.Build().Dispose();
                 d.DisposeCalled.Should().Be(1);
             }
+        }
+
+        [Fact]
+        public void CallOnce()
+        {
+            var provider = TestHelper.BuildServiceProvider();
+
+            var p = provider.GetRequiredService<IPublisher<int>>();
+            var s = provider.GetRequiredService<ISubscriber<int>>();
+
+            var d = DisposableBag.CreateSingleAssignment();
+
+            var list = new List<int>();
+            d.Disposable = s.Subscribe(x =>
+            {
+                list.Add(x);
+                d.Dispose();
+            });
+
+            p.Publish(100);
+            p.Publish(200);
+            p.Publish(300);
+
+            list.Should().Equal(new[] { 100 });
         }
 
         public class Disposable : IDisposable

@@ -609,6 +609,30 @@ void Close()
 }
 ```
 
+```csharp
+IDisposable disposable;
+
+void OnInitialize(ISubscriber<int> subscriber)
+{
+    var bag = DisposableBag.CreateBuilder();
+
+    // calling once(or x count), you can use DisposableBag.CreateSingleAssignment to hold subscription reference.
+    var d = DisposableBag.CreateSingleAssignment();
+    
+    // you can invoke Dispose in handler action.
+    // assign disposable, you can use `SetTo` and `AddTo` bag.
+    // or you can use d.Disposable = subscriber.Subscribe();
+    subscriber.Subscribe(_ => { d.Dispose(); }).SetTo(d).AddTo(bag);
+
+    disposable = bag.Build();
+}
+
+void Close()
+{
+    disposable?.Dispose();
+}
+```
+
 The returned `IDisposable` value **must** be handled. If it is ignored, it will leak. However Weak reference, which is widely used in WPF, is an anti-pattern. All subscriptions should be managed explicitly.
 
 You can monitor subscription count by `MessagePipeDiagnosticsInfo`. It can get from service provider(or DI).
