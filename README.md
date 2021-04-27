@@ -1,4 +1,5 @@
 # MessagePipe
+[![GitHub Actions](https://github.com/Cysharp/MessagePipe/workflows/Build-Debug/badge.svg)](https://github.com/Cysharp/MessagePipe/actions) [![Releases](https://img.shields.io/github/release/Cysharp/MessagePipe.svg)](https://github.com/Cysharp/MessagePipe/releases)
 
 MessagePipe is a high-performance in-memory/distributed messaging pipeline for .NET and Unity. It supports all cases of Pub/Sub usage, mediator pattern for CQRS, EventAggregator of Prism(V-VM decoupling), etc.
 
