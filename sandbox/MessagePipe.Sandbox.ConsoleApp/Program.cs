@@ -551,7 +551,7 @@ namespace MessagePipe
 
     public class MonitorTimer : IDisposable
     {
-        CancellationTokenSource cts;
+        CancellationTokenSource cts = new CancellationTokenSource();
 
         public MonitorTimer(MessagePipeDiagnosticsInfo diagnosticsInfo)
         {
