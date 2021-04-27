@@ -105,6 +105,42 @@ namespace MessagePipe.Tests
             }
         }
 
+        [Fact]
+        public void SingleAssignment()
+        {
+            {
+                var si = DisposableBag.CreateSingleAssignment();
+                var d = new Disposable(100);
+                si.Disposable = d;
+                d.DisposeCalled.Should().Be(0);
+                si.Dispose();
+                d.DisposeCalled.Should().Be(1);
+            }
+            {
+                var si = DisposableBag.CreateSingleAssignment();
+                var d = new Disposable(100);
+                si.Disposable = d;
+                Assert.Throws<InvalidOperationException>(() => si.Disposable = d);
+            }
+            {
+                var si = DisposableBag.CreateSingleAssignment();
+                si.Dispose();
+                var d = new Disposable(100);
+                si.Disposable = d;
+                d.DisposeCalled.Should().Be(1);
+            }
+
+            {
+                var bag = DisposableBag.CreateBuilder();
+                var si = DisposableBag.CreateSingleAssignment();
+                var d = new Disposable(100);
+                d.SetTo(si).AddTo(bag);
+                d.DisposeCalled.Should().Be(0);
+                bag.Build().Dispose();
+                d.DisposeCalled.Should().Be(1);
+            }
+        }
+
         public class Disposable : IDisposable
         {
             public int Number { get; }

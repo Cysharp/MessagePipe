@@ -55,6 +55,7 @@ namespace PostBuildUtility
                 {"null!", "null" },
                 {"result!", "result" },
                 {"where TKey : notnull", ""},
+                {"IDisposable?", "IDisposable"},
             };
 
             System.Console.WriteLine("Start to replace code, remove nullability and use UniTask.");

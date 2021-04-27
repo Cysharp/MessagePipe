@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace MessagePipe
 {
@@ -33,6 +34,11 @@ namespace MessagePipe
             }
         }
 
+        public static SingleAssignmentDisposable CreateSingleAssignment()
+        {
+            return new SingleAssignmentDisposable();
+        }
+
         public static DisposableBagBuilder CreateBuilder()
         {
             return new DisposableBagBuilder();
@@ -48,6 +54,12 @@ namespace MessagePipe
         public static void AddTo(this IDisposable disposable, DisposableBagBuilder disposableBag)
         {
             disposableBag.Add(disposable);
+        }
+
+        public static SingleAssignmentDisposable SetTo(this IDisposable disposable, SingleAssignmentDisposable singleAssignmentDisposable)
+        {
+            singleAssignmentDisposable.Disposable = disposable;
+            return singleAssignmentDisposable;
         }
     }
 
@@ -85,9 +97,64 @@ namespace MessagePipe
 
         public void Clear()
         {
+            foreach (var item in disposables)
+            {
+                item.Dispose();
+            }
             disposables.Clear();
         }
 
         //public IDisposable Build() in Disposables.tt(Disposables.cs)
+    }
+
+    public sealed class SingleAssignmentDisposable : IDisposable
+    {
+        IDisposable inner;
+        bool isDisposed;
+        readonly object gate = new object();
+
+        public IDisposable Disposable
+        {
+            set
+            {
+                lock (gate)
+                {
+                    if (isDisposed)
+                    {
+                        // already disposed, dispose immediately
+                        value.Dispose();
+                        return;
+                    }
+                    else
+                    {
+                        if (inner == null)
+                        {
+                            // set new Disposable once.
+                            inner = value;
+                            return;
+                        }
+                        else
+                        {
+                            // set twice is invalid.
+                            throw new InvalidOperationException("Set IDisposable twice is invalid.");
+                        }
+                    }
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            if (isDisposed) return;
+            lock (gate)
+            {
+                isDisposed = true;
+                if (inner != null)
+                {
+                    inner.Dispose();
+                    inner = null;
+                }
+            }
+        }
     }
 }
