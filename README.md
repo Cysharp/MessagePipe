@@ -7,6 +7,7 @@ MessagePipe is a high-performance in-memory/distributed messaging pipeline for .
 * sync/async
 * keyed/keyless
 * broadcast/response(+many)
+* better event
 * in-memory/distributed
 
 MessagePipe is faster than standard C# event and 78 times faster than Prism's EventAggregator.
@@ -231,6 +232,63 @@ All are available in the form of `IPublisher/Subscribe<T>` in the DI. async hand
 The before and after of execution can be changed by passing a custom filter. See the [Filter](#filter) section for details.
 
 If an error occurs, it will be propagated to the caller and subsequent subscribers will be stopped. This behavior can be changed by writing a filter to ignore errors.
+
+EventFactory
+---
+Using `EventFactory`, you can create generic `IPublisher/ISubscriber`, `IAsyncPublisher/IAsyncSubscriber` like C# events, with a Subscriber tied to each instance, not grouped by type.
+
+MessagePipe has better properties than a normal C# event
+
+* Using Subscribe/Dispose instead of `+=`, `-=` , easy to management subscription
+* Both sync and async support
+* Enable unsubscribe all subscription from publisher.dispose
+* Attaches invocation pipeline behaviour by Filter
+* To monitor subscription leak by `MessagePipeDiagnosticsInfo`
+
+```csharp
+public class BetterEvent : IDisposable
+{
+    // using MessagePipe instead of C# event/Rx.Subject
+    // store Publisher to private field(declare IDisposablePublisher/IDisposableAsyncPublisher)
+    IDisposablePublisher<int> tickPublisher;
+
+    // Subscriber is used from outside so public property
+    public ISubscriber<int> OnTick { get; }
+
+    public BetterEvent(EventFactory eventFactory)
+    {
+        // CreateEvent can deconstruct by tuple and set together
+        (tickPublisher, OnTick) = eventFactory.CreateEvent<int>();
+
+        // also create async event(IAsyncSubscriber) by `CreateAsyncEvent`
+        // eventFactory.CreateAsyncEvent
+    }
+
+    int count;
+    void Tick()
+    {
+        tickPublisher.Publish(count++);
+    }
+
+    public void Dispose()
+    {
+        // You can unsubscribe all from Publisher.
+        tickPublisher.Dispose();
+    }
+}
+```
+
+If you want to create event outside of DI, see [Global Provider](#global-provider) section.
+
+```csharp
+IDisposablePublisher<int> tickPublisher;
+public ISubscriber<int> OnTick { get; }
+
+ctor()
+{
+    (tickPublisher, OnTick) = GlobalMessagePipe.CreateEvent<int>();
+}
+```
 
 Request/Response/All
 ---
@@ -659,6 +717,28 @@ public interface IRedisSerializer
 
 In default uses [MessagePack for C#](https://github.com/neuecc/MessagePack-CSharp)'s `ContractlessStandardResolver`. You can change to use other `MessagePackSerializerOptions` by `new MessagePackRedisSerializer(options)` or implement own serializer wrapper.
 
+MessagePipe has in-memory IDistributedPublisher/Subscriber for local test usage.
+
+```csharp
+Host.CreateDefaultBuilder()
+    .ConfigureServices((ctx, services) =>
+    {
+        var config = ctx.Configuration.Get<MyConfig>();
+
+        services.AddMessagePipe();
+        if (config.IsLocal)
+        {
+            // use in-memory IDistributedPublisher/Subscriber in local.
+            services.AddInMemoryDistributedMessageBroker();   
+        }
+        else
+        {
+            // use Redis IDistributedPublisher/Subscriber
+            services.AddMessagePipeRedis();
+        }
+    });
+```
+
 MessagePipeOptions
 ---
 You can configure MessagePipe behaviour by `MessagePipeOptions` in `AddMessagePipe(Action<MMessagePipeOptions> configure)`.
@@ -800,6 +880,58 @@ Host.CreateDefaultBuilder()
             options.AddGlobalMessageHandlerFilter(typeof(LoggingFilter<>), -10000);
         });
     });
+```
+
+Global provider
+---
+If you want to get publisher/subscriber/handler from globally scope, get `IServiceProvider` before run and set to static helper.
+
+```csharp
+var host = Host.CreateDefaultBuilder()
+    .ConfigureServices((ctx, x) =>
+    {
+        x.AddMessagePipe();
+    })
+    .Build(); // build host before run.
+
+GlobalMessagePipe.SetProvider(host.Services); // set service provider
+
+await host.RunAsync(); // run framework.
+
+// ----
+
+// helper wrapper of IServiceProvider.
+public static class GlobalMessagePipe
+{
+    static IServiceProvider provider;
+    static EventFactory eventFactory;
+
+    public static void SetProvider(IServiceProvider provider)
+    {
+        GlobalMessagePipe.provider = provider;
+        GlobalMessagePipe.eventFactory = provider.GetRequiredService<EventFactory>();
+    }
+
+    public static IPublisher<T> GetPublisher<T>()
+    {
+        return provider.GetRequiredService<IPublisher<T>>();
+    }
+
+    public static ISubscriber<T> GetSubscriber<T>()
+    {
+        return provider.GetRequiredService<ISubscriber<T>>();
+    }
+
+    public static (IDisposablePublisher<T>, ISubscriber<T>) CreateEvent<T>()
+    {
+        return eventFactory.CreateEvent<T>();
+    }
+
+    public static (IDisposableAsyncPublisher<T>, IAsyncSubscriber<T>) CreateAsyncEvent<T>()
+    {
+        return eventFactory.CreateAsyncEvent<T>();
+    }
+}
 ```
 
 Integration with other DI library
