@@ -51,14 +51,18 @@ public class MessagePipeDemo : VContainer.Unity.IStartable
     readonly IPublisher<int> publisher;
     readonly ISubscriber<int> subscriber;
 
-    public MessagePipeDemo(IPublisher<int> publisher, ISubscriber<int> subscriber)
+    public MessagePipeDemo(IPublisher<int> publisher, ISubscriber<int> subscriber, IObjectResolver resolver)
     {
         this.publisher = publisher;
         this.subscriber = subscriber;
+
+        GlobalMessagePipe.SetProvider(resolver.AsServiceProvider());
     }
 
     public void Start()
     {
+
+
         var d = DisposableBag.CreateBuilder();
         subscriber.Subscribe(x => Debug.Log("P1:" + x)).AddTo(d);
         subscriber.Subscribe(x => Debug.Log("P2:" + x)).AddTo(d);

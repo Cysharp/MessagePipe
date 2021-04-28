@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MessagePipe.VContainer;
+using System;
 using VContainer;
 
 namespace MessagePipe.VContainer
@@ -58,6 +59,17 @@ namespace MessagePipe.VContainer
         public object GetService(Type serviceType)
         {
             return resolver.Resolve(serviceType);
+        }
+    }
+}
+
+namespace MessagePipe
+{
+    public static class ObjectResolverExtensions
+    {
+        public static IServiceProvider AsServiceProvider(this IObjectResolver resolver)
+        {
+            return new ObjectResolverProxy(resolver);
         }
     }
 }

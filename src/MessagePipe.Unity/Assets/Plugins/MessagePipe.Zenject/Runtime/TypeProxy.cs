@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MessagePipe.Zenject;
+using System;
 using Zenject;
 
 namespace MessagePipe.Zenject
@@ -60,18 +61,29 @@ namespace MessagePipe.Zenject
         }
     }
 
-    public sealed class ObjectResolverProxy : IServiceProvider
+    public sealed class DiContainerProviderProxy : IServiceProvider
     {
-        DiContainer resolver;
+        DiContainer container;
 
-        public ObjectResolverProxy(DiContainer resolver)
+        public DiContainerProviderProxy(DiContainer container)
         {
-            this.resolver = resolver;
+            this.container = container;
         }
 
         public object GetService(Type serviceType)
         {
-            return resolver.Resolve(serviceType);
+            return container.Resolve(serviceType);
+        }
+    }
+}
+
+namespace MessagePipe
+{
+    public static partial class DiContainerExtensions
+    {
+        public static IServiceProvider AsServiceProvider(this DiContainer container)
+        {
+            return new DiContainerProviderProxy(container);
         }
     }
 }

@@ -4,7 +4,7 @@ using MessagePipe.Zenject;
 
 namespace MessagePipe
 {
-    public static class DiContainerExtensions
+    public static partial class DiContainerExtensions
     {
         // original is ServiceCollectionExtensions, trimed openegenerics register.
 
@@ -28,7 +28,7 @@ namespace MessagePipe
                 options.InstanceLifetime = InstanceLifetime.Scoped;
             });
 
-            builder.Bind<IServiceProvider>().To<ObjectResolverProxy>().AsCached();
+            builder.Bind<IServiceProvider>().To<DiContainerProviderProxy>().AsCached();
 
             return options;
         }

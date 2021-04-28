@@ -55,6 +55,9 @@ namespace PostBuildUtility
                 {"null!", "null" },
                 {"result!", "result" },
                 {"where TKey : notnull", ""},
+                {"IServiceProvider?", "IServiceProvider"},
+                {"EventFactory?", "EventFactory"},
+                {"MessagePipeDiagnosticsInfo?", "MessagePipeDiagnosticsInfo"},
                 {"IDisposable?", "IDisposable"},
             };
 
