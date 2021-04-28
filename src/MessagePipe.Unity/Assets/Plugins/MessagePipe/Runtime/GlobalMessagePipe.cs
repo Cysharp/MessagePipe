@@ -22,6 +22,8 @@ namespace MessagePipe
             GlobalMessagePipe.diagnosticsInfo = provider.GetRequiredService<MessagePipeDiagnosticsInfo>();
         }
 
+        public static bool IsInitialized => provider != null;
+
         public static MessagePipeDiagnosticsInfo DiagnosticsInfo
         {
             get

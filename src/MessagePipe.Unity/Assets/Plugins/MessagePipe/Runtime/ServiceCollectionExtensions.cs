@@ -178,7 +178,7 @@ namespace MessagePipe
             return services;
         }
 
-        public static void AddInMemoryDistributedMessageBroker(this IServiceCollection services)
+        public static IServiceCollection AddInMemoryDistributedMessageBroker(this IServiceCollection services)
         {
             var options = services.FirstOrDefault(x => x.ServiceType == typeof(MessagePipeOptions));
             if (options == null)
@@ -189,6 +189,8 @@ namespace MessagePipe
             var lifetime = ((MessagePipeOptions)options.ImplementationInstance!).InstanceLifetime;
             services.Add(typeof(IDistributedPublisher<,>), typeof(InMemoryDistributedPublisher<,>), lifetime);
             services.Add(typeof(IDistributedSubscriber<,>), typeof(InMemoryDistributedSubscriber<,>), lifetime);
+
+            return services;
         }
 
         internal static void Add(this IServiceCollection services, Type serviceType, InstanceLifetime lifetime)
