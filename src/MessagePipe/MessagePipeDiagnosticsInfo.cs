@@ -45,14 +45,17 @@ namespace MessagePipe
             get
             {
                 if (!enableCaptureStackTrace) return Array.Empty<string>().ToLookup(x => x);
-                return capturedStackTraces
-                    .SelectMany(x => x.Value.Values)
-                    .ToLookup(x =>
-                    {
-                        var split = x.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-                        var skips = split.SkipWhile(y => y.TrimStart().Contains(" MessagePipe."));
-                        return skips.First().TrimStart().Substring(3); // remove "at ".
-                    });
+                lock (gate)
+                {
+                    return capturedStackTraces
+                        .SelectMany(x => x.Value.Values)
+                        .ToLookup(x =>
+                        {
+                            var split = x.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+                            var skips = split.SkipWhile(y => y.TrimStart().Contains(" MessagePipe."));
+                            return skips.First().TrimStart().Substring(3); // remove "at ".
+                        });
+                }
             }
         }
 
