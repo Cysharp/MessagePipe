@@ -17,7 +17,8 @@ namespace MessagePipe
     public sealed class MessagePipeDiagnosticsInfo
     {
         int subscribeCount;
-        bool enableCaptureStackTrace;
+        bool dirty;
+        MessagePipeOptions options;
 
         object gate = new object();
         Dictionary<IHandlerHolderMarker, Dictionary<IDisposable, string>> capturedStackTraces = new Dictionary<IHandlerHolderMarker, Dictionary<IDisposable, string>>();
@@ -25,12 +26,21 @@ namespace MessagePipe
         /// <summary>Get current subscribed count.</summary>
         public int SubscribeCount => subscribeCount;
 
+        internal bool CheckAndResetDirty()
+        {
+            var d = dirty;
+            dirty = false;
+            return d;
+        }
+
+        internal MessagePipeOptions MessagePipeOptions => options;
+
         /// <summary>
         /// When MessagePipeOptions.EnableCaptureStackTrace is enabled, list all stacktrace on subscribe.
         /// </summary>
         public string[] GetCapturedStackTraces()
         {
-            if (!enableCaptureStackTrace) return Array.Empty<string>();
+            if (!options.EnableCaptureStackTrace) return Array.Empty<string>();
             lock (gate)
             {
                 return capturedStackTraces.SelectMany(x => x.Value.Values).ToArray();
@@ -44,34 +54,35 @@ namespace MessagePipe
         {
             get
             {
-                if (!enableCaptureStackTrace) return Array.Empty<string>().ToLookup(x => x);
-                return capturedStackTraces
-                    .SelectMany(x => x.Value.Values)
-                    .ToLookup(x =>
-                    {
-                        var split = x.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-                        var skips = split.SkipWhile(y => y.TrimStart().Contains(" MessagePipe."));
-                        return skips.First().TrimStart().Substring(3); // remove "at ".
-                    });
+                if (!options.EnableCaptureStackTrace) return Array.Empty<string>().ToLookup(x => x);
+                lock (gate)
+                {
+                    return capturedStackTraces
+                        .SelectMany(x => x.Value.Values)
+                        .ToLookup(x =>
+                        {
+                            var split = x.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+                            var skips = split.SkipWhile(y => y.TrimStart().Contains(" MessagePipe."));
+                            return skips.First().TrimStart().Substring(3); // remove "at ".
+                        });
+                }
             }
         }
 
         public MessagePipeDiagnosticsInfo(MessagePipeOptions options)
         {
-            if (options.EnableCaptureStackTrace)
-            {
-                enableCaptureStackTrace = true;
-            }
+            this.options = options;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void IncrementSubscribe(IHandlerHolderMarker handlerHolder, IDisposable subscription)
         {
             Interlocked.Increment(ref subscribeCount);
-            if (enableCaptureStackTrace)
+            if (options.EnableCaptureStackTrace)
             {
                 AddStackTrace(handlerHolder, subscription);
             }
+            dirty = true;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -93,10 +104,11 @@ namespace MessagePipe
         internal void DecrementSubscribe(IHandlerHolderMarker handlerHolder, IDisposable subscription)
         {
             Interlocked.Decrement(ref subscribeCount);
-            if (enableCaptureStackTrace)
+            if (options.EnableCaptureStackTrace)
             {
                 RemoveStackTrace(handlerHolder, subscription);
             }
+            dirty = true;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -116,13 +128,14 @@ namespace MessagePipe
         internal void RemoveTargetDiagnostics(IHandlerHolderMarker targetHolder, int removeCount)
         {
             Interlocked.Add(ref subscribeCount, -removeCount);
-            if (enableCaptureStackTrace)
+            if (options.EnableCaptureStackTrace)
             {
                 lock (gate)
                 {
                     capturedStackTraces.Remove(targetHolder);
                 }
             }
+            dirty = true;
         }
     }
 }

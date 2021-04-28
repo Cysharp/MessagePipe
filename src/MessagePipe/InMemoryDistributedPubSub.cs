@@ -35,13 +35,13 @@ namespace MessagePipe
 
         public ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler, CancellationToken cancellationToken = default)
         {
-            var d = subscriber.Subscribe(key, new AsyncMessageHandlerBrdiger<TMessage>(handler));
+            var d = subscriber.Subscribe(key, new AsyncMessageHandlerBridge<TMessage>(handler));
             return new ValueTask<IAsyncDisposable>(new AsyncDisposableBridge(d));
         }
 
         public ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler, MessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken = default)
         {
-            var d = subscriber.Subscribe(key, new AsyncMessageHandlerBrdiger<TMessage>(handler), filters.Select(x => new AsyncMessageHandlerFilterBrdiger<TMessage>(x)).ToArray());
+            var d = subscriber.Subscribe(key, new AsyncMessageHandlerBridge<TMessage>(handler), filters.Select(x => new AsyncMessageHandlerFilterBridge<TMessage>(x)).ToArray());
             return new ValueTask<IAsyncDisposable>(new AsyncDisposableBridge(d));
         }
 
@@ -75,11 +75,11 @@ namespace MessagePipe
         }
     }
 
-    internal sealed class AsyncMessageHandlerBrdiger<T> : IAsyncMessageHandler<T>
+    internal sealed class AsyncMessageHandlerBridge<T> : IAsyncMessageHandler<T>
     {
         readonly IMessageHandler<T> handler;
 
-        public AsyncMessageHandlerBrdiger(IMessageHandler<T> handler)
+        public AsyncMessageHandlerBridge(IMessageHandler<T> handler)
         {
             this.handler = handler;
         }
@@ -91,11 +91,11 @@ namespace MessagePipe
         }
     }
 
-    internal sealed class AsyncMessageHandlerFilterBrdiger<T> : AsyncMessageHandlerFilter<T>
+    internal sealed class AsyncMessageHandlerFilterBridge<T> : AsyncMessageHandlerFilter<T>
     {
         readonly MessageHandlerFilter<T> filter;
 
-        public AsyncMessageHandlerFilterBrdiger(MessageHandlerFilter<T> filter)
+        public AsyncMessageHandlerFilterBridge(MessageHandlerFilter<T> filter)
         {
             this.filter = filter;
             this.Order = filter.Order;
@@ -103,7 +103,7 @@ namespace MessagePipe
 
         public override ValueTask HandleAsync(T message, CancellationToken cancellationToken, Func<T, CancellationToken, ValueTask> next)
         {
-            filter.Handle(message, async x => await next(x, CancellationToken.None));
+            filter.Handle(message, async x => await next(x, cancellationToken));
             return default;
         }
     }

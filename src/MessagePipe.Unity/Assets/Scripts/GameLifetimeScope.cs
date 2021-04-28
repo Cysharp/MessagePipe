@@ -7,7 +7,7 @@ public class GameLifetimeScope : LifetimeScope
 {
     protected override void Configure(IContainerBuilder builder)
     {
-        var options = builder.RegisterMessagePipe();
+        var options = builder.RegisterMessagePipe(x => { x.EnableCaptureStackTrace = true; });
         builder.RegisterMessageBroker<int>(options);
 
         builder.RegisterEntryPoint<MessagePipeDemo>(Lifetime.Singleton);
@@ -57,6 +57,7 @@ public class MessagePipeDemo : VContainer.Unity.IStartable
         this.subscriber = subscriber;
 
         GlobalMessagePipe.SetProvider(resolver.AsServiceProvider());
+
     }
 
     public void Start()
@@ -72,7 +73,7 @@ public class MessagePipeDemo : VContainer.Unity.IStartable
         publisher.Publish(30);
 
         var disposable = d.Build();
-        disposable.Dispose();
+        // disposable.Dispose();
     }
 }
 
