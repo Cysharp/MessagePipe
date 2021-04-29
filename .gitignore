@@ -141,3 +141,5 @@ src/MessagePipe.Unity/Assembly-CSharp-Editor.csproj
 src/MessagePipe.Unity/Zenject-Editor.csproj
 
 src/MessagePipe.Unity/Zenject.csproj
+
+src/MessagePipe.Unity/MessagePipe.Editor.csproj
