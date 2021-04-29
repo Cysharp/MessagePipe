@@ -694,7 +694,7 @@ for Unity, `Window ->  MessagePipe Diagnostics` window is useful for monitoring 
 
 To Enable use of the MessagePipeDiagnostics window, require to set up `GlobalMessagePipe`.
 
-```
+```csharp
 // VContainer
 public class MessagePipeDemo : VContainer.Unity.IStartable
 {
