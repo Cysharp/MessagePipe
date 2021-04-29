@@ -139,6 +139,18 @@ namespace MessagePipe
             return eventFactory.CreateAsyncEvent<T>();
         }
 
+        public static (IDisposableBufferedPublisher<T>, IBufferedSubscriber<T>) CreateBufferedEvent<T>(T initialValue)
+        {
+            ThrowIfNotInitialized();
+            return eventFactory.CreateBufferedEvent<T>(initialValue);
+        }
+
+        public static (IDisposableBufferedAsyncPublisher<T>, IBufferedAsyncSubscriber<T>) CreateBufferedAsyncEvent<T>(T initialValue)
+        {
+            ThrowIfNotInitialized();
+            return eventFactory.CreateBufferedAsyncEvent<T>(initialValue);
+        }
+
         // [MemberNotNull(nameof(provider), nameof(eventFactory), nameof(diagnosticsInfo))]
         static void ThrowIfNotInitialized()
         {

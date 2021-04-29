@@ -38,6 +38,83 @@ namespace MessagePipe
         }
     }
 
+    public sealed class BufferedAsyncMessageBroker<TMessage> : IBufferedAsyncPublisher<TMessage>, IBufferedAsyncSubscriber<TMessage>
+    {
+        readonly BufferedAsyncMessageBrokerCore<TMessage> core;
+        readonly FilterAttachedAsyncMessageHandlerFactory handlerFactory;
+
+        public BufferedAsyncMessageBroker(BufferedAsyncMessageBrokerCore<TMessage> core, FilterAttachedAsyncMessageHandlerFactory handlerFactory)
+        {
+            this.core = core;
+            this.handlerFactory = handlerFactory;
+        }
+
+        public void Publish(TMessage message, CancellationToken cancellationToken)
+        {
+            core.Publish(message, cancellationToken);
+        }
+
+        public ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken)
+        {
+            return core.PublishAsync(message, cancellationToken);
+        }
+
+        public ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken)
+        {
+            return core.PublishAsync(message, publishStrategy, cancellationToken);
+        }
+
+        public ValueTask<IDisposable> SubscribeAsync(IAsyncMessageHandler<TMessage> handler, CancellationToken cancellationToken)
+        {
+            return SubscribeAsync(handler, Array.Empty<AsyncMessageHandlerFilter<TMessage>>(), cancellationToken);
+        }
+
+        public ValueTask<IDisposable> SubscribeAsync(IAsyncMessageHandler<TMessage> handler, AsyncMessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken)
+        {
+            handler = handlerFactory.CreateAsyncMessageHandler(handler, filters);
+            return core.SubscribeAsync(handler, cancellationToken);
+        }
+    }
+
+    public sealed class BufferedAsyncMessageBrokerCore<TMessage>
+    {
+        readonly AsyncMessageBrokerCore<TMessage> core;
+        TMessage? lastMessage;
+
+        public BufferedAsyncMessageBrokerCore(AsyncMessageBrokerCore<TMessage> core)
+        {
+            this.core = core;
+            this.lastMessage = default;
+        }
+
+        public void Publish(TMessage message, CancellationToken cancellationToken)
+        {
+            lastMessage = message;
+            core.Publish(message, cancellationToken);
+        }
+
+        public ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken)
+        {
+            lastMessage = message;
+            return core.PublishAsync(message, cancellationToken);
+        }
+
+        public ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken)
+        {
+            lastMessage = message;
+            return core.PublishAsync(message, publishStrategy, cancellationToken);
+        }
+
+        public async ValueTask<IDisposable> SubscribeAsync(IAsyncMessageHandler<TMessage> handler, CancellationToken cancellationToken)
+        {
+            if (lastMessage != null)
+            {
+                await handler.HandleAsync(lastMessage, cancellationToken);
+            }
+            return core.Subscribe(handler);
+        }
+    }
+
     public sealed class AsyncMessageBrokerCore<TMessage> : IDisposable, IHandlerHolderMarker
     {
         FreeList<IAsyncMessageHandler<TMessage>> handlers;

@@ -47,38 +47,6 @@ namespace MessagePipe
         }
     }
 
-    public static class GlobalMessagePipe
-    {
-        static IServiceProvider provider;
-        static EventFactory eventFactory;
-
-        public static void SetProvider(IServiceProvider provider)
-        {
-            GlobalMessagePipe.provider = provider;
-            GlobalMessagePipe.eventFactory = provider.GetRequiredService<EventFactory>();
-        }
-
-        public static IPublisher<T> GetPublisher<T>()
-        {
-            return provider.GetRequiredService<IPublisher<T>>();
-        }
-
-        public static ISubscriber<T> GetSubscriber<T>()
-        {
-            return provider.GetRequiredService<ISubscriber<T>>();
-        }
-
-        public static (IDisposablePublisher<T>, ISubscriber<T>) CreateEvent<T>()
-        {
-            return eventFactory.CreateEvent<T>();
-        }
-
-        public static (IDisposableAsyncPublisher<T>, IAsyncSubscriber<T>) CreateAsyncEvent<T>()
-        {
-            return eventFactory.CreateAsyncEvent<T>();
-        }
-    }
-
     class Program : ConsoleAppBase
     {
         static async Task Main(string[] args)

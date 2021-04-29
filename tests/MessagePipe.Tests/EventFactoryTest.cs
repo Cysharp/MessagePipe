@@ -120,41 +120,4 @@ namespace MessagePipe.Tests
             d2.Dispose();
         }
     }
-
-    public class EventFactorySample : IDisposable
-    {
-        // You can use EventFactory instead of event.
-        // public event Action<int> OnTick;
-        IDisposablePublisher<int> tickPublisher;
-        public ISubscriber<int> OnTick { get; }
-
-        public EventFactorySample(EventFactory eventFactory)
-        {
-            (tickPublisher, OnTick) = eventFactory.CreateEvent<int>();
-        }
-
-        int count;
-        void Tick()
-        {
-            tickPublisher.Publish(count++);
-        }
-
-        public void Dispose()
-        {
-            tickPublisher.Dispose();
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

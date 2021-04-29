@@ -75,12 +75,15 @@ namespace MessagePipe
             for (int i = 0; i < stackTrace.FrameCount; i++)
             {
                 var sf = stackTrace.GetFrame(i);
+                if (sf == null) continue;
                 var m = sf.GetMethod();
+                if (m == null) continue;
+                if (m.DeclaringType == null) continue;
                 if (m.DeclaringType.Namespace == null || !m.DeclaringType.Namespace.StartsWith("MessagePipe"))
                 {
                     if (displayFileNames && sf.GetILOffset() != -1)
                     {
-                        String fileName = null;
+                        string? fileName = null;
                         try
                         {
                             fileName = sf.GetFileName();
