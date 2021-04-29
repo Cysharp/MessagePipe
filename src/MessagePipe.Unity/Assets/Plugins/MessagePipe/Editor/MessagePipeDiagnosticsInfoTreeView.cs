@@ -39,7 +39,7 @@ namespace MessagePipe.Editor
             : this(new TreeViewState(), new MultiColumnHeader(new MultiColumnHeaderState(new[]
             {
                 new MultiColumnHeaderState.Column() { headerContent = new GUIContent("Position")},
-                new MultiColumnHeaderState.Column() { headerContent = new GUIContent("Count"), width = 3},
+                new MultiColumnHeaderState.Column() { headerContent = new GUIContent("Count"), width = 5},
             })))
         {
         }
