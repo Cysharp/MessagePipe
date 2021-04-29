@@ -971,7 +971,7 @@ You need to install Core library and choose [VContainer](https://github.com/hada
 * VContainer `https://github.com/Cysharp/MessagePipe.git?path=src/MessagePipe.Unity/Assets/Plugins/MessagePipe.VContainer`
 * Zenject `https://github.com/Cysharp/MessagePipe.git?path=src/MessagePipe.Unity/Assets/Plugins/MessagePipe.Zenject`
 
-Andalso, requires [UniTask](https://github.com/Cysharp/UniTask) to install.
+Andalso, requires [UniTask](https://github.com/Cysharp/UniTask) to install, all `ValueTask` declaration in .NET is replaced to `UniTask`.
 
 Unity version does not have open generics support(for IL2CPP) and does not support auto registration. Therefore, all required types need to be manually registered.
 
