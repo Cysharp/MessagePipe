@@ -9,6 +9,7 @@ using System;
 using UnityEditor.IMGUI.Controls;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace MessagePipe.Editor
 {
@@ -17,8 +18,8 @@ namespace MessagePipe.Editor
         static Regex removeHref = new Regex("<a href.+>(.+)</a>", RegexOptions.Compiled);
 
         public int Count { get; set; }
-        public string Caller { get; set; }
-        public string[] StackTraces { get; set; }
+        public string Head { get; set; }
+        public IEnumerable<StackTrace> StackTraces { get; set; }
 
         public MessagePipeDiagnosticsInfoTreeViewItem(int id) : base(id)
         {
@@ -31,13 +32,14 @@ namespace MessagePipe.Editor
         const string sortedColumnIndexStateKey = "MessagePipeDiagnosticsInfoTreeView_sortedColumnIndex";
 
         public IReadOnlyList<TreeViewItem> CurrentBindingItems;
+        Dictionary<string, int> usedTrackIds = new Dictionary<string, int>();
         int trackId = 0;
 
         public MessagePipeDiagnosticsInfoTreeView()
             : this(new TreeViewState(), new MultiColumnHeader(new MultiColumnHeaderState(new[]
             {
-                new MultiColumnHeaderState.Column() { headerContent = new GUIContent("Count"), width = 5},
-                new MultiColumnHeaderState.Column() { headerContent = new GUIContent("Caller")},
+                new MultiColumnHeaderState.Column() { headerContent = new GUIContent("Position")},
+                new MultiColumnHeaderState.Column() { headerContent = new GUIContent("Count"), width = 3},
             })))
         {
         }
@@ -76,10 +78,10 @@ namespace MessagePipe.Editor
             switch (index)
             {
                 case 0:
-                    orderedEnumerable = ascending ? items.OrderBy(item => item.Count) : items.OrderByDescending(item => item.Count);
+                    orderedEnumerable = ascending ? items.OrderBy(item => item.Head) : items.OrderByDescending(item => item.Head);
                     break;
                 case 1:
-                    orderedEnumerable = ascending ? items.OrderBy(item => item.Caller) : items.OrderByDescending(item => item.Caller);
+                    orderedEnumerable = ascending ? items.OrderBy(item => item.Count) : items.OrderByDescending(item => item.Count);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(index), index, null);
@@ -97,16 +99,38 @@ namespace MessagePipe.Editor
 
             if (MessagePipeDiagnosticsInfoWindow.diagnosticsInfo != null)
             {
-                var grouped = MessagePipeDiagnosticsInfoWindow.diagnosticsInfo.GroupedByCaller;
-                foreach (var item in grouped)
+                if (MessagePipeDiagnosticsInfoWindow.EnableCollapse)
                 {
-                    var viewItem = new MessagePipeDiagnosticsInfoTreeViewItem(trackId++)
+                    var grouped = MessagePipeDiagnosticsInfoWindow.diagnosticsInfo.GroupedByCaller;
+                    foreach (var item in grouped)
                     {
-                        Count = item.Count(),
-                        Caller = item.Key,
-                        StackTraces = item.ToArray()
-                    };
-                    children.Add(viewItem);
+                        if (!usedTrackIds.TryGetValue(item.Key, out var id))
+                        {
+                            id = trackId++;
+                            usedTrackIds[item.Key] = id;
+                        }
+
+                        var viewItem = new MessagePipeDiagnosticsInfoTreeViewItem(id)
+                        {
+                            Count = item.Count(),
+                            Head = item.Key,
+                            StackTraces = item.ToArray()
+                        };
+                        children.Add(viewItem);
+                    }
+                }
+                else
+                {
+                    foreach (var item in MessagePipeDiagnosticsInfoWindow.diagnosticsInfo.GetCapturedStackTraces())
+                    {
+                        var viewItem = new MessagePipeDiagnosticsInfoTreeViewItem(trackId++)
+                        {
+                            Count = 1,
+                            Head = MessagePipeDiagnosticsInfo.GetGroupKey(item),
+                            StackTraces = new[] { item }
+                        };
+                        children.Add(viewItem);
+                    }
                 }
             }
 
@@ -134,10 +158,10 @@ namespace MessagePipe.Editor
                 switch (columnIndex)
                 {
                     case 0:
-                        EditorGUI.LabelField(rect, item.Count.ToString(), labelStyle);
+                        EditorGUI.LabelField(rect, item.Head, labelStyle);
                         break;
                     case 1:
-                        EditorGUI.LabelField(rect, item.Caller, labelStyle);
+                        EditorGUI.LabelField(rect, item.Count.ToString(), labelStyle);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException(nameof(columnIndex), columnIndex, null);

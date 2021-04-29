@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security;
 using System.Threading;
 
 namespace MessagePipe
@@ -16,12 +17,14 @@ namespace MessagePipe
     /// </summary>
     public sealed class MessagePipeDiagnosticsInfo
     {
+        static bool displayFileNames = true;
+
         int subscribeCount;
         bool dirty;
         MessagePipeOptions options;
 
         object gate = new object();
-        Dictionary<IHandlerHolderMarker, Dictionary<IDisposable, string>> capturedStackTraces = new Dictionary<IHandlerHolderMarker, Dictionary<IDisposable, string>>();
+        Dictionary<IHandlerHolderMarker, Dictionary<IDisposable, StackTrace>> capturedStackTraces = new Dictionary<IHandlerHolderMarker, Dictionary<IDisposable, StackTrace>>();
 
         /// <summary>Get current subscribed count.</summary>
         public int SubscribeCount => subscribeCount;
@@ -38,9 +41,9 @@ namespace MessagePipe
         /// <summary>
         /// When MessagePipeOptions.EnableCaptureStackTrace is enabled, list all stacktrace on subscribe.
         /// </summary>
-        public string[] GetCapturedStackTraces()
+        public StackTrace[] GetCapturedStackTraces()
         {
-            if (!options.EnableCaptureStackTrace) return Array.Empty<string>();
+            if (!options.EnableCaptureStackTrace) return Array.Empty<StackTrace>();
             lock (gate)
             {
                 return capturedStackTraces.SelectMany(x => x.Value.Values).ToArray();
@@ -50,23 +53,62 @@ namespace MessagePipe
         /// <summary>
         /// When MessagePipeOptions.EnableCaptureStackTrace is enabled, groped by caller of subscribe.
         /// </summary>
-        public ILookup<string, string> GroupedByCaller
+        public ILookup<string, StackTrace> GroupedByCaller
         {
             get
             {
-                if (!options.EnableCaptureStackTrace) return Array.Empty<string>().ToLookup(x => x);
+                if (!options.EnableCaptureStackTrace) return Array.Empty<StackTrace>().ToLookup(x => "", x => x);
                 lock (gate)
                 {
                     return capturedStackTraces
                         .SelectMany(x => x.Value.Values)
                         .ToLookup(x =>
                         {
-                            var split = x.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-                            var skips = split.SkipWhile(y => y.TrimStart().Contains(" MessagePipe."));
-                            return skips.First().TrimStart().Substring(3); // remove "at ".
+                            return GetGroupKey(x);
                         });
                 }
             }
+        }
+
+        internal static string GetGroupKey(StackTrace stackTrace)
+        {
+            for (int i = 0; i < stackTrace.FrameCount; i++)
+            {
+                var sf = stackTrace.GetFrame(i);
+                var m = sf.GetMethod();
+                if (m.DeclaringType.Namespace == null || !m.DeclaringType.Namespace.StartsWith("MessagePipe"))
+                {
+                    if (displayFileNames && sf.GetILOffset() != -1)
+                    {
+                        String fileName = null;
+                        try
+                        {
+                            fileName = sf.GetFileName();
+                        }
+                        catch (NotSupportedException)
+                        {
+                            displayFileNames = false;
+                        }
+                        catch (SecurityException)
+                        {
+                            displayFileNames = false;
+                        }
+
+                        if (fileName != null)
+                        {
+                            return m.DeclaringType.FullName + "." + m.Name + " (at: " + sf.GetFileLineNumber() + ")";
+                        }
+                        else
+                        {
+                            return m.DeclaringType.FullName + "." + m.Name + " (offset: " + sf.GetILOffset() + ")";
+                        }
+                    }
+
+                    return m.DeclaringType.FullName + "." + m.Name;
+                }
+            }
+
+            return "";
         }
 
         public MessagePipeDiagnosticsInfo(MessagePipeOptions options)
@@ -92,11 +134,11 @@ namespace MessagePipe
             {
                 if (!capturedStackTraces.TryGetValue(handlerHolder, out var dict))
                 {
-                    dict = new Dictionary<IDisposable, string>();
+                    dict = new Dictionary<IDisposable, StackTrace>();
                     capturedStackTraces[handlerHolder] = dict;
                 }
 
-                dict.Add(subscription, new StackTrace().ToString());
+                dict.Add(subscription, new StackTrace(true));
             }
         }
 

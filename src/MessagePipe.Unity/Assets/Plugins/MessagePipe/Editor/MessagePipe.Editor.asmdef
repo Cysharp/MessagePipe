@@ -1,7 +1,8 @@
 {
     "name": "MessagePipe.Editor",
     "references": [
-        "MessagePipe"
+        "MessagePipe",
+        "UniTask"
     ],
     "includePlatforms": [
         "Editor"

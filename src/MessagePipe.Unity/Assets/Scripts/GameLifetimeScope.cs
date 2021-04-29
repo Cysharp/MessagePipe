@@ -10,6 +10,7 @@ public class GameLifetimeScope : LifetimeScope
         var options = builder.RegisterMessagePipe(x => { x.EnableCaptureStackTrace = true; });
         builder.RegisterMessageBroker<int>(options);
 
+
         builder.RegisterEntryPoint<MessagePipeDemo>(Lifetime.Singleton);
     }
 
@@ -62,6 +63,9 @@ public class MessagePipeDemo : VContainer.Unity.IStartable
 
     public void Start()
     {
+        
+        
+
 
 
         var d = DisposableBag.CreateBuilder();

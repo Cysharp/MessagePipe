@@ -12,11 +12,14 @@ namespace MessagePipe.Editor
 {
     public class MessagePipeDiagnosticsInfoWindow : EditorWindow
     {
+        static readonly string Splitter = Environment.NewLine + "---" + Environment.NewLine;
+
         static int interval;
 
         static MessagePipeDiagnosticsInfoWindow window;
 
         internal static MessagePipeDiagnosticsInfo diagnosticsInfo;
+        
 
         [MenuItem("Window/MessagePipe Diagnostics")]
         public static void OpenWindow()
@@ -63,8 +66,10 @@ namespace MessagePipe.Editor
 
         static bool EnableAutoReload { get; set; }
         static bool EnableCaptureStackTrace { get; set; }
+        internal static bool EnableCollapse { get; set; } = true;
         static readonly GUIContent EnableAutoReloadHeadContent = EditorGUIUtility.TrTextContent("Enable AutoReload", "Reload view automatically.", (Texture)null);
         static readonly GUIContent EnableCaptureStackTraceHeadContent = EditorGUIUtility.TrTextContent("Enable CaptureStackTrace", "CaptureStackTrace on Subscribe.", (Texture)null);
+        static readonly GUIContent EnableCollapseHeadContent = EditorGUIUtility.TrTextContent("Collapse", "Collapse StackTraces.", (Texture)null);
         static readonly GUIContent ReloadHeadContent = EditorGUIUtility.TrTextContent("Reload", "Reload View.", (Texture)null);
 
         // [Enable CaptureStackTrace] | [Enable AutoReload] | .... | Reload
@@ -73,11 +78,13 @@ namespace MessagePipe.Editor
             EditorGUILayout.BeginVertical(EmptyLayoutOption);
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar, EmptyLayoutOption);
 
+            // lazy initialize...
             if (diagnosticsInfo == null)
             {
                 if (GlobalMessagePipe.IsInitialized)
                 {
                     diagnosticsInfo = GlobalMessagePipe.DiagnosticsInfo;
+                    EnableCaptureStackTrace = diagnosticsInfo.MessagePipeOptions.EnableCaptureStackTrace;
                 }
             }
 
@@ -86,6 +93,14 @@ namespace MessagePipe.Editor
                 if (CheckInitialized())
                 {
                     diagnosticsInfo.MessagePipeOptions.EnableCaptureStackTrace = EnableCaptureStackTrace = !EnableCaptureStackTrace;
+                }
+            }
+
+            if (GUILayout.Toggle(EnableCollapse, EnableCollapseHeadContent, EditorStyles.toolbarButton, EmptyLayoutOption) != EnableCollapse)
+            {
+                if (CheckInitialized())
+                {
+                    EnableCollapse = !EnableCollapse;
                 }
             }
 
@@ -198,7 +213,7 @@ namespace MessagePipe.Editor
                 var item = treeView.CurrentBindingItems.FirstOrDefault(x => x.id == first) as MessagePipeDiagnosticsInfoTreeViewItem;
                 if (item != null)
                 {
-                    message = string.Join(Environment.NewLine + "---" + Environment.NewLine, item.StackTraces);
+                    message = string.Join(Splitter, item.StackTraces.Select(x => x.CleanupAsyncStackTrace()));
                 }
             }
 
