@@ -801,7 +801,10 @@ Host.CreateDefaultBuilder()
         services.AddMessagePipe(options =>
         {
             options.InstanceLifetime = InstanceLifetime.Scoped;
+#if DEBUG
+            // EnableCaptureStackTrace slows performance, so recommended to use only in DEBUG and in profiling, disable it.
             options.EnableCaptureStackTrace = true;
+#endif
         });
     })
 ```
