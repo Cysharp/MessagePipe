@@ -58,7 +58,6 @@ public class MessagePipeDemo : VContainer.Unity.IStartable
         this.subscriber = subscriber;
 
         GlobalMessagePipe.SetProvider(resolver.AsServiceProvider());
-
     }
 
     public void Start()

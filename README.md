@@ -646,12 +646,12 @@ public sealed class MessagePipeDiagnosticsInfo
     /// <summary>
     /// When MessagePipeOptions.EnableCaptureStackTrace is enabled, list all stacktrace on subscribe.
     /// </summary>
-    public string[] GetCapturedStackTraces();
+    public StackTrace[] GetCapturedStackTraces();
 
     /// <summary>
     /// When MessagePipeOptions.EnableCaptureStackTrace is enabled, groped by caller of subscribe.
     /// </summary>
-    public ILookup<string, string> GroupedByCaller { get; }
+    public ILookup<string, StackTrace> GroupedByCaller { get; }
 }
 ```
 
@@ -687,6 +687,30 @@ public class MonitorTimer : IDisposable
 Also, by enabling MessagePipeOptions.EnableCaptureStackTrace (disabled by default), the location of the subscribed location can be displayed, making it easier to find the location of the leak if it exists.
 
 Check the Count of GroupedByCaller, and if any of them show abnormal values, then the stack trace is where it occurs, and you probably ignore Subscription.
+
+for Unity, `Window ->  MessagePipe Diagnostics` window is useful for monitoring subscritpion. It visualises `MessagePipeDianogsticsInfo`.
+
+![image](https://user-images.githubusercontent.com/46207/116520080-34c61d80-a90d-11eb-8786-7737c5da274d.png)
+
+To Enable use of the MessagePipeDiagnostics window, require to set up `GlobalMessagePipe`.
+
+```
+// VContainer
+public class MessagePipeDemo : VContainer.Unity.IStartable
+{
+    public MessagePipeDemo(IObjectResolver resolver)
+    {
+        // require this line.
+        GlobalMessagePipe.SetProvider(resolver.AsServiceProvider());
+    }
+}
+
+// Zenject
+void Configure(DiContainer container)
+{
+    GlobalMessagePipe.SetProvider(container.AsServiceProvider());
+}
+```
 
 IDistributedPubSub / MessagePipe.Redis
 ---
@@ -909,7 +933,7 @@ Host.CreateDefaultBuilder()
 
 Global provider
 ---
-If you want to get publisher/subscriber/handler from globally scope, get `IServiceProvider` before run and set to static helper.
+If you want to get publisher/subscriber/handler from globally scope, get `IServiceProvider` before run and set to static helper called `GlobalMessagePipe`.
 
 ```csharp
 var host = Host.CreateDefaultBuilder()
@@ -922,42 +946,11 @@ var host = Host.CreateDefaultBuilder()
 GlobalMessagePipe.SetProvider(host.Services); // set service provider
 
 await host.RunAsync(); // run framework.
-
-// ----
-
-// helper wrapper of IServiceProvider.
-public static class GlobalMessagePipe
-{
-    static IServiceProvider provider;
-    static EventFactory eventFactory;
-
-    public static void SetProvider(IServiceProvider provider)
-    {
-        GlobalMessagePipe.provider = provider;
-        GlobalMessagePipe.eventFactory = provider.GetRequiredService<EventFactory>();
-    }
-
-    public static IPublisher<T> GetPublisher<T>()
-    {
-        return provider.GetRequiredService<IPublisher<T>>();
-    }
-
-    public static ISubscriber<T> GetSubscriber<T>()
-    {
-        return provider.GetRequiredService<ISubscriber<T>>();
-    }
-
-    public static (IDisposablePublisher<T>, ISubscriber<T>) CreateEvent<T>()
-    {
-        return eventFactory.CreateEvent<T>();
-    }
-
-    public static (IDisposableAsyncPublisher<T>, IAsyncSubscriber<T>) CreateAsyncEvent<T>()
-    {
-        return eventFactory.CreateAsyncEvent<T>();
-    }
-}
 ```
+
+`GlobalMessagePipe` has these static method(`GetPublisher<T>`, `GetSubscriber<T>`, `CreateEvent<T>`, etc...) so you can get globally.
+
+![image](https://user-images.githubusercontent.com/46207/116521078-7c00de00-a90e-11eb-85c0-2c62c140c51d.png)
 
 Integration with other DI library
 ---
@@ -1070,6 +1063,8 @@ static void RegisterRequest<TRequest, TResponse, THandler>(IContainerBuilder bui
     options.AddGlobalRequestHandlerFilter<MyRequestHandlerFilter<TRequest, TResponse>>();
 }
 ```
+
+Also you can use `GlobalMessagePipe` and `MessagePipe Diagnostics` window. see: [Global provider](#global-provider) and [Managing Subscription and Diagnostics](#managing-subscription-and-diagnostics) section.
 
 License
 ---
