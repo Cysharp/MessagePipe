@@ -8,7 +8,7 @@ using Xunit;
 // for check diagnostics, modify namespace.
 namespace __MessagePipe.Tests
 {
-    public class PubsubKeylessSync
+    public class PubsubKeylessSyncTest
     {
         [Fact]
         public void SimplePush()

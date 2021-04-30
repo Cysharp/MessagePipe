@@ -1,6 +1,4 @@
-﻿#pragma warning disable CS1998
-
-using FluentAssertions;
+﻿using FluentAssertions;
 using MessagePipe;
 using MessagePipe.Tests;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,7 +8,7 @@ using Xunit;
 // for check diagnostics, modify namespace.
 namespace __MessagePipe.Tests
 {
-    public class PubsubKeyedASync
+    public class PubSubKeyedSyncTest
     {
         [Fact]
         public void SimplePush()
@@ -21,13 +19,13 @@ namespace __MessagePipe.Tests
             var provider = TestHelper.BuildServiceProvider();
 
             var info = provider.GetRequiredService<MessagePipeDiagnosticsInfo>();
-            var p = provider.GetRequiredService<IAsyncPublisher<string, string>>();
-            var s = provider.GetRequiredService<IAsyncSubscriber<string, string>>();
+            var p = provider.GetRequiredService<IPublisher<string, string>>();
+            var s = provider.GetRequiredService<ISubscriber<string, string>>();
 
             var result = new List<string>();
-            var d1 = s.Subscribe(Key1, async (x, ct) => result.Add("1:" + x));
-            var d2 = s.Subscribe(Key2, async (x, ct) => result.Add("2:" + x));
-            var d3 = s.Subscribe(Key1, async (x, ct) => result.Add("3:" + x));
+            var d1 = s.Subscribe(Key1, x => result.Add("1:" + x));
+            var d2 = s.Subscribe(Key2, x => result.Add("2:" + x));
+            var d3 = s.Subscribe(Key1, x => result.Add("3:" + x));
 
             info.SubscribeCount.Should().Be(3);
 

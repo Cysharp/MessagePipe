@@ -13,7 +13,7 @@ using Xunit;
 // for check diagnostics, modify namespace.
 namespace __MessagePipe.Tests
 {
-    public class PubsubKeylessAsync
+    public class PubsubKeylessAsyncTest
     {
         [Fact]
         public async Task SameAsSync()
