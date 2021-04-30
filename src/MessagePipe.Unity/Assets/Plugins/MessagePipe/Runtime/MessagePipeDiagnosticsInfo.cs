@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security;
@@ -75,12 +76,15 @@ namespace MessagePipe
             for (int i = 0; i < stackTrace.FrameCount; i++)
             {
                 var sf = stackTrace.GetFrame(i);
+                if (sf == null) continue;
                 var m = sf.GetMethod();
+                if (m == null) continue;
+                if (m.DeclaringType == null) continue;
                 if (m.DeclaringType.Namespace == null || !m.DeclaringType.Namespace.StartsWith("MessagePipe"))
                 {
                     if (displayFileNames && sf.GetILOffset() != -1)
                     {
-                        String fileName = null;
+                        string fileName = null;
                         try
                         {
                             fileName = sf.GetFileName();
@@ -96,7 +100,7 @@ namespace MessagePipe
 
                         if (fileName != null)
                         {
-                            return m.DeclaringType.FullName + "." + m.Name + " (at: " + sf.GetFileLineNumber() + ")";
+                            return m.DeclaringType.FullName + "." + m.Name + " (at " + Path.GetFileName(fileName) + ":" + sf.GetFileLineNumber() + ")";
                         }
                         else
                         {
