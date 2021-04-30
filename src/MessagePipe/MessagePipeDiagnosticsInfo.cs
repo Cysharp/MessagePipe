@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security;
@@ -99,7 +100,7 @@ namespace MessagePipe
 
                         if (fileName != null)
                         {
-                            return m.DeclaringType.FullName + "." + m.Name + " (at: " + sf.GetFileLineNumber() + ")";
+                            return m.DeclaringType.FullName + "." + m.Name + " (at " + Path.GetFileName(fileName) + ":" + sf.GetFileLineNumber() + ")";
                         }
                         else
                         {
