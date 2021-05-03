@@ -160,4 +160,43 @@ public class ZenjectTest
             "Invoke2:1999",
         }, store.Logs);
     }
+
+    [Test]
+    public void Buffered()
+    {
+        var provider = TestHelper.BuildZenject((options, builder) =>
+        {
+            builder.BindMessageBroker<IntClass>(options);
+        });
+
+        var p = provider.Resolve<IBufferedPublisher<IntClass>>();
+        var s = provider.Resolve<IBufferedSubscriber<IntClass>>();
+
+        var l = new List<int>();
+        using (var d1 = s.Subscribe(x => l.Add(x.Value)))
+        {
+            Assert.AreEqual(0, l.Count);
+        }
+
+        p.Publish(new IntClass { Value = 9999 }); // set initial value
+
+        var d2 = s.Subscribe(x => l.Add(x.Value));
+
+        CollectionAssert.AreEqual(new[] { 9999 }, l);
+        p.Publish(new IntClass { Value = 333 });
+        CollectionAssert.AreEqual(new[] { 9999, 333 }, l);
+
+        var d3 = s.Subscribe(x => l.Add(x.Value));
+        CollectionAssert.AreEqual(new[] { 9999, 333, 333 }, l);
+        p.Publish(new IntClass { Value = 11 });
+        CollectionAssert.AreEqual(new[] { 9999, 333, 333, 11, 11 }, l);
+        d3.Dispose();
+        p.Publish(new IntClass { Value = 4 });
+        CollectionAssert.AreEqual(new[] { 9999, 333, 333, 11, 11, 4 }, l);
+    }
+
+    public class IntClass
+    {
+        public int Value { get; set; }
+    }
 }
