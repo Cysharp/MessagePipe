@@ -2,9 +2,9 @@ using System;
 
 namespace MessagePipe
 {
-    internal static class DependencyInjectionShims
+    public static class DependencyInjectionShims
     {
-        internal static T GetRequiredService<T>(this IServiceProvider provider)
+        public static T GetRequiredService<T>(this IServiceProvider provider)
         {
             var service = provider.GetService(typeof(T));
             if (service == null)
@@ -14,7 +14,7 @@ namespace MessagePipe
             return (T)service;
         }
 
-        internal static object GetRequiredService(this IServiceProvider provider, Type type)
+        public static object GetRequiredService(this IServiceProvider provider, Type type)
         {
             var service = provider.GetService(type);
             if (service == null)

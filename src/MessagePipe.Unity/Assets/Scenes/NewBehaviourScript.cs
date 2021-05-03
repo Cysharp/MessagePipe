@@ -3,7 +3,7 @@ using MessagePipe;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
-using VContainer;
+// using VContainer;
 
 public class NewBehaviourScript : MonoBehaviour
 {
@@ -19,16 +19,16 @@ public class NewBehaviourScript : MonoBehaviour
 
     public void Start()
     {
-        var builder = new ContainerBuilder();
+        var builder = new BuiltinContainerBuilder();
 
-        var options = builder.RegisterMessagePipe(x => { x.EnableCaptureStackTrace = true; });
-        builder.RegisterMessageBroker<int>(options);
+        builder.AddMessagePipe(x => { x.EnableCaptureStackTrace = true; });
+        builder.AddMessageBroker<int>();
 
-        var resolver = builder.Build();
-        GlobalMessagePipe.SetProvider(resolver.AsServiceProvider());
+        var resolver = builder.BuildServiceProvider();
+        GlobalMessagePipe.SetProvider(resolver);
 
-        publisher = resolver.Resolve<IPublisher<int>>();
-        subscriber = resolver.Resolve<ISubscriber<int>>();
+        publisher = resolver.GetRequiredService<IPublisher<int>>();
+        subscriber = resolver.GetRequiredService<ISubscriber<int>>();
 
         button1.onClick.AddListener(FooSubscribe);
         button2.onClick.AddListener(BarSubscribe);
