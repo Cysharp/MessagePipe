@@ -50,6 +50,8 @@ namespace MessagePipe
 
     public sealed class BufferedMessageBrokerCore<TMessage>
     {
+        static readonly bool IsValueType = typeof(TMessage).IsValueType;
+
         readonly MessageBrokerCore<TMessage> core;
         TMessage? lastMessage;
 
@@ -67,9 +69,9 @@ namespace MessagePipe
 
         public IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters)
         {
-            if (lastMessage != null)
+            if (IsValueType || lastMessage != null)
             {
-                handler.Handle(lastMessage);
+                handler.Handle(lastMessage!);
             }
             return core.Subscribe(handler);
         }

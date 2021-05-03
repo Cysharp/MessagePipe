@@ -61,6 +61,7 @@ namespace PostBuildUtility
                 {"IDisposable?", "IDisposable"},
                 {"TMessage?", "TMessage"},
                 {"string?", "string"},
+                {"lastMessage!", "lastMessage"},
             };
 
             System.Console.WriteLine("Start to replace code, remove nullability and use UniTask.");

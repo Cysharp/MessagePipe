@@ -13,62 +13,24 @@ namespace MessagePipe
     {
     }
 
-    /// <summary>
-    /// Diagnostics info of in-memory(ISubscriber/IAsyncSubscriber) subscriptions.
-    /// </summary>
-    public sealed class MessagePipeDiagnosticsInfo
+    public class StackTraceInfo
     {
         static bool displayFileNames = true;
+        static int idSeed = 0;
 
-        int subscribeCount;
-        bool dirty;
-        MessagePipeOptions options;
+        public int Id { get; }
+        public DateTimeOffset Timestamp { get; }
+        public StackTrace StackTrace { get; }
+        public string Head { get; }
 
-        object gate = new object();
-        Dictionary<IHandlerHolderMarker, Dictionary<IDisposable, StackTrace>> capturedStackTraces = new Dictionary<IHandlerHolderMarker, Dictionary<IDisposable, StackTrace>>();
+        internal string formattedStackTrace = default; // cache field for internal use(Unity Editor, etc...)
 
-        /// <summary>Get current subscribed count.</summary>
-        public int SubscribeCount => subscribeCount;
-
-        internal bool CheckAndResetDirty()
+        public StackTraceInfo(StackTrace stackTrace)
         {
-            var d = dirty;
-            dirty = false;
-            return d;
-        }
-
-        internal MessagePipeOptions MessagePipeOptions => options;
-
-        /// <summary>
-        /// When MessagePipeOptions.EnableCaptureStackTrace is enabled, list all stacktrace on subscribe.
-        /// </summary>
-        public StackTrace[] GetCapturedStackTraces()
-        {
-            if (!options.EnableCaptureStackTrace) return Array.Empty<StackTrace>();
-            lock (gate)
-            {
-                return capturedStackTraces.SelectMany(x => x.Value.Values).ToArray();
-            }
-        }
-
-        /// <summary>
-        /// When MessagePipeOptions.EnableCaptureStackTrace is enabled, groped by caller of subscribe.
-        /// </summary>
-        public ILookup<string, StackTrace> GroupedByCaller
-        {
-            get
-            {
-                if (!options.EnableCaptureStackTrace) return Array.Empty<StackTrace>().ToLookup(x => "", x => x);
-                lock (gate)
-                {
-                    return capturedStackTraces
-                        .SelectMany(x => x.Value.Values)
-                        .ToLookup(x =>
-                        {
-                            return GetGroupKey(x);
-                        });
-                }
-            }
+            Id = Interlocked.Increment(ref idSeed);
+            Timestamp = DateTimeOffset.UtcNow;
+            StackTrace = stackTrace;
+            Head = GetGroupKey(stackTrace);
         }
 
         internal static string GetGroupKey(StackTrace stackTrace)
@@ -114,6 +76,62 @@ namespace MessagePipe
 
             return "";
         }
+    }
+
+    /// <summary>
+    /// Diagnostics info of in-memory(ISubscriber/IAsyncSubscriber) subscriptions.
+    /// </summary>
+    public sealed class MessagePipeDiagnosticsInfo
+    {
+
+
+        int subscribeCount;
+        bool dirty;
+        MessagePipeOptions options;
+
+        object gate = new object();
+        Dictionary<IHandlerHolderMarker, Dictionary<IDisposable, StackTraceInfo>> capturedStackTraces = new Dictionary<IHandlerHolderMarker, Dictionary<IDisposable, StackTraceInfo>>();
+
+        /// <summary>Get current subscribed count.</summary>
+        public int SubscribeCount => subscribeCount;
+
+        internal bool CheckAndResetDirty()
+        {
+            var d = dirty;
+            dirty = false;
+            return d;
+        }
+
+        internal MessagePipeOptions MessagePipeOptions => options;
+
+        /// <summary>
+        /// When MessagePipeOptions.EnableCaptureStackTrace is enabled, list all stacktrace on subscribe.
+        /// </summary>
+        public StackTraceInfo[] GetCapturedStackTraces()
+        {
+            if (!options.EnableCaptureStackTrace) return Array.Empty<StackTraceInfo>();
+            lock (gate)
+            {
+                return capturedStackTraces.SelectMany(x => x.Value.Values).ToArray();
+            }
+        }
+
+        /// <summary>
+        /// When MessagePipeOptions.EnableCaptureStackTrace is enabled, groped by caller of subscribe.
+        /// </summary>
+        public ILookup<string, StackTraceInfo> GroupedByCaller
+        {
+            get
+            {
+                if (!options.EnableCaptureStackTrace) return Array.Empty<StackTraceInfo>().ToLookup(x => "", x => x);
+                lock (gate)
+                {
+                    return capturedStackTraces
+                        .SelectMany(x => x.Value.Values)
+                        .ToLookup(x => x.Head);
+                }
+            }
+        }
 
         public MessagePipeDiagnosticsInfo(MessagePipeOptions options)
         {
@@ -138,11 +156,11 @@ namespace MessagePipe
             {
                 if (!capturedStackTraces.TryGetValue(handlerHolder, out var dict))
                 {
-                    dict = new Dictionary<IDisposable, StackTrace>();
+                    dict = new Dictionary<IDisposable, StackTraceInfo>();
                     capturedStackTraces[handlerHolder] = dict;
                 }
 
-                dict.Add(subscription, new StackTrace(true));
+                dict.Add(subscription, new StackTraceInfo(new StackTrace(true)));
             }
         }
 

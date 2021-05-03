@@ -1,25 +1,22 @@
 ﻿#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
-using UnityEngine;
-using UnityEditor;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System;
-using UnityEditor.IMGUI.Controls;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
 
 namespace MessagePipe.Editor
 {
     public class MessagePipeDiagnosticsInfoWindow : EditorWindow
     {
-        static readonly string Splitter = Environment.NewLine + "---" + Environment.NewLine;
+        static readonly string Splitter = "---" + Environment.NewLine;
 
         static int interval;
 
         static MessagePipeDiagnosticsInfoWindow window;
 
         internal static MessagePipeDiagnosticsInfo diagnosticsInfo;
-        
+
 
         [MenuItem("Window/MessagePipe Diagnostics")]
         public static void OpenWindow()
@@ -43,6 +40,7 @@ namespace MessagePipe.Editor
             window = this; // set singleton.
             splitterState = SplitterGUILayout.CreateSplitterState(new float[] { 75f, 25f }, new int[] { 32, 32 }, null);
             treeView = new MessagePipeDiagnosticsInfoTreeView();
+            EnableAutoReload = EditorPrefs.GetBool("MessagePipeDiagnosticsInfoWindow.EnableAutoReload", false);
         }
 
         void OnGUI()
@@ -101,6 +99,8 @@ namespace MessagePipe.Editor
                 if (CheckInitialized())
                 {
                     EnableCollapse = !EnableCollapse;
+                    treeView.ReloadAndSort();
+                    Repaint();
                 }
             }
 
@@ -109,6 +109,7 @@ namespace MessagePipe.Editor
                 if (CheckInitialized())
                 {
                     EnableAutoReload = !EnableAutoReload;
+                    EditorPrefs.SetBool("MessagePipeDiagnosticsInfoWindow.EnableAutoReload", EnableAutoReload);
                 }
             }
 
@@ -213,7 +214,7 @@ namespace MessagePipe.Editor
                 var item = treeView.CurrentBindingItems.FirstOrDefault(x => x.id == first) as MessagePipeDiagnosticsInfoTreeViewItem;
                 if (item != null)
                 {
-                    message = string.Join(Splitter, item.StackTraces.Select(x => x.CleanupAsyncStackTrace()));
+                    message = string.Join(Splitter, item.StackTraces.Select(x => x.formattedStackTrace ?? (x.formattedStackTrace = x.StackTrace.CleanupAsyncStackTrace())));
                 }
             }
 

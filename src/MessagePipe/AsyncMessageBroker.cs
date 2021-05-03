@@ -78,6 +78,8 @@ namespace MessagePipe
 
     public sealed class BufferedAsyncMessageBrokerCore<TMessage>
     {
+        static readonly bool IsValueType = typeof(TMessage).IsValueType;
+
         readonly AsyncMessageBrokerCore<TMessage> core;
         TMessage? lastMessage;
 
@@ -107,9 +109,9 @@ namespace MessagePipe
 
         public async ValueTask<IDisposable> SubscribeAsync(IAsyncMessageHandler<TMessage> handler, CancellationToken cancellationToken)
         {
-            if (lastMessage != null)
+            if (IsValueType || lastMessage != null)
             {
-                await handler.HandleAsync(lastMessage, cancellationToken);
+                await handler.HandleAsync(lastMessage!, cancellationToken);
             }
             return core.Subscribe(handler);
         }

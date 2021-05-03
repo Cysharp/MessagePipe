@@ -19,7 +19,8 @@ namespace MessagePipe.Editor
 
         public int Count { get; set; }
         public string Head { get; set; }
-        public IEnumerable<StackTrace> StackTraces { get; set; }
+        public string Timestamp { get; set; }
+        public IEnumerable<StackTraceInfo> StackTraces { get; set; }
 
         public MessagePipeDiagnosticsInfoTreeViewItem(int id) : base(id)
         {
@@ -33,12 +34,13 @@ namespace MessagePipe.Editor
 
         public IReadOnlyList<TreeViewItem> CurrentBindingItems;
         Dictionary<string, int> usedTrackIds = new Dictionary<string, int>();
-        int trackId = 0;
+        int trackId = -10000; // 0~ is used in StackTraceInfo
 
         public MessagePipeDiagnosticsInfoTreeView()
             : this(new TreeViewState(), new MultiColumnHeader(new MultiColumnHeaderState(new[]
             {
                 new MultiColumnHeaderState.Column() { headerContent = new GUIContent("Position")},
+                new MultiColumnHeaderState.Column() { headerContent = new GUIContent("Timestamp"), width = 8 },
                 new MultiColumnHeaderState.Column() { headerContent = new GUIContent("Count"), width = 5},
             })))
         {
@@ -81,6 +83,9 @@ namespace MessagePipe.Editor
                     orderedEnumerable = ascending ? items.OrderBy(item => item.Head) : items.OrderByDescending(item => item.Head);
                     break;
                 case 1:
+                    orderedEnumerable = ascending ? items.OrderBy(item => item.Timestamp) : items.OrderByDescending(item => item.Timestamp);
+                    break;
+                case 2:
                     orderedEnumerable = ascending ? items.OrderBy(item => item.Count) : items.OrderByDescending(item => item.Count);
                     break;
                 default:
@@ -114,7 +119,8 @@ namespace MessagePipe.Editor
                         {
                             Count = item.Count(),
                             Head = item.Key,
-                            StackTraces = item.ToArray()
+                            Timestamp = item.Last().Timestamp.ToLocalTime().ToString("HH:mm:ss.fff"),
+                            StackTraces = item
                         };
                         children.Add(viewItem);
                     }
@@ -123,10 +129,11 @@ namespace MessagePipe.Editor
                 {
                     foreach (var item in MessagePipeDiagnosticsInfoWindow.diagnosticsInfo.GetCapturedStackTraces())
                     {
-                        var viewItem = new MessagePipeDiagnosticsInfoTreeViewItem(trackId++)
+                        var viewItem = new MessagePipeDiagnosticsInfoTreeViewItem(item.Id)
                         {
                             Count = 1,
-                            Head = MessagePipeDiagnosticsInfo.GetGroupKey(item),
+                            Head = item.Head,
+                            Timestamp = item.Timestamp.ToLocalTime().ToString("HH:mm:ss.fff"),
                             StackTraces = new[] { item }
                         };
                         children.Add(viewItem);
@@ -161,6 +168,9 @@ namespace MessagePipe.Editor
                         EditorGUI.LabelField(rect, item.Head, labelStyle);
                         break;
                     case 1:
+                        EditorGUI.LabelField(rect, item.Timestamp, labelStyle);
+                        break;
+                    case 2:
                         EditorGUI.LabelField(rect, item.Count.ToString(), labelStyle);
                         break;
                     default:
