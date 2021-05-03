@@ -49,11 +49,17 @@ namespace MessagePipe
             services.Add(typeof(MessageBrokerCore<>), lifetime);
             services.Add(typeof(IPublisher<>), typeof(MessageBroker<>), lifetime);
             services.Add(typeof(ISubscriber<>), typeof(MessageBroker<>), lifetime);
+            services.Add(typeof(BufferedMessageBrokerCore<>), lifetime);
+            services.Add(typeof(IBufferedPublisher<>), typeof(BufferedMessageBroker<>), lifetime);
+            services.Add(typeof(IBufferedSubscriber<>), typeof(BufferedMessageBroker<>), lifetime);
 
             // keyless PubSub async
             services.Add(typeof(AsyncMessageBrokerCore<>), lifetime);
             services.Add(typeof(IAsyncPublisher<>), typeof(AsyncMessageBroker<>), lifetime);
             services.Add(typeof(IAsyncSubscriber<>), typeof(AsyncMessageBroker<>), lifetime);
+            services.Add(typeof(BufferedAsyncMessageBrokerCore<>), lifetime);
+            services.Add(typeof(IBufferedAsyncPublisher<>), typeof(BufferedAsyncMessageBroker<>), lifetime);
+            services.Add(typeof(IBufferedAsyncSubscriber<>), typeof(BufferedAsyncMessageBroker<>), lifetime);
 
             // keyed PubSub
             services.Add(typeof(MessageBrokerCore<,>), lifetime);

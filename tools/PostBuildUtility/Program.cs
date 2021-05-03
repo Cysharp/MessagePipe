@@ -59,6 +59,8 @@ namespace PostBuildUtility
                 {"EventFactory?", "EventFactory"},
                 {"MessagePipeDiagnosticsInfo?", "MessagePipeDiagnosticsInfo"},
                 {"IDisposable?", "IDisposable"},
+                {"TMessage?", "TMessage"},
+                {"string?", "string"},
             };
 
             System.Console.WriteLine("Start to replace code, remove nullability and use UniTask.");

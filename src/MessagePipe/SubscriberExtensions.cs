@@ -29,6 +29,27 @@ namespace MessagePipe
             return new ObservableSubscriber<TMessage>(subscriber, filters);
         }
 
+        public static IDisposable Subscribe<TMessage>(this IBufferedSubscriber<TMessage> subscriber, Action<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters)
+        {
+            return subscriber.Subscribe(new AnonymousMessageHandler<TMessage>(handler), filters);
+        }
+
+        public static IDisposable Subscribe<TMessage>(this IBufferedSubscriber<TMessage> subscriber, Action<TMessage> handler, Func<TMessage, bool> predicate, params MessageHandlerFilter<TMessage>[] filters)
+        {
+            var predicateFilter = new PredicateFilter<TMessage>(predicate);
+            filters = (filters.Length == 0)
+                ? new[] { predicateFilter }
+                : ArrayUtil.ImmutableAdd(filters, predicateFilter);
+
+            return subscriber.Subscribe(new AnonymousMessageHandler<TMessage>(handler), filters);
+        }
+
+        public static IObservable<TMessage> AsObservable<TMessage>(this IBufferedSubscriber<TMessage> subscriber, params MessageHandlerFilter<TMessage>[] filters)
+        {
+            return new ObservableBufferedSubscriber<TMessage>(subscriber, filters);
+        }
+
+
         // pubsub-keyless-async
 
         public static IDisposable Subscribe<TMessage>(this IAsyncSubscriber<TMessage> subscriber, Func<TMessage, CancellationToken, ValueTask> handler, params AsyncMessageHandlerFilter<TMessage>[] filters)
@@ -44,6 +65,31 @@ namespace MessagePipe
                 : ArrayUtil.ImmutableAdd(filters, predicateFilter);
 
             return subscriber.Subscribe(new AnonymousAsyncMessageHandler<TMessage>(handler), filters);
+        }
+
+        public static ValueTask<IDisposable> SubscribeAsync<TMessage>(this IBufferedAsyncSubscriber<TMessage> subscriber, Func<TMessage, CancellationToken, ValueTask> handler, CancellationToken cancellationToken = default)
+        {
+            return SubscribeAsync(subscriber, handler, Array.Empty<AsyncMessageHandlerFilter<TMessage>>(), cancellationToken);
+        }
+
+        public static ValueTask<IDisposable> SubscribeAsync<TMessage>(this IBufferedAsyncSubscriber<TMessage> subscriber, Func<TMessage, CancellationToken, ValueTask> handler, AsyncMessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken = default)
+        {
+            return subscriber.SubscribeAsync(new AnonymousAsyncMessageHandler<TMessage>(handler), filters, cancellationToken);
+        }
+
+        public static ValueTask<IDisposable> SubscribeAsync<TMessage>(this IBufferedAsyncSubscriber<TMessage> subscriber, Func<TMessage, CancellationToken, ValueTask> handler, Func<TMessage, bool> predicate, CancellationToken cancellationToken = default)
+        {
+            return SubscribeAsync(subscriber, handler, predicate, Array.Empty<AsyncMessageHandlerFilter<TMessage>>(), cancellationToken);
+        }
+
+        public static ValueTask<IDisposable> SubscribeAsync<TMessage>(this IBufferedAsyncSubscriber<TMessage> subscriber, Func<TMessage, CancellationToken, ValueTask> handler, Func<TMessage, bool> predicate, AsyncMessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken = default)
+        {
+            var predicateFilter = new AsyncPredicateFilter<TMessage>(predicate);
+            filters = (filters.Length == 0)
+                ? new[] { predicateFilter }
+                : ArrayUtil.ImmutableAdd(filters, predicateFilter);
+
+            return subscriber.SubscribeAsync(new AnonymousAsyncMessageHandler<TMessage>(handler), filters, cancellationToken);
         }
 
         // pubsub-key-sync
@@ -147,6 +193,23 @@ namespace MessagePipe
         readonly MessageHandlerFilter<TMessage>[] filters;
 
         public ObservableSubscriber(ISubscriber<TMessage> subscriber, MessageHandlerFilter<TMessage>[] filters)
+        {
+            this.subscriber = subscriber;
+            this.filters = filters;
+        }
+
+        public IDisposable Subscribe(IObserver<TMessage> observer)
+        {
+            return subscriber.Subscribe(new ObserverMessageHandler<TMessage>(observer), filters);
+        }
+    }
+
+    internal sealed class ObservableBufferedSubscriber<TMessage> : IObservable<TMessage>
+    {
+        readonly IBufferedSubscriber<TMessage> subscriber;
+        readonly MessageHandlerFilter<TMessage>[] filters;
+
+        public ObservableBufferedSubscriber(IBufferedSubscriber<TMessage> subscriber, MessageHandlerFilter<TMessage>[] filters)
         {
             this.subscriber = subscriber;
             this.filters = filters;

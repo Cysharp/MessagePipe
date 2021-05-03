@@ -38,9 +38,35 @@ namespace MessagePipe
             var subscriber = new AsyncMessageBroker<T>(core, asyncHandlerFactory);
             return (publisher, subscriber);
         }
+
+        public (IDisposableBufferedPublisher<T>, IBufferedSubscriber<T>) CreateBufferedEvent<T>(T initialValue)
+        {
+            var innerCore = new MessageBrokerCore<T>(diagnosticsInfo, options);
+            var core = new BufferedMessageBrokerCore<T>(innerCore);
+            var broker = new BufferedMessageBroker<T>(core, handlerFactory);
+            var publisher = new DisposableBufferedPublisher<T>(broker, innerCore);
+            var subscriber = broker;
+            publisher.Publish(initialValue);
+            return (publisher, subscriber);
+        }
+
+        public (IDisposableBufferedAsyncPublisher<T>, IBufferedAsyncSubscriber<T>) CreateBufferedAsyncEvent<T>(T initialValue)
+        {
+            var innerCore = new AsyncMessageBrokerCore<T>(diagnosticsInfo, options);
+            var core = new BufferedAsyncMessageBrokerCore<T>(innerCore);
+            var broker = new BufferedAsyncMessageBroker<T>(core, asyncHandlerFactory);
+            var publisher = new DisposableBufferedAsyncPublisher<T>(broker, innerCore);
+            var subscriber = broker;
+            publisher.Publish(initialValue, CancellationToken.None); // set initial value is completely sync.
+            return (publisher, subscriber);
+        }
     }
 
     public interface IDisposablePublisher<TMessage> : IPublisher<TMessage>, IDisposable
+    {
+    }
+
+    public interface IDisposableBufferedPublisher<TMessage> : IBufferedPublisher<TMessage>, IDisposable
     {
     }
 
@@ -64,7 +90,33 @@ namespace MessagePipe
         }
     }
 
+    internal class DisposableBufferedPublisher<TMessage> : IDisposableBufferedPublisher<TMessage>
+    {
+        readonly BufferedMessageBroker<TMessage> broker;
+        readonly IDisposable disposable;
+
+        public DisposableBufferedPublisher(BufferedMessageBroker<TMessage> broker, IDisposable disposable)
+        {
+            this.broker = broker;
+            this.disposable = disposable;
+        }
+
+        public void Publish(TMessage message)
+        {
+            broker.Publish(message);
+        }
+
+        public void Dispose()
+        {
+            disposable.Dispose();
+        }
+    }
+
     public interface IDisposableAsyncPublisher<TMessage> : IAsyncPublisher<TMessage>, IDisposable
+    {
+    }
+
+    public interface IDisposableBufferedAsyncPublisher<TMessage> : IBufferedAsyncPublisher<TMessage>, IDisposable
     {
     }
 
@@ -95,6 +147,38 @@ namespace MessagePipe
         public void Dispose()
         {
             core.Dispose();
+        }
+    }
+
+    internal sealed class DisposableBufferedAsyncPublisher<TMessage> : IDisposableBufferedAsyncPublisher<TMessage>
+    {
+        readonly BufferedAsyncMessageBroker<TMessage> broker;
+        readonly IDisposable disposable;
+
+        public DisposableBufferedAsyncPublisher(BufferedAsyncMessageBroker<TMessage> broker, IDisposable disposable)
+        {
+            this.broker = broker;
+            this.disposable = disposable;
+        }
+
+        public void Publish(TMessage message, CancellationToken cancellationToken)
+        {
+            broker.Publish(message, cancellationToken);
+        }
+
+        public UniTask PublishAsync(TMessage message, CancellationToken cancellationToken)
+        {
+            return broker.PublishAsync(message, cancellationToken);
+        }
+
+        public UniTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken)
+        {
+            return broker.PublishAsync(message, publishStrategy, cancellationToken);
+        }
+
+        public void Dispose()
+        {
+            disposable.Dispose();
         }
     }
 }

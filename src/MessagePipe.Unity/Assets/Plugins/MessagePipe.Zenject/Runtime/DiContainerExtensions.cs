@@ -33,7 +33,7 @@ namespace MessagePipe
             return options;
         }
 
-        /// <summary>Register IPublisher[TMessage] and ISubscriber[TMessage](includes Async) to container builder.</summary>
+        /// <summary>Register IPublisher[TMessage] and ISubscriber[TMessage](includes Async/Buffered) to container builder.</summary>
         public static DiContainer BindMessageBroker<TMessage>(this DiContainer builder, MessagePipeOptions options)
         {
             var lifetime = options.InstanceLifetime;
@@ -48,6 +48,16 @@ namespace MessagePipe
             services.Add(typeof(AsyncMessageBrokerCore<TMessage>), lifetime);
             services.Add(typeof(IAsyncPublisher<TMessage>), typeof(AsyncMessageBroker<TMessage>), lifetime);
             services.Add(typeof(IAsyncSubscriber<TMessage>), typeof(AsyncMessageBroker<TMessage>), lifetime);
+
+            // keyless buffered PubSub
+            services.Add(typeof(BufferedMessageBrokerCore<TMessage>), lifetime);
+            services.Add(typeof(IBufferedPublisher<TMessage>), typeof(BufferedMessageBroker<TMessage>), lifetime);
+            services.Add(typeof(IBufferedSubscriber<TMessage>), typeof(BufferedMessageBroker<TMessage>), lifetime);
+
+            // keyless buffered PubSub async
+            services.Add(typeof(BufferedAsyncMessageBrokerCore<TMessage>), lifetime);
+            services.Add(typeof(IBufferedAsyncPublisher<TMessage>), typeof(BufferedAsyncMessageBroker<TMessage>), lifetime);
+            services.Add(typeof(IBufferedAsyncSubscriber<TMessage>), typeof(BufferedAsyncMessageBroker<TMessage>), lifetime);
 
             return builder;
         }

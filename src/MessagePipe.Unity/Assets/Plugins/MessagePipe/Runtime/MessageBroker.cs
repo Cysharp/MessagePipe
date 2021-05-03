@@ -26,6 +26,55 @@ namespace MessagePipe
         }
     }
 
+    public sealed class BufferedMessageBroker<TMessage> : IBufferedPublisher<TMessage>, IBufferedSubscriber<TMessage>
+    {
+        readonly BufferedMessageBrokerCore<TMessage> core;
+        readonly FilterAttachedMessageHandlerFactory handlerFactory;
+
+        public BufferedMessageBroker(BufferedMessageBrokerCore<TMessage> core, FilterAttachedMessageHandlerFactory handlerFactory)
+        {
+            this.core = core;
+            this.handlerFactory = handlerFactory;
+        }
+
+        public void Publish(TMessage message)
+        {
+            core.Publish(message);
+        }
+
+        public IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters)
+        {
+            return core.Subscribe(handlerFactory.CreateMessageHandler(handler, filters));
+        }
+    }
+
+    public sealed class BufferedMessageBrokerCore<TMessage>
+    {
+        readonly MessageBrokerCore<TMessage> core;
+        TMessage lastMessage;
+
+        public BufferedMessageBrokerCore(MessageBrokerCore<TMessage> core)
+        {
+            this.core = core;
+            this.lastMessage = default;
+        }
+
+        public void Publish(TMessage message)
+        {
+            lastMessage = message;
+            core.Publish(message);
+        }
+
+        public IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters)
+        {
+            if (lastMessage != null)
+            {
+                handler.Handle(lastMessage);
+            }
+            return core.Subscribe(handler);
+        }
+    }
+
     public sealed class MessageBrokerCore<TMessage> : IDisposable, IHandlerHolderMarker
     {
         readonly FreeList<IMessageHandler<TMessage>> handlers;

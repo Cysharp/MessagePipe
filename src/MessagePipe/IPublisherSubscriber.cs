@@ -67,4 +67,32 @@ namespace MessagePipe
     {
         IDisposable Subscribe(TKey key, IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
     }
+
+    // buffered keyless
+
+    public interface IBufferedPublisher<TMessage>
+    {
+        void Publish(TMessage message);
+    }
+
+    public interface IBufferedSubscriber<TMessage>
+    {
+        IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
+    }
+
+    public interface IBufferedAsyncPublisher<TMessage>
+    {
+        void Publish(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
+    }
+
+    public interface IBufferedAsyncSubscriber<TMessage>
+    {
+        ValueTask<IDisposable> SubscribeAsync(IAsyncMessageHandler<TMessage> handler, CancellationToken cancellationToken = default);
+        ValueTask<IDisposable> SubscribeAsync(IAsyncMessageHandler<TMessage> handler, AsyncMessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken = default);
+    }
+
+    // NOTE: buffered Keyed is undefined
+    // because difficult to avoid (unused)key and keep latest value memory leak.
 }
