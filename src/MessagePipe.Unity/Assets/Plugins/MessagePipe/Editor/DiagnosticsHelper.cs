@@ -245,7 +245,20 @@ namespace MessagePipe.Editor
             else
             {
                 var fname = fi.FullName.Replace(Path.DirectorySeparatorChar, '/').Replace(Application.dataPath, "");
-                var withAssetsPath = "Assets/" + fname;
+                if (Path.GetPathRoot(fname).Contains(":"))
+                {
+                    return fname + ":" + line; // without link outside of project dir
+                }
+
+                string withAssetsPath = null;
+                if (fname.StartsWith("/"))
+                {
+                    withAssetsPath = "Assets" + fname;
+                }
+                else
+                {
+                    withAssetsPath = "Assets/" + fname;
+                }
                 return "<a href=\"" + withAssetsPath + "\" line=\"" + line + "\">" + withAssetsPath + ":" + line + "</a>";
             }
         }

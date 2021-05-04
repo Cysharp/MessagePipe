@@ -5,10 +5,11 @@ MessagePipe is a high-performance in-memory/distributed messaging pipeline for .
 
 * Dependency-injection first
 * Filter pipeline
+* better event
 * sync/async
 * keyed/keyless
+* bufferless/buffered
 * broadcast/response(+many)
-* better event
 * in-memory/distributed
 
 MessagePipe is faster than standard C# event and 78 times faster than Prism's EventAggregator.
@@ -25,7 +26,7 @@ For .NET, use NuGet. For Unity, please read [Unity](#unity) section.
 
 > PM> Install-Package [MessagePipe](https://www.nuget.org/packages/MessagePipe)
 
-MessagePipe is built on top of a `Microsoft.Extensions.DependencyInjection`(for Unity, `VContainer` or `Zenject`) so set up via `ConfigureServices` in [.NET Generic Host](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/generic-host). Generic Host is widely used in .NET such as ASP.NET Core, [MagicOnion](https://github.com/Cysharp/MagicOnion/), [ConsoleAppFramework](https://github.com/Cysharp/ConsoleAppFramework/), MAUI, WPF(with external support), etc so easy to setup.
+MessagePipe is built on top of a `Microsoft.Extensions.DependencyInjection`(for Unity, `VContainer` or `Zenject` or `Builtin Tiny DI`) so set up via `ConfigureServices` in [.NET Generic Host](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/generic-host). Generic Host is widely used in .NET such as ASP.NET Core, [MagicOnion](https://github.com/Cysharp/MagicOnion/), [ConsoleAppFramework](https://github.com/Cysharp/ConsoleAppFramework/), MAUI, WPF(with external support), etc so easy to setup.
 
 ```csharp
 using MessagePipe;
@@ -167,6 +168,8 @@ public partial class BlazorPage : ComponentBase, IDisposable
 
 > The main difference of Reactive Extensions' Subject is has no `OnCompleted`. OnCompleted may or may not be used, making it very difficult to determine the intent to the observer(subscriber). Also, we usually subscribe to multiple events from the same (different event type)publisher, and it is difficult to handle duplicate OnCompleted in that case. For this reason, MessagePipe only provides a simple Publish(OnNext). If you want to convey completion, please receive a separate event and perform dedicated processing there.
 
+> In other words, this is the equivalent of [Relay in RxSwift](https://github.com/ReactiveX/RxSwift/blob/main/Documentation/Subjects.md).
+
 In addition to standard Pub/Sub, MessagePipe supports async handlers, mediator patterns with handlers that accept return values, and filters for pre-and-post execution customization.
 
 Publish/Subscribe
@@ -234,14 +237,38 @@ The before and after of execution can be changed by passing a custom filter. See
 
 If an error occurs, it will be propagated to the caller and subsequent subscribers will be stopped. This behavior can be changed by writing a filter to ignore errors.
 
+Buffered
+---
+`IBufferedPublisher<TMessage>/IBufferedSubscriber<TMessage>` pair is similar as `BehaviorSubject` or Reactive Extensions(More equal is RxSwift's `BehaviorRelay`). It returns latest value on `Subscribe`.
+
+```csharp
+var p = provider.GetRequiredService<IBufferedPublisher<int>>();
+var s = provider.GetRequiredService<IBufferedSubscriber<int>>();
+
+p.Publish(999);
+
+var d1 = s.Subscribe(x => Console.WriteLine(x)); // 999
+p.Publish(1000); // 1000
+
+var d2 = s.Subscribe(x => Console.WriteLine(x)); // 1000
+p.Publish(9999); // 9999, 9999
+
+DisposableBag.Create(d1, d2).Dispose();
+```
+
+> If `TMessage` is class and does not have latest value(null), does not send value on Subscribe.
+
+> Keyed buffered publisher/subscriber does not exist because difficult to avoid memory leak of (unused)key and keep latest value.
+
 EventFactory
 ---
-Using `EventFactory`, you can create generic `IPublisher/ISubscriber`, `IAsyncPublisher/IAsyncSubscriber` like C# events, with a Subscriber tied to each instance, not grouped by type.
+Using `EventFactory`, you can create generic `IPublisher/ISubscriber`, `IAsyncPublisher/IAsyncSubscriber`, `IBufferedPublisher/IBufferedSubscriber`, `IBufferedAsyncPublisher/IBufferedAsyncSubscriber` like C# events, with a Subscriber tied to each instance, not grouped by type.
 
 MessagePipe has better properties than a normal C# event
 
 * Using Subscribe/Dispose instead of `+=`, `-=` , easy to management subscription
 * Both sync and async support
+* Both bufferless and buffered support
 * Enable unsubscribe all subscription from publisher.dispose
 * Attaches invocation pipeline behaviour by Filter
 * To monitor subscription leak by `MessagePipeDiagnosticsInfo`
@@ -646,12 +673,12 @@ public sealed class MessagePipeDiagnosticsInfo
     /// <summary>
     /// When MessagePipeOptions.EnableCaptureStackTrace is enabled, list all stacktrace on subscribe.
     /// </summary>
-    public StackTrace[] GetCapturedStackTraces();
+    public StackTraceInfo[] GetCapturedStackTraces(bool ascending = true);
 
     /// <summary>
     /// When MessagePipeOptions.EnableCaptureStackTrace is enabled, groped by caller of subscribe.
     /// </summary>
-    public ILookup<string, StackTrace> GroupedByCaller { get; }
+    public ILookup<string, StackTraceInfo> GetGroupedByCaller(bool ascending = true)
 }
 ```
 
@@ -688,9 +715,9 @@ Also, by enabling MessagePipeOptions.EnableCaptureStackTrace (disabled by defaul
 
 Check the Count of GroupedByCaller, and if any of them show abnormal values, then the stack trace is where it occurs, and you probably ignore Subscription.
 
-for Unity, `Window ->  MessagePipe Diagnostics` window is useful for monitoring subscritpion. It visualises `MessagePipeDianogsticsInfo`.
+for Unity, `Window ->  MessagePipe Diagnostics` window is useful for monitoring subscritpion. It visualizes `MessagePipeDianogsticsInfo`.
 
-![image](https://user-images.githubusercontent.com/46207/116520080-34c61d80-a90d-11eb-8786-7737c5da274d.png)
+![image](https://user-images.githubusercontent.com/46207/116953319-e2e41580-acc7-11eb-88c9-a4704bf3e3c9.png)
 
 To Enable use of the MessagePipeDiagnostics window, require to set up `GlobalMessagePipe`.
 
@@ -710,6 +737,10 @@ void Configure(DiContainer container)
 {
     GlobalMessagePipe.SetProvider(container.AsServiceProvider());
 }
+
+// builtin
+var prodiver = builder.BuildServiceProvider();
+GlobalMessagePipe.SetProvider(provider);
 ```
 
 IDistributedPubSub / MessagePipe.Redis
@@ -886,6 +917,8 @@ Configure MessageBroker(publisher/subscriber manager)'s lifetime of DI cotainer.
 
 Register `IRequestHandler`, `IAsyncHandler` and filters to DI container automatically on startup. Default is `true` and default search target is CurrentDomain's all assemblies and types. However, this sometimes fails to detect the assembly being stripped. In that case, you can enable the search by explicitly adding it to `SetAutoRegistrationSearchAssemblies` or `SetAutoRegistrationSearchTypes`.
 
+`[IgnoreAutoRegistration]` attribute allows to disable auto registration which attribute attached.
+
 ### EnableCaptureStackTrace
 
 See the details [Managing Subscription and Diagnostics](#managing-subscription-and-diagnostics) section, if `true` then capture stacktrace on Subscribe. It is useful for debugging but performance will be degraded. Default is `false` and recommended to enable only debug.
@@ -965,7 +998,7 @@ Compare with Channels
 
 Unity
 ---
-You need to install Core library and choose [VContainer](https://github.com/hadashiA/VContainer/) or [Zenject](https://github.com/modesttree/Zenject) for runtime. You can install via UPM git URL package or asset package(MessagePipe.*.unitypackage) available in [MessagePipe/releases](https://github.com/Cysharp/MessagePipe/releases) page.
+You need to install Core library and choose [VContainer](https://github.com/hadashiA/VContainer/) or [Zenject](https://github.com/modesttree/Zenject) or `BuiltinContainerBuilder` for runtime. You can install via UPM git URL package or asset package(MessagePipe.*.unitypackage) available in [MessagePipe/releases](https://github.com/Cysharp/MessagePipe/releases) page.
 
 * Core `https://github.com/Cysharp/MessagePipe.git?path=src/MessagePipe.Unity/Assets/Plugins/MessagePipe`
 * VContainer `https://github.com/Cysharp/MessagePipe.git?path=src/MessagePipe.Unity/Assets/Plugins/MessagePipe.VContainer`
@@ -985,12 +1018,12 @@ public class GameLifetimeScope : LifetimeScope
         // RegisterMessagePipe returns options.
         var options = builder.RegisterMessagePipe(/* configure option */);
         
-        // RegisterMessageBroker: Register for IPublisher<T>/ISubscriber<T>
+        // RegisterMessageBroker: Register for IPublisher<T>/ISubscriber<T>, includes async and buffered.
         builder.RegisterMessageBroker<int>(options);
 
-        // also exists RegisterAsyncMessageBroker, RegisterRequestHandler, RegisterAsyncRequestHandler
+        // also exists RegisterMessageBroker<TKey, TMessage>, RegisterRequestHandler, RegisterAsyncRequestHandler
 
-        // RegisterHandlerFilter: Register for filter, also exists RegisterAsyncMessageHandlerFilter, Register(Async)RequestHandlerFilter
+        // RegisterMessageHandlerFilter: Register for filter, also exists RegisterAsyncMessageHandlerFilter, Register(Async)RequestHandlerFilter
         builder.RegisterMessageHandlerFilter<MyFilter<int>>();
 
         builder.RegisterEntryPoint<MessagePipeDemo>(Lifetime.Singleton);
@@ -1002,10 +1035,13 @@ public class MessagePipeDemo : VContainer.Unity.IStartable
     readonly IPublisher<int> publisher;
     readonly ISubscriber<int> subscriber;
 
-    public MessagePipeDemo(IPublisher<int> publisher, ISubscriber<int> subscriber)
+    public MessagePipeDemo(IPublisher<int> publisher, ISubscriber<int> subscriber, IObjectResolver resolver)
     {
         this.publisher = publisher;
         this.subscriber = subscriber;
+
+        // set global to enable diagnostics window and global function
+        GlobalMessagePipe.SetProvider(resolver.AsServiceProvider());
     }
 
     public void Start()
@@ -1032,17 +1068,54 @@ void Configure(DiContainer builder)
     // BindMessagePipe returns options.
     var options = builder.BindMessagePipe(/* configure option */);
     
-    // BindMessageBroker: Register for IPublisher<T>/ISubscriber<T>
+    // BindMessageBroker: Register for IPublisher<T>/ISubscriber<T>, includes async and buffered.
     builder.BindMessageBroker<int>(options);
 
-    // also exists BindAsyncMessageBroker, BindRequestHandler, BindAsyncRequestHandler
+    // also exists BindMessageBroker<TKey, TMessage>, BindRequestHandler, BindAsyncRequestHandler
 
-    // BindHandlerFilter: Bind for filter, also exists BindAsyncMessageHandlerFilter, Bind(Async)RequestHandlerFilter
+    // BindMessageHandlerFilter: Bind for filter, also exists BindAsyncMessageHandlerFilter, Bind(Async)RequestHandlerFilter
     builder.BindMessageHandlerFilter<MyFilter<int>>();
+
+    // set global to enable diagnostics window and global function
+    GlobalMessagePipe.SetProvider(builder.AsServiceProvider());
 }
 ```
 
 > Zenject version is not supported `InstanceScope.Singleton` for Zenject's limitation. The default is `Scoped`, which cannot be changed.
+
+`BuiltinContainerBuilder` is builtin minimum DI library for MessagePipe, it no needs other DI library to use MessagePipe. Here is installation sample.
+
+```csharp
+var builder = new BuiltinContainerBuilder();
+
+builder.AddMessagePipe(/* configure option */);
+
+// AddMessageBroker: Register for IPublisher<T>/ISubscriber<T>, includes async and buffered.
+builder.AddMessageBroker<int>(options);
+
+// also exists AddMessageBroker<TKey, TMessage>, AddRequestHandler, AddAsyncRequestHandler
+
+// AddMessageHandlerFilter: Register for filter, also exists RegisterAsyncMessageHandlerFilter, Register(Async)RequestHandlerFilter
+builder.AddMessageHandlerFilter<MyFilter<int>>();
+
+// create provider and set to Global(to enable diagnostics window and global fucntion)
+var provider = builder.BuildServiceProvider();
+GlobalMessagePipe.SetProvider(provider);
+
+// --- to use MessagePipe, you can use from GlobalMessagePipe.
+var p = GlobalMessagePipe.GetPublisher<IPublisher<int>>();
+var s = GlobalMessagePipe.GetSubscriber<ISubscriber<int>>();
+
+var d = s.Subscribe(x => Debug.Log(x));
+
+p.Publish(10);
+p.Publish(20);
+p.Publish(30);
+
+d.Dispose();
+```
+
+> BuiltinContainerBuilder does not supports scope(always `InstanceScope.Singleton`), `IRequestAllHandler/IAsyncRequestAllHandler`, and many DI functionally, so we recommend to use by `GlobalMessagePipe` when use BuiltinContainerBuilder.
 
 Adding global filter, you can not use open generics filter so recommended to create these helper method.
 

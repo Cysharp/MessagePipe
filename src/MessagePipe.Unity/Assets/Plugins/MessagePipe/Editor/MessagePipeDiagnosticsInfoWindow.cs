@@ -214,7 +214,12 @@ namespace MessagePipe.Editor
                 var item = treeView.CurrentBindingItems.FirstOrDefault(x => x.id == first) as MessagePipeDiagnosticsInfoTreeViewItem;
                 if (item != null)
                 {
-                    message = string.Join(Splitter, item.StackTraces.Select(x => x.formattedStackTrace ?? (x.formattedStackTrace = x.StackTrace.CleanupAsyncStackTrace())));
+                    var now = DateTimeOffset.UtcNow;
+                    message = string.Join(Splitter, item.StackTraces
+                        .Select(x =>
+                            "Subscribe at " + x.Timestamp.ToLocalTime().ToString("HH:mm:ss.ff") // + ", Elapsed: " + (now - x.Timestamp).TotalSeconds.ToString("00.00")
+                            + Environment.NewLine
+                            + (x.formattedStackTrace ?? (x.formattedStackTrace = x.StackTrace.CleanupAsyncStackTrace()))));
                 }
             }
 

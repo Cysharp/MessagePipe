@@ -185,9 +185,9 @@ namespace MessagePipe
             foreach (var item in builder.singleton)
             {
                 var implType = item.implementationType;
-                this.singletonInstances[item.serviceType] = new Lazy<object>(() => new ServiceProviderType(implType).Instantiate(this, 0));
+                this.singletonInstances[item.serviceType] = new Lazy<object>(() => new ServiceProviderType(implType).Instantiate(this, 0)); // memo: require to lazy with parameter(pass depth).
             }
-
+            
             foreach (var item in builder.transient)
             {
                 this.transientTypes[item.serviceType] = new ServiceProviderType(item.implementationType);

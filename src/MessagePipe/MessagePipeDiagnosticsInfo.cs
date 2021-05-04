@@ -83,7 +83,7 @@ namespace MessagePipe
     /// </summary>
     public sealed class MessagePipeDiagnosticsInfo
     {
-
+        static readonly ILookup<string, StackTraceInfo> EmptyLookup = Array.Empty<StackTraceInfo>().ToLookup(x => "", x => x);
 
         int subscribeCount;
         bool dirty;
@@ -107,29 +107,28 @@ namespace MessagePipe
         /// <summary>
         /// When MessagePipeOptions.EnableCaptureStackTrace is enabled, list all stacktrace on subscribe.
         /// </summary>
-        public StackTraceInfo[] GetCapturedStackTraces()
+        public StackTraceInfo[] GetCapturedStackTraces(bool ascending = true)
         {
             if (!options.EnableCaptureStackTrace) return Array.Empty<StackTraceInfo>();
             lock (gate)
             {
-                return capturedStackTraces.SelectMany(x => x.Value.Values).ToArray();
+                var iter = capturedStackTraces.SelectMany(x => x.Value.Values);
+                iter = (ascending) ? iter.OrderBy(x => x.Id) : iter.OrderByDescending(x => x.Id);
+                return iter.ToArray();
             }
         }
 
         /// <summary>
         /// When MessagePipeOptions.EnableCaptureStackTrace is enabled, groped by caller of subscribe.
         /// </summary>
-        public ILookup<string, StackTraceInfo> GroupedByCaller
+        public ILookup<string, StackTraceInfo> GetGroupedByCaller(bool ascending = true)
         {
-            get
+            if (!options.EnableCaptureStackTrace) return EmptyLookup;
+            lock (gate)
             {
-                if (!options.EnableCaptureStackTrace) return Array.Empty<StackTraceInfo>().ToLookup(x => "", x => x);
-                lock (gate)
-                {
-                    return capturedStackTraces
-                        .SelectMany(x => x.Value.Values)
-                        .ToLookup(x => x.Head);
-                }
+                var iter = capturedStackTraces.SelectMany(x => x.Value.Values);
+                iter = (ascending) ? iter.OrderBy(x => x.Id) : iter.OrderByDescending(x => x.Id);
+                return iter.ToLookup(x => x.Head);
             }
         }
 

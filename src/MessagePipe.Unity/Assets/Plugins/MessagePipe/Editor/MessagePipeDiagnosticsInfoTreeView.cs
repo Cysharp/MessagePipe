@@ -19,7 +19,7 @@ namespace MessagePipe.Editor
 
         public int Count { get; set; }
         public string Head { get; set; }
-        public string Timestamp { get; set; }
+        public TimeSpan Elapsed { get; set; }
         public IEnumerable<StackTraceInfo> StackTraces { get; set; }
 
         public MessagePipeDiagnosticsInfoTreeViewItem(int id) : base(id)
@@ -40,7 +40,7 @@ namespace MessagePipe.Editor
             : this(new TreeViewState(), new MultiColumnHeader(new MultiColumnHeaderState(new[]
             {
                 new MultiColumnHeaderState.Column() { headerContent = new GUIContent("Position")},
-                new MultiColumnHeaderState.Column() { headerContent = new GUIContent("Timestamp"), width = 8 },
+                new MultiColumnHeaderState.Column() { headerContent = new GUIContent("Elapsed"), width = 5 },
                 new MultiColumnHeaderState.Column() { headerContent = new GUIContent("Count"), width = 5},
             })))
         {
@@ -83,7 +83,7 @@ namespace MessagePipe.Editor
                     orderedEnumerable = ascending ? items.OrderBy(item => item.Head) : items.OrderByDescending(item => item.Head);
                     break;
                 case 1:
-                    orderedEnumerable = ascending ? items.OrderBy(item => item.Timestamp) : items.OrderByDescending(item => item.Timestamp);
+                    orderedEnumerable = ascending ? items.OrderBy(item => item.Elapsed) : items.OrderByDescending(item => item.Elapsed);
                     break;
                 case 2:
                     orderedEnumerable = ascending ? items.OrderBy(item => item.Count) : items.OrderByDescending(item => item.Count);
@@ -104,9 +104,10 @@ namespace MessagePipe.Editor
 
             if (MessagePipeDiagnosticsInfoWindow.diagnosticsInfo != null)
             {
+                var now = DateTimeOffset.UtcNow;
                 if (MessagePipeDiagnosticsInfoWindow.EnableCollapse)
                 {
-                    var grouped = MessagePipeDiagnosticsInfoWindow.diagnosticsInfo.GroupedByCaller;
+                    var grouped = MessagePipeDiagnosticsInfoWindow.diagnosticsInfo.GetGroupedByCaller(false);
                     foreach (var item in grouped)
                     {
                         if (!usedTrackIds.TryGetValue(item.Key, out var id))
@@ -119,7 +120,7 @@ namespace MessagePipe.Editor
                         {
                             Count = item.Count(),
                             Head = item.Key,
-                            Timestamp = item.Last().Timestamp.ToLocalTime().ToString("HH:mm:ss.fff"),
+                            Elapsed = now - item.Last().Timestamp,
                             StackTraces = item
                         };
                         children.Add(viewItem);
@@ -133,7 +134,7 @@ namespace MessagePipe.Editor
                         {
                             Count = 1,
                             Head = item.Head,
-                            Timestamp = item.Timestamp.ToLocalTime().ToString("HH:mm:ss.fff"),
+                            Elapsed = now - item.Timestamp,
                             StackTraces = new[] { item }
                         };
                         children.Add(viewItem);
@@ -168,7 +169,7 @@ namespace MessagePipe.Editor
                         EditorGUI.LabelField(rect, item.Head, labelStyle);
                         break;
                     case 1:
-                        EditorGUI.LabelField(rect, item.Timestamp, labelStyle);
+                        EditorGUI.LabelField(rect, item.Elapsed.TotalSeconds.ToString(@"00.00"), labelStyle);
                         break;
                     case 2:
                         EditorGUI.LabelField(rect, item.Count.ToString(), labelStyle);
