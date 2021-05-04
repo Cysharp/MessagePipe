@@ -8,7 +8,7 @@ MessagePipe is a high-performance in-memory/distributed messaging pipeline for .
 * better event
 * sync/async
 * keyed/keyless
-* bufferless/buffered
+* buffered/bufferless
 * broadcast/response(+many)
 * in-memory/distributed
 
