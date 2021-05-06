@@ -172,6 +172,12 @@ public partial class BlazorPage : ComponentBase, IDisposable
 
 In addition to standard Pub/Sub, MessagePipe supports async handlers, mediator patterns with handlers that accept return values, and filters for pre-and-post execution customization.
 
+This image is a visualization of the connection between all those interfaces.
+
+![image](https://user-images.githubusercontent.com/46207/117265996-c2ff4e00-ae8f-11eb-9549-7bb0baf6f794.png)
+
+You may be confused by the number of interfaces, but many functions can be written with a similar, unified API.
+
 Publish/Subscribe
 ---
 Publish/Subscribe interface has keyed(topic) and keyless, sync and async interface.
