@@ -1,6 +1,7 @@
 ﻿using MessagePipe.Zenject;
 using System;
 using Zenject;
+using Zenject.Internal;
 
 namespace MessagePipe.Zenject
 {
@@ -61,10 +62,12 @@ namespace MessagePipe.Zenject
         }
     }
 
+    [Preserve]
     public sealed class DiContainerProviderProxy : IServiceProvider
     {
         DiContainer container;
 
+        [Preserve]
         public DiContainerProviderProxy(DiContainer container)
         {
             this.container = container;

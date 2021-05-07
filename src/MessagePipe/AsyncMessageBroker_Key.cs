@@ -6,12 +6,14 @@ using System.Threading.Tasks;
 
 namespace MessagePipe
 {
+    [Preserve]
     public sealed class AsyncMessageBroker<TKey, TMessage> : IAsyncPublisher<TKey, TMessage>, IAsyncSubscriber<TKey, TMessage>
-        where TKey : notnull
+    where TKey : notnull
     {
         readonly AsyncMessageBrokerCore<TKey, TMessage> core;
         readonly FilterAttachedAsyncMessageHandlerFactory handlerFactory;
 
+        [Preserve]
         public AsyncMessageBroker(AsyncMessageBrokerCore<TKey, TMessage> core, FilterAttachedAsyncMessageHandlerFactory handlerFactory)
         {
             this.core = core;
@@ -39,8 +41,9 @@ namespace MessagePipe
         }
     }
 
+    [Preserve]
     public sealed class AsyncMessageBrokerCore<TKey, TMessage> : IDisposable
-        where TKey : notnull
+    where TKey : notnull
     {
         readonly Dictionary<TKey, HandlerHolder> handlerGroup;
         readonly MessagePipeDiagnosticsInfo diagnotics;
@@ -49,6 +52,7 @@ namespace MessagePipe
         readonly object gate;
         bool isDisposed;
 
+        [Preserve]
         public AsyncMessageBrokerCore(MessagePipeDiagnosticsInfo diagnotics, MessagePipeOptions options)
         {
             this.handlerGroup = new Dictionary<TKey, HandlerHolder>();

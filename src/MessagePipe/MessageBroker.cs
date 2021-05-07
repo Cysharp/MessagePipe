@@ -4,11 +4,13 @@ using System.Runtime.CompilerServices;
 
 namespace MessagePipe
 {
+    [Preserve]
     public sealed class MessageBroker<TMessage> : IPublisher<TMessage>, ISubscriber<TMessage>
     {
         readonly MessageBrokerCore<TMessage> core;
         readonly FilterAttachedMessageHandlerFactory handlerFactory;
 
+        [Preserve]
         public MessageBroker(MessageBrokerCore<TMessage> core, FilterAttachedMessageHandlerFactory handlerFactory)
         {
             this.core = core;
@@ -26,11 +28,13 @@ namespace MessagePipe
         }
     }
 
+    [Preserve]
     public sealed class BufferedMessageBroker<TMessage> : IBufferedPublisher<TMessage>, IBufferedSubscriber<TMessage>
     {
         readonly BufferedMessageBrokerCore<TMessage> core;
         readonly FilterAttachedMessageHandlerFactory handlerFactory;
 
+        [Preserve]
         public BufferedMessageBroker(BufferedMessageBrokerCore<TMessage> core, FilterAttachedMessageHandlerFactory handlerFactory)
         {
             this.core = core;
@@ -48,6 +52,7 @@ namespace MessagePipe
         }
     }
 
+    [Preserve]
     public sealed class BufferedMessageBrokerCore<TMessage>
     {
         static readonly bool IsValueType = typeof(TMessage).IsValueType;
@@ -55,6 +60,7 @@ namespace MessagePipe
         readonly MessageBrokerCore<TMessage> core;
         TMessage? lastMessage;
 
+        [Preserve]
         public BufferedMessageBrokerCore(MessageBrokerCore<TMessage> core)
         {
             this.core = core;
@@ -77,6 +83,7 @@ namespace MessagePipe
         }
     }
 
+    [Preserve]
     public sealed class MessageBrokerCore<TMessage> : IDisposable, IHandlerHolderMarker
     {
         readonly FreeList<IMessageHandler<TMessage>> handlers;
@@ -85,6 +92,7 @@ namespace MessagePipe
         readonly object gate = new object();
         bool isDisposed;
 
+        [Preserve]
         public MessageBrokerCore(MessagePipeDiagnosticsInfo diagnotics, MessagePipeOptions options)
         {
             this.handlers = new FreeList<IMessageHandler<TMessage>>();

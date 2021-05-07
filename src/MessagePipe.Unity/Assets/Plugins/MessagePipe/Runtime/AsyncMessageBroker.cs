@@ -6,11 +6,13 @@ using Cysharp.Threading.Tasks;
 
 namespace MessagePipe
 {
+    [Preserve]
     public sealed class AsyncMessageBroker<TMessage> : IAsyncPublisher<TMessage>, IAsyncSubscriber<TMessage>
     {
         readonly AsyncMessageBrokerCore<TMessage> core;
         readonly FilterAttachedAsyncMessageHandlerFactory handlerFactory;
 
+        [Preserve]
         public AsyncMessageBroker(AsyncMessageBrokerCore<TMessage> core, FilterAttachedAsyncMessageHandlerFactory handlerFactory)
         {
             this.core = core;
@@ -38,11 +40,13 @@ namespace MessagePipe
         }
     }
 
+    [Preserve]
     public sealed class BufferedAsyncMessageBroker<TMessage> : IBufferedAsyncPublisher<TMessage>, IBufferedAsyncSubscriber<TMessage>
     {
         readonly BufferedAsyncMessageBrokerCore<TMessage> core;
         readonly FilterAttachedAsyncMessageHandlerFactory handlerFactory;
 
+        [Preserve]
         public BufferedAsyncMessageBroker(BufferedAsyncMessageBrokerCore<TMessage> core, FilterAttachedAsyncMessageHandlerFactory handlerFactory)
         {
             this.core = core;
@@ -76,6 +80,7 @@ namespace MessagePipe
         }
     }
 
+    [Preserve]
     public sealed class BufferedAsyncMessageBrokerCore<TMessage>
     {
         static readonly bool IsValueType = typeof(TMessage).IsValueType;
@@ -83,6 +88,7 @@ namespace MessagePipe
         readonly AsyncMessageBrokerCore<TMessage> core;
         TMessage lastMessage;
 
+        [Preserve]
         public BufferedAsyncMessageBrokerCore(AsyncMessageBrokerCore<TMessage> core)
         {
             this.core = core;
@@ -117,6 +123,7 @@ namespace MessagePipe
         }
     }
 
+    [Preserve]
     public sealed class AsyncMessageBrokerCore<TMessage> : IDisposable, IHandlerHolderMarker
     {
         FreeList<IAsyncMessageHandler<TMessage>> handlers;
@@ -126,6 +133,7 @@ namespace MessagePipe
         readonly object gate = new object();
         bool isDisposed;
 
+        [Preserve]
         public AsyncMessageBrokerCore(MessagePipeDiagnosticsInfo diagnotics, MessagePipeOptions options)
         {
             this.handlers = new FreeList<IAsyncMessageHandler<TMessage>>();

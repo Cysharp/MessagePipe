@@ -1,3 +1,4 @@
+using MessagePipe.Internal;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -81,6 +82,7 @@ namespace MessagePipe
     /// <summary>
     /// Diagnostics info of in-memory(ISubscriber/IAsyncSubscriber) subscriptions.
     /// </summary>
+    [Preserve]
     public sealed class MessagePipeDiagnosticsInfo
     {
         static readonly ILookup<string, StackTraceInfo> EmptyLookup = Array.Empty<StackTraceInfo>().ToLookup(x => "", x => x);
@@ -132,6 +134,7 @@ namespace MessagePipe
             }
         }
 
+        [Preserve]
         public MessagePipeDiagnosticsInfo(MessagePipeOptions options)
         {
             this.options = options;

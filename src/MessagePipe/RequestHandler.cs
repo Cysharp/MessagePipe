@@ -1,12 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using MessagePipe.Internal;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MessagePipe
 {
+    [Preserve]
     public sealed class RequestHandler<TRequest, TResponse> : IRequestHandler<TRequest, TResponse>
     {
         readonly IRequestHandlerCore<TRequest, TResponse> handler;
 
+        [Preserve]
         public RequestHandler(IRequestHandlerCore<TRequest, TResponse> handler, FilterAttachedRequestHandlerFactory handlerFactory)
         {
             this.handler = handlerFactory.CreateRequestHandler<TRequest, TResponse>(handler);
@@ -18,10 +21,12 @@ namespace MessagePipe
         }
     }
 
+    [Preserve]
     public sealed class RequestAllHandler<TRequest, TResponse> : IRequestAllHandler<TRequest, TResponse>
     {
         readonly IRequestHandlerCore<TRequest, TResponse>[] handlers;
 
+        [Preserve]
         public RequestAllHandler(IEnumerable<IRequestHandlerCore<TRequest, TResponse>> handlers, FilterAttachedRequestHandlerFactory handlerFactory)
         {
             var collection = (handlers as ICollection<IRequestHandlerCore<TRequest, TResponse>>) ?? handlers.ToArray();

@@ -1,3 +1,4 @@
+using MessagePipe.Internal;
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -18,11 +19,13 @@ namespace MessagePipe
     // Sync filter
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+    [Preserve]
     public class MessageHandlerFilterAttribute : Attribute, IMessagePipeFilterAttribute
     {
         public Type Type { get; }
         public int Order { get; set; }
 
+        [Preserve]
         public MessageHandlerFilterAttribute(Type type)
         {
             if (!typeof(IMessageHandlerFilter).IsAssignableFrom(type))
@@ -46,11 +49,13 @@ namespace MessagePipe
     // Async filter
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+    [Preserve]
     public class AsyncMessageHandlerFilterAttribute : Attribute, IMessagePipeFilterAttribute
     {
         public Type Type { get; }
         public int Order { get; set; }
 
+        [Preserve]
         public AsyncMessageHandlerFilterAttribute(Type type)
         {
             if (!typeof(IAsyncMessageHandlerFilter).IsAssignableFrom(type))
@@ -75,11 +80,13 @@ namespace MessagePipe
     // Req-Res Filter
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+    [Preserve]
     public class RequestHandlerFilterAttribute : Attribute, IMessagePipeFilterAttribute
     {
         public Type Type { get; }
         public int Order { get; set; }
 
+        [Preserve]
         public RequestHandlerFilterAttribute(Type type)
         {
             if (!typeof(IRequestHandlerFilter).IsAssignableFrom(type))
@@ -104,11 +111,13 @@ namespace MessagePipe
     // async Req-Res
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+    [Preserve]
     public class AsyncRequestHandlerFilterAttribute : Attribute, IMessagePipeFilterAttribute
     {
         public Type Type { get; }
         public int Order { get; set; }
 
+        [Preserve]
         public AsyncRequestHandlerFilterAttribute(Type type)
         {
             if (!typeof(IAsyncRequestHandlerFilter).IsAssignableFrom(type))

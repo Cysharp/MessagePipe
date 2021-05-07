@@ -187,7 +187,7 @@ namespace MessagePipe
                 var implType = item.implementationType;
                 this.singletonInstances[item.serviceType] = new Lazy<object>(() => new ServiceProviderType(implType).Instantiate(this, 0)); // memo: require to lazy with parameter(pass depth).
             }
-            
+
             foreach (var item in builder.transient)
             {
                 this.transientTypes[item.serviceType] = new ServiceProviderType(item.implementationType);
@@ -231,15 +231,25 @@ namespace MessagePipe
             var info = type.GetConstructors(BindingFlags.Public | BindingFlags.Instance)
                 .Select(x => new { ctor = x, parameters = x.GetParameters() })
                 .OrderByDescending(x => x.parameters.Length) // MaxBy
-                .First();
+                .FirstOrDefault();
+
+            if (!type.IsValueType && info == null)
+            {
+                throw new InvalidOperationException("ConsturoctorInfo is not found, is stripped? Type:" + type.FullName);
+            }
 
             this.type = type;
-            this.ctor = info.ctor;
-            this.parameters = info.parameters;
+            this.ctor = info?.ctor;
+            this.parameters = info?.parameters;
         }
 
         public object Instantiate(BuiltinContainerBuilderServiceProvider provider, int depth)
         {
+            if (ctor == null)
+            {
+                return Activator.CreateInstance(type);
+            }
+
             if (parameters.Length == 0)
             {
                 return ctor.Invoke(Array.Empty<object>());

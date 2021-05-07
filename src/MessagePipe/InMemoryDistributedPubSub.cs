@@ -1,5 +1,6 @@
 ﻿#if !UNITY_2018_3_OR_NEWER
 
+using MessagePipe.Internal;
 using System;
 using System.Linq;
 using System.Threading;
@@ -7,11 +8,13 @@ using System.Threading.Tasks;
 
 namespace MessagePipe
 {
+    [Preserve]
     public sealed class InMemoryDistributedPublisher<TKey, TMessage> : IDistributedPublisher<TKey, TMessage>
-        where TKey : notnull
+    where TKey : notnull
     {
         readonly IAsyncPublisher<TKey, TMessage> publisher;
 
+        [Preserve]
         public InMemoryDistributedPublisher(IAsyncPublisher<TKey, TMessage> publisher)
         {
             this.publisher = publisher;
@@ -23,11 +26,13 @@ namespace MessagePipe
         }
     }
 
+    [Preserve]
     public sealed class InMemoryDistributedSubscriber<TKey, TMessage> : IDistributedSubscriber<TKey, TMessage>
         where TKey : notnull
     {
         readonly IAsyncSubscriber<TKey, TMessage> subscriber;
 
+        [Preserve]
         public InMemoryDistributedSubscriber(IAsyncSubscriber<TKey, TMessage> subscriber)
         {
             this.subscriber = subscriber;

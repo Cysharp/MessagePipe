@@ -14,6 +14,7 @@ public class BuiltinTest
         {
             builder.AddMessageBroker<int>();
         });
+        GlobalMessagePipe.SetProvider(resolver);
 
         var pub = resolver.GetRequiredService<IPublisher<int>>();
         var sub1 = resolver.GetRequiredService<ISubscriber<int>>();

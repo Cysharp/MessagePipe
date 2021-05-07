@@ -10,12 +10,14 @@ namespace MessagePipe
 {
     // Async
 
+    [Preserve]
     public sealed class FilterAttachedAsyncRequestHandlerFactory
     {
         readonly MessagePipeOptions options;
         readonly AttributeFilterProvider<AsyncRequestHandlerFilterAttribute> filterProvider;
         readonly IServiceProvider provider;
 
+        [Preserve]
         public FilterAttachedAsyncRequestHandlerFactory(MessagePipeOptions options, AttributeFilterProvider<AsyncRequestHandlerFilterAttribute> filterProvider, IServiceProvider provider)
         {
             this.options = options;

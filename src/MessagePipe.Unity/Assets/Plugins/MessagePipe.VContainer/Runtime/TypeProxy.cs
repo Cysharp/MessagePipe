@@ -47,10 +47,12 @@ namespace MessagePipe.VContainer
         }
     }
 
+    [Preserve]
     public sealed class ObjectResolverProxy : IServiceProvider
     {
         IObjectResolver resolver;
 
+        [Preserve]
         public ObjectResolverProxy(IObjectResolver resolver)
         {
             this.resolver = resolver;

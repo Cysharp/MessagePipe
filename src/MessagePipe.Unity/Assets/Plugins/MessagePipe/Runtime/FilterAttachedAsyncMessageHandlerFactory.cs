@@ -1,3 +1,4 @@
+using MessagePipe.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,12 +10,14 @@ namespace MessagePipe
 {
     // Async
 
+    [Preserve]
     public sealed class FilterAttachedAsyncMessageHandlerFactory
     {
         readonly MessagePipeOptions options;
         readonly AttributeFilterProvider<AsyncMessageHandlerFilterAttribute> filterProvider;
         readonly IServiceProvider provider;
 
+        [Preserve]
         public FilterAttachedAsyncMessageHandlerFactory(MessagePipeOptions options, AttributeFilterProvider<AsyncMessageHandlerFilterAttribute> filterProvider, IServiceProvider provider)
         {
             this.options = options;

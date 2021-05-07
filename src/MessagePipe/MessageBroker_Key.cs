@@ -4,12 +4,14 @@ using System.Collections.Generic;
 
 namespace MessagePipe
 {
+    [Preserve]
     public sealed class MessageBroker<TKey, TMessage> : IPublisher<TKey, TMessage>, ISubscriber<TKey, TMessage>
-        where TKey : notnull
+    where TKey : notnull
     {
         readonly MessageBrokerCore<TKey, TMessage> core;
         readonly FilterAttachedMessageHandlerFactory handlerFactory;
 
+        [Preserve]
         public MessageBroker(MessageBrokerCore<TKey, TMessage> core, FilterAttachedMessageHandlerFactory handlerFactory)
         {
             this.core = core;
@@ -27,8 +29,9 @@ namespace MessagePipe
         }
     }
 
+    [Preserve]
     public sealed class MessageBrokerCore<TKey, TMessage> : IDisposable
-        where TKey : notnull
+    where TKey : notnull
     {
         readonly Dictionary<TKey, HandlerHolder> handlerGroup;
         readonly MessagePipeDiagnosticsInfo diagnotics;
@@ -36,6 +39,7 @@ namespace MessagePipe
         readonly object gate;
         bool isDisposed;
 
+        [Preserve]
         public MessageBrokerCore(MessagePipeDiagnosticsInfo diagnotics, MessagePipeOptions options)
         {
             this.handlerGroup = new Dictionary<TKey, HandlerHolder>();

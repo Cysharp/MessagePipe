@@ -1,9 +1,11 @@
+using MessagePipe.Internal;
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 
 namespace MessagePipe
 {
+    [Preserve]
     public sealed class EventFactory
     {
         readonly MessagePipeOptions options;
@@ -11,11 +13,12 @@ namespace MessagePipe
         readonly FilterAttachedMessageHandlerFactory handlerFactory;
         readonly FilterAttachedAsyncMessageHandlerFactory asyncHandlerFactory;
 
+        [Preserve]
         public EventFactory(
-            MessagePipeOptions options,
-            MessagePipeDiagnosticsInfo diagnosticsInfo,
-            FilterAttachedMessageHandlerFactory handlerFactory,
-            FilterAttachedAsyncMessageHandlerFactory asyncHandlerFactory)
+                MessagePipeOptions options,
+                MessagePipeDiagnosticsInfo diagnosticsInfo,
+                FilterAttachedMessageHandlerFactory handlerFactory,
+                FilterAttachedAsyncMessageHandlerFactory asyncHandlerFactory)
         {
             this.options = options;
             this.diagnosticsInfo = diagnosticsInfo;

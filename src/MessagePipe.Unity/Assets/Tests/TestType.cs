@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine.Scripting;
 
 public class DataStore
 {
@@ -51,10 +52,12 @@ public class MyHandler : IMessageHandler<int>
 
 [RequestHandlerFilter(typeof(MyRequestHandlerFilter), Order = 999)]
 [RequestHandlerFilter(typeof(MyRequestHandlerFilter), Order = 1099)]
+[Preserve]
 public class MyRequestHandler : IRequestHandler<int, int>
 {
     readonly DataStore store;
 
+    [Preserve]
     public MyRequestHandler(DataStore store)
     {
         this.store = store;
@@ -67,10 +70,12 @@ public class MyRequestHandler : IRequestHandler<int, int>
     }
 }
 
+[Preserve]
 public class MyRequestHandler2 : IRequestHandler<int, int>
 {
     readonly DataStore store;
 
+    [Preserve]
     public MyRequestHandler2(DataStore store)
     {
         this.store = store;
@@ -83,10 +88,12 @@ public class MyRequestHandler2 : IRequestHandler<int, int>
     }
 }
 
+[Preserve]
 public class MyRequestHandlerFilter : RequestHandlerFilter<int, int>
 {
     readonly DataStore store;
 
+    [Preserve]
     public MyRequestHandlerFilter(DataStore store)
     {
         this.store = store;
