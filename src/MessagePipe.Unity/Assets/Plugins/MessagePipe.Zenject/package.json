@@ -1,7 +1,7 @@
 {
     "name": "com.cysharp.messagepipe.zenject",
     "displayName": "MessagePipe.Zenject",
-    "version": "1.3.2",
+    "version": "1.3.3",
     "unity": "2018.4",
     "description": "MessagePipe Runtime support for Zenject.",
     "keywords": [ "pubsub", "event", "Scripting", "DI" ],
