@@ -2,6 +2,7 @@ using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 using MessagePipe;
+using System;
 
 public class GameLifetimeScope : LifetimeScope
 {
@@ -62,12 +63,17 @@ public class MessagePipeDemo : VContainer.Unity.IStartable
 
     public void Start()
     {
-        
-        
 
 
 
         var d = DisposableBag.CreateBuilder();
+
+        // subscriber.Subscribe(x => Debug.Log("P1:" + x));
+
+
+
+
+
         subscriber.Subscribe(x => Debug.Log("P1:" + x)).AddTo(d);
         subscriber.Subscribe(x => Debug.Log("P2:" + x)).AddTo(d);
 
