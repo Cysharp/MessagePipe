@@ -125,7 +125,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: MessagePipe.Analyzer
-          path: ./src/MessagePipe.Analyzer/bin/Debug/netstandard2.0/MessagePipe.Analyzer.dll
+          path: ./src/MessagePipe.Analyzer/bin/Release/netstandard2.0/MessagePipe.Analyzer.dll
 
   build-unity:
     needs: [update-packagejson]
