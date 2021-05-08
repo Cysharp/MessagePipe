@@ -1,6 +1,4 @@
-﻿#if !UNITY_2018_3_OR_NEWER
-
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,5 +17,3 @@ namespace MessagePipe
         ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IAsyncMessageHandler<TMessage> handler, AsyncMessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken = default);
     }
 }
-
-#endif

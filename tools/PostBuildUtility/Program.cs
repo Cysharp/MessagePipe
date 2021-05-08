@@ -32,6 +32,7 @@ namespace PostBuildUtility
                 {"ValueTaskAwaiter<TResponse>", "Cysharp.Threading.Tasks.UniTask<TResponse>.Awaiter" },
                 {"ValueTaskAwaiter", "Cysharp.Threading.Tasks.UniTask.Awaiter" },
                 {"ValueTask", "UniTask" },
+                {"IAsyncDisposable", "IUniTaskAsyncDisposable" },
                 {"System.Threading.Tasks", "Cysharp.Threading.Tasks" },
                 {"IAsyncEnumerable", "IUniTaskAsyncEnumerable" },
                 {"[EnumeratorCancellation]", "" },

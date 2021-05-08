@@ -1,5 +1,3 @@
-#if !UNITY_2018_3_OR_NEWER
-
 using MessagePipe.Internal;
 using System;
 using System.Linq;
@@ -38,33 +36,33 @@ namespace MessagePipe
             this.subscriber = subscriber;
         }
 
-        public UniTask<IAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler, CancellationToken cancellationToken = default)
+        public UniTask<IUniTaskAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler, CancellationToken cancellationToken = default)
         {
             var d = subscriber.Subscribe(key, new AsyncMessageHandlerBridge<TMessage>(handler));
-            return new UniTask<IAsyncDisposable>(new AsyncDisposableBridge(d));
+            return new UniTask<IUniTaskAsyncDisposable>(new AsyncDisposableBridge(d));
         }
 
-        public UniTask<IAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler, MessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken = default)
+        public UniTask<IUniTaskAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler, MessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken = default)
         {
             var d = subscriber.Subscribe(key, new AsyncMessageHandlerBridge<TMessage>(handler), filters.Select(x => new AsyncMessageHandlerFilterBridge<TMessage>(x)).ToArray());
-            return new UniTask<IAsyncDisposable>(new AsyncDisposableBridge(d));
+            return new UniTask<IUniTaskAsyncDisposable>(new AsyncDisposableBridge(d));
         }
 
-        public UniTask<IAsyncDisposable> SubscribeAsync(TKey key, IAsyncMessageHandler<TMessage> handler, CancellationToken cancellationToken = default)
+        public UniTask<IUniTaskAsyncDisposable> SubscribeAsync(TKey key, IAsyncMessageHandler<TMessage> handler, CancellationToken cancellationToken = default)
         {
             var d = subscriber.Subscribe(key, handler);
-            return new UniTask<IAsyncDisposable>(new AsyncDisposableBridge(d));
+            return new UniTask<IUniTaskAsyncDisposable>(new AsyncDisposableBridge(d));
         }
 
-        public UniTask<IAsyncDisposable> SubscribeAsync(TKey key, IAsyncMessageHandler<TMessage> handler, AsyncMessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken = default)
+        public UniTask<IUniTaskAsyncDisposable> SubscribeAsync(TKey key, IAsyncMessageHandler<TMessage> handler, AsyncMessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken = default)
         {
 
             var d = subscriber.Subscribe(key, handler, filters);
-            return new UniTask<IAsyncDisposable>(new AsyncDisposableBridge(d));
+            return new UniTask<IUniTaskAsyncDisposable>(new AsyncDisposableBridge(d));
         }
     }
 
-    internal sealed class AsyncDisposableBridge : IAsyncDisposable
+    internal sealed class AsyncDisposableBridge : IUniTaskAsyncDisposable
     {
         readonly IDisposable disposable;
 
@@ -113,5 +111,3 @@ namespace MessagePipe
         }
     }
 }
-
-#endif

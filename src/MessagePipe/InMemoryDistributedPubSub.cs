@@ -1,6 +1,4 @@
-﻿#if !UNITY_2018_3_OR_NEWER
-
-using MessagePipe.Internal;
+﻿using MessagePipe.Internal;
 using System;
 using System.Linq;
 using System.Threading;
@@ -113,5 +111,3 @@ namespace MessagePipe
         }
     }
 }
-
-#endif
