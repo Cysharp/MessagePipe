@@ -10,7 +10,26 @@
         <IncludeSymbols>false</IncludeSymbols>
         <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
         <DevelopmentDependency>true</DevelopmentDependency>
+
+        <!-- NuGet Packaging -->
+        <PackageVersion>$(Version)</PackageVersion>
+        <Company>Cysharp</Company>
+        <Authors>Cysharp</Authors>
+        <Copyright>© Cysharp, Inc.</Copyright>
+        <PackageTags>analyzer;</PackageTags>
+        <Description>Analyzers of MessagePipe to prevent subscription leak.</Description>
+        <PackageProjectUrl>https://github.com/Cysharp/MessagePipe</PackageProjectUrl>
+        <RepositoryUrl>$(PackageProjectUrl)</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <SignAssembly>true</SignAssembly>
+        <AssemblyOriginatorKeyFile>../../opensource.snk</AssemblyOriginatorKeyFile>
+        <PackageIcon>Icon.png</PackageIcon>
     </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="Icon.png" Pack="true" PackagePath="/" />
+    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.2">

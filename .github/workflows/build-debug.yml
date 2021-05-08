@@ -35,6 +35,11 @@ jobs:
       - run: dotnet build ./tools/PostBuildUtility/ -c Debug
       - run: dotnet build -c Debug
       - run: dotnet test -c Debug --no-build < /dev/null
+      # Store artifacts.
+      - uses: actions/upload-artifact@v2
+        with:
+          name: MessagePipe.Analyzer.dll
+          path: ./src/MessagePipe.Analyzer/bin/Debug/netstandard2.0/MessagePipe.Analyzer.dll
 
   build-unity:
     if: "((github.event_name == 'push' && github.repository_owner == 'Cysharp') || startsWith(github.event.pull_request.head.label, 'Cysharp:'))"
