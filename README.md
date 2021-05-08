@@ -20,6 +20,10 @@ Of course, memory allocation per publish operation is less(zero).
 
 ![](https://user-images.githubusercontent.com/46207/115814615-62542800-a430-11eb-9041-1f31c1ac8464.png)
 
+Also providing roslyn-analyzer to prevent subscription leak.
+
+![](https://user-images.githubusercontent.com/46207/117535259-da753d00-b02f-11eb-9818-0ab5ef3049b1.png)
+
 Getting Started
 ---
 For .NET, use NuGet. For Unity, please read [Unity](#unity) section.
@@ -278,6 +282,7 @@ MessagePipe has better properties than a normal C# event
 * Enable unsubscribe all subscription from publisher.dispose
 * Attaches invocation pipeline behaviour by Filter
 * To monitor subscription leak by `MessagePipeDiagnosticsInfo`
+* TO prevent subscription leak by `MessagePipe.Analyzer`
 
 ```csharp
 public class BetterEvent : IDisposable
@@ -748,6 +753,24 @@ void Configure(DiContainer container)
 var prodiver = builder.BuildServiceProvider();
 GlobalMessagePipe.SetProvider(provider);
 ```
+
+Analyzer
+---
+In previous section, we anounce `The returned IDisposable value **must** be handled`. To prevent subscription leak, we provide roslyn analyzer.
+
+> PM> Install-Package [MessagePipe.Analyzer](https://www.nuget.org/packages/MessagePipe.Analyzer)
+
+![](https://user-images.githubusercontent.com/46207/117535259-da753d00-b02f-11eb-9818-0ab5ef3049b1.png)
+
+This will raise an error for unhandled `Subscribe`.
+
+This analyzer can use after Unity 2020.2(see: [Roslyn analyzers and ruleset files](https://docs.unity3d.com/2020.2/Documentation/Manual/roslyn-analyzers.html) document). `MessagePipe.Analyzer.dll` exists in [releases page](https://github.com/Cysharp/MessagePipe/releases/).
+
+![](https://user-images.githubusercontent.com/46207/117535248-d5b08900-b02f-11eb-8add-33101a71033a.png)
+
+Currently Unity's analyzer support is incomplete. We are complementing analyzer support with editor extension, please check the [Cysharp/CsprojModifier](https://github.com/Cysharp/CsprojModifier).
+
+![](https://github.com/Cysharp/CsprojModifier/raw/master/docs/images/Screen-01.png)
 
 IDistributedPubSub / MessagePipe.Redis
 ---
