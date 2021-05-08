@@ -38,7 +38,7 @@ jobs:
       # Store artifacts.
       - uses: actions/upload-artifact@v2
         with:
-          name: MessagePipe.Analyzer.dll
+          name: MessagePipe.Analyzer
           path: ./src/MessagePipe.Analyzer/bin/Debug/netstandard2.0/MessagePipe.Analyzer.dll
 
   build-unity:
