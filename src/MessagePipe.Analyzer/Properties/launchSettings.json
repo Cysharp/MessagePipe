@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MessagePipe.Analyzer": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "..\\..\\sandbox\\MessagePipe.AnalyzerTestApp\\MessagePipe.AnalyzerTestApp.csproj"
+    }
+  }
+}
