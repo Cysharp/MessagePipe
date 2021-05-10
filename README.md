@@ -195,7 +195,7 @@ public interface IPublisher<TMessage>
 
 public interface ISubscriber<TMessage>
 {
-    public IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
+    IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
 }
 
 // keyless-async
