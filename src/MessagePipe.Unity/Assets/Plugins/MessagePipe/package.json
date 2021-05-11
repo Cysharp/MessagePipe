@@ -1,6 +1,7 @@
 {
     "name": "com.cysharp.messagepipe",
     "displayName": "MessagePipe",
+    "author": { "name": "Cysharp, Inc.", "url": "https://cysharp.co.jp/en/" },
     "version": "1.3.3",
     "unity": "2018.4",
     "description": "High performance messaging pipeline.",
