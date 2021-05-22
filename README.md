@@ -454,11 +454,23 @@ However, the extension method allows you to write `Action<T>` directly.
 public static IDisposable Subscribe<TMessage>(this ISubscriber<TMessage> subscriber, Action<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters)
 public static IDisposable Subscribe<TMessage>(this ISubscriber<TMessage> subscriber, Action<TMessage> handler, Func<TMessage, bool> predicate, params MessageHandlerFilter<TMessage>[] filters)
 public static IObservable<TMessage> AsObservable<TMessage>(this ISubscriber<TMessage> subscriber, params MessageHandlerFilter<TMessage>[] filters)
+public static ValueTask<TMessage> FirstAsync<TMessage>(this ISubscriber<TMessage> subscriber, CancellationToken cancellationToken, params MessageHandlerFilter<TMessage>[] filters)
+public static ValueTask<TMessage> FirstAsync<TMessage>(this ISubscriber<TMessage> subscriber, CancellationToken cancellationToken, Func<TMessage, bool> predicate, params MessageHandlerFilter<TMessage>[] filters)
 ```
 
 Also, the `Func<TMessage, bool>` overload can filter messages by predicate (internally implemented with PredicateFilter, where Order is int.MinValue and is always checked first).
 
-`AsObservable` can convert message pipeline to `IObservable<T>`, it can handle by Reactive Extensions(in Unity, you can use `UniRx`).
+`AsObservable` can convert message pipeline to `IObservable<T>`, it can handle by Reactive Extensions(in Unity, you can use `UniRx`). `AsObervable` exists in sync subscriber(keyless, keyed, buffered).
+
+`FirstAsync` gets the first value of message. It is similar as `AsObservable().FirstAsync()`, `AsObservable().Where().FirstAsync()`. If uses `CancellationTokenSource(TimeSpan)` then similar as `AsObservable().Timeout().FirstAsync()`. Argument of `CancellationToken` is required to avoid task leak. 
+
+```csharp
+// for Unity, use cts.CancelAfterSlim(TIimeSpan) instead.
+using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+var value = await subscriber.FirstAsync(cts.Token);
+```
+
+`FirstAsync` exists in both sync and async subscriber(keyless, keyed, buffered).
 
 Filter
 ---

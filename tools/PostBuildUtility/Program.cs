@@ -29,13 +29,24 @@ namespace PostBuildUtility
             var replaceSet = new Dictionary<string, string>
             {
                 // to UniTask
+                {", ValueTaskSourceOnCompletedFlags flags", "" },
                 {"ValueTaskAwaiter<TResponse>", "Cysharp.Threading.Tasks.UniTask<TResponse>.Awaiter" },
                 {"ValueTaskAwaiter", "Cysharp.Threading.Tasks.UniTask.Awaiter" },
+                {"ValueTaskSourceStatus", "UniTaskStatus" },
+                {"IValueTaskSource", "IUniTaskSource" },
+                {"ManualResetValueTaskSourceCore", "UniTaskCompletionSourceCore" },
                 {"ValueTask", "UniTask" },
                 {"IAsyncDisposable", "IUniTaskAsyncDisposable" },
+                {"using System.Threading.Tasks.Sources;", "" },
                 {"System.Threading.Tasks", "Cysharp.Threading.Tasks" },
                 {"IAsyncEnumerable", "IUniTaskAsyncEnumerable" },
                 {"[EnumeratorCancellation]", "" },
+                {" core.OnCompleted(continuation, state, token, flags);", " core.OnCompleted(continuation, state, token);" },
+                {"core.SetException", "core.TrySetException" },
+                {"core.SetResult", "core.TrySetResult" },
+                {"public UniTaskStatus GetStatus(short token)", @"void IUniTaskSource.GetResult(short token) => GetResult(token);
+        public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
+        public UniTaskStatus GetStatus(short token)" },
 
                 // Remove nullable
                 {"T?", "T" },
@@ -63,6 +74,8 @@ namespace PostBuildUtility
                 {"TMessage?", "TMessage"},
                 {"string?", "string"},
                 {"lastMessage!", "lastMessage"},
+                {"state!", "state"},
+                {"object?", "object"},
             };
 
             System.Console.WriteLine("Start to replace code, remove nullability and use UniTask.");
