@@ -5,22 +5,12 @@
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
         <Configurations>Debug;Release;WinBenchmark</Configurations>
-        <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
         <!-- NuGet Packaging -->
-        <PackageVersion>$(Version)</PackageVersion>
-        <Company>Cysharp</Company>
-        <Authors>Cysharp</Authors>
-        <Copyright>© Cysharp, Inc.</Copyright>
         <PackageTags>pubsub;eventaggregator</PackageTags>
         <Description>Redis IDistributedPublisher/Subscriber provider for MessagePipe.</Description>
-        <PackageProjectUrl>https://github.com/Cysharp/MessagePipe</PackageProjectUrl>
-        <RepositoryUrl>$(PackageProjectUrl)</RepositoryUrl>
-        <RepositoryType>git</RepositoryType>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <SignAssembly>true</SignAssembly>
         <AssemblyOriginatorKeyFile>../../opensource.snk</AssemblyOriginatorKeyFile>
-        <PackageIcon>Icon.png</PackageIcon>
     </PropertyGroup>
 
     <ItemGroup>
