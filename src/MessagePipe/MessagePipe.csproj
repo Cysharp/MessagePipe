@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <WarningsAsErrors>true</WarningsAsErrors>
         <Configurations>Debug;Release;WinBenchmark</Configurations>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
         <!-- NuGet Packaging -->
         <PackageVersion>$(Version)</PackageVersion>
