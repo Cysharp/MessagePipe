@@ -2,8 +2,6 @@
     <PropertyGroup>
         <OutputType>library</OutputType>
         <TargetFramework>netstandard2.0</TargetFramework>
-        <LangVersion>latest</LangVersion>
-        <Nullable>enable</Nullable>
         <IsRoslynComponent>true</IsRoslynComponent>
         <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);PackBuildOutputs</TargetsForTfmSpecificContentInPackage>
         <IncludeBuildOutput>false</IncludeBuildOutput>
