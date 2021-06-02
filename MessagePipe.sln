@@ -38,9 +38,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{7107
 		.github\workflows\build-debug.yml = .github\workflows\build-debug.yml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePipe.Analyzer", "src\MessagePipe.Analyzer\MessagePipe.Analyzer.csproj", "{CB2E0099-5D84-4E14-9699-3AF5B9237DF4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePipe.Analyzer", "src\MessagePipe.Analyzer\MessagePipe.Analyzer.csproj", "{CB2E0099-5D84-4E14-9699-3AF5B9237DF4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePipe.AnalyzerTestApp", "sandbox\MessagePipe.AnalyzerTestApp\MessagePipe.AnalyzerTestApp.csproj", "{3F0CF7FC-D764-40C0-BA3A-0302DB2F205F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePipe.AnalyzerTestApp", "sandbox\MessagePipe.AnalyzerTestApp\MessagePipe.AnalyzerTestApp.csproj", "{3F0CF7FC-D764-40C0-BA3A-0302DB2F205F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePipe.Analyzer.Tests", "tests\MessagePipe.Analyzer.Tests\MessagePipe.Analyzer.Tests.csproj", "{64A0C890-301B-49D9-95C8-8CAFB53DCFDC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -103,6 +105,12 @@ Global
 		{3F0CF7FC-D764-40C0-BA3A-0302DB2F205F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3F0CF7FC-D764-40C0-BA3A-0302DB2F205F}.WinBenchmark|Any CPU.ActiveCfg = Debug|Any CPU
 		{3F0CF7FC-D764-40C0-BA3A-0302DB2F205F}.WinBenchmark|Any CPU.Build.0 = Debug|Any CPU
+		{64A0C890-301B-49D9-95C8-8CAFB53DCFDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64A0C890-301B-49D9-95C8-8CAFB53DCFDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64A0C890-301B-49D9-95C8-8CAFB53DCFDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64A0C890-301B-49D9-95C8-8CAFB53DCFDC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64A0C890-301B-49D9-95C8-8CAFB53DCFDC}.WinBenchmark|Any CPU.ActiveCfg = Debug|Any CPU
+		{64A0C890-301B-49D9-95C8-8CAFB53DCFDC}.WinBenchmark|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -118,6 +126,7 @@ Global
 		{71072B57-914A-4CA8-915A-64E832DA6E1F} = {33ADB827-BA73-4B6A-AA57-13C74AB9183D}
 		{CB2E0099-5D84-4E14-9699-3AF5B9237DF4} = {381F6F79-110B-4CE4-9A49-583046D8C164}
 		{3F0CF7FC-D764-40C0-BA3A-0302DB2F205F} = {9813BFC3-7860-4697-A3AF-118BDF710BD0}
+		{64A0C890-301B-49D9-95C8-8CAFB53DCFDC} = {36546FD6-866F-4809-AFCE-87F7F4201361}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {138B7AA8-E4C0-46A3-A48B-0D373CAC365D}

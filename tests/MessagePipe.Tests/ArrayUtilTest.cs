@@ -1,4 +1,6 @@
-﻿using FluentAssertions;
+﻿#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+
+using FluentAssertions;
 using MessagePipe.Internal;
 using System;
 using System.Collections.Generic;
