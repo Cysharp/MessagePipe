@@ -158,29 +158,38 @@ namespace MessagePipe
 
         static IServiceCollection AddRequestHandlerCore(IServiceCollection services, Type type, Type coreType)
         {
-            var interfaceType = type.GetInterfaces().FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == coreType);
-            if (interfaceType == null)
-            {
-                throw new ArgumentException($"{type.FullName} does not implement {coreType.Name.Replace("Core", "")}.");
-            }
-
             var options = services.FirstOrDefault(x => x.ServiceType == typeof(MessagePipeOptions));
             if (options == null)
             {
                 throw new ArgumentException($"Not yet added MessagePipeOptions, please call servcies.AddMessagePipe() before.");
             }
 
-            if (type.IsGenericType && !type.IsConstructedGenericType)
+            var registered = false;
+            foreach (var interfaceType in type.GetInterfaces())
             {
-                if (!interfaceType.GetGenericArguments().All(x => x.IsGenericParameter))
+                if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == coreType)
                 {
-                    throw new ArgumentException("partial open generic type is not supported. Type:" + type.FullName);
-                }
+                    var iType = interfaceType;
+                    if (type.IsGenericType && !type.IsConstructedGenericType)
+                    {
+                        if (!interfaceType.GetGenericArguments().All(x => x.IsGenericParameter))
+                        {
+                            throw new ArgumentException("partial open generic type is not supported. Type:" + type.FullName);
+                        }
 
-                interfaceType = interfaceType.GetGenericTypeDefinition();
+                        iType = interfaceType.GetGenericTypeDefinition();
+                    }
+
+                    registered = true;
+                    services.Add(iType, type, ((MessagePipeOptions)options.ImplementationInstance!).InstanceLifetime);
+                }
             }
 
-            services.Add(interfaceType, type, ((MessagePipeOptions)options.ImplementationInstance!).InstanceLifetime);
+            if (!registered)
+            {
+                throw new ArgumentException($"{type.FullName} does not implement {coreType.Name.Replace("Core", "")}.");
+            }
+
             return services;
         }
 
