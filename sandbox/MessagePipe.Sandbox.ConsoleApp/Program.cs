@@ -62,7 +62,7 @@ namespace MessagePipe
             var host = Host.CreateDefaultBuilder()
                     .ConfigureServices((ctx, x) =>
                     {
-                        
+
                         x.AddMessagePipe();
                     })
                     .Build(); // build host before run.
@@ -562,4 +562,38 @@ namespace MessagePipe
             return response;
         }
     }
+
+    public class Command1
+    {
+    }
+
+    public class Response1
+    {
+    }
+
+    public class Command2
+    {
+    }
+
+    public class Response2
+    {
+    }
+
+
+    public class MultiHandler :
+        IAsyncRequestHandler<Command1, Response1>,
+        IAsyncRequestHandler<Command2, Response2>
+    {
+        public async ValueTask<Response1> InvokeAsync(Command1 request, CancellationToken cancellationToken = default)
+        {
+            return default;
+        }
+
+        public async ValueTask<Response2> InvokeAsync(Command2 request, CancellationToken cancellationToken = default)
+        {
+            return default;
+        }
+    }
+
+
 }

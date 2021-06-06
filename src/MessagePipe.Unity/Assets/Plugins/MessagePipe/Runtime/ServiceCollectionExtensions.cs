@@ -230,7 +230,7 @@ namespace MessagePipe
                         {
                             services.Add(typeof(IRequestHandlerCore<,>), objectType, requestHandlerLifetime);
                         }
-                        goto NEXT_TYPE;
+                        continue;
                     }
 
                     if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IAsyncRequestHandlerCore<,>))
@@ -243,7 +243,7 @@ namespace MessagePipe
                         {
                             services.Add(typeof(IAsyncRequestHandlerCore<,>), objectType, requestHandlerLifetime);
                         }
-                        goto NEXT_TYPE;
+                        continue;
                     }
                 }
 
