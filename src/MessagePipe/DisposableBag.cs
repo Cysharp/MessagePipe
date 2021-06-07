@@ -39,6 +39,11 @@ namespace MessagePipe
             return new SingleAssignmentDisposable();
         }
 
+        public static CancellationTokenDisposable CreateCancellation()
+        {
+            return new CancellationTokenDisposable();
+        }
+
         public static DisposableBagBuilder CreateBuilder()
         {
             return new DisposableBagBuilder();
@@ -155,6 +160,23 @@ namespace MessagePipe
                     inner = null;
                 }
             }
+        }
+    }
+
+    public sealed class CancellationTokenDisposable : IDisposable
+    {
+        CancellationTokenSource cancellationTokenSource;
+        public CancellationToken Token => cancellationTokenSource.Token;
+
+        public CancellationTokenDisposable()
+        {
+            this.cancellationTokenSource = new CancellationTokenSource();
+        }
+
+        public void Dispose()
+        {
+            cancellationTokenSource.Cancel();
+            cancellationTokenSource.Dispose();
         }
     }
 }
