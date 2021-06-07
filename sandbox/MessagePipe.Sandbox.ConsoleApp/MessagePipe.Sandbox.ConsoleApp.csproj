@@ -6,7 +6,6 @@
         <LangVersion>latest</LangVersion>
         <Configurations>Debug;Release;WinBenchmark</Configurations>
         <SignAssembly>true</SignAssembly>
-        <AssemblyOriginatorKeyFile>../../opensource.snk</AssemblyOriginatorKeyFile>
     </PropertyGroup>
 
     <ItemGroup>
