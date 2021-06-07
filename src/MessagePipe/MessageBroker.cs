@@ -87,17 +87,17 @@ namespace MessagePipe
     public sealed class MessageBrokerCore<TMessage> : IDisposable, IHandlerHolderMarker
     {
         readonly FreeList<IMessageHandler<TMessage>> handlers;
-        readonly MessagePipeDiagnosticsInfo diagnotics;
+        readonly MessagePipeDiagnosticsInfo diagnostics;
         readonly HandlingSubscribeDisposedPolicy handlingSubscribeDisposedPolicy;
         readonly object gate = new object();
         bool isDisposed;
 
         [Preserve]
-        public MessageBrokerCore(MessagePipeDiagnosticsInfo diagnotics, MessagePipeOptions options)
+        public MessageBrokerCore(MessagePipeDiagnosticsInfo diagnostics, MessagePipeOptions options)
         {
             this.handlers = new FreeList<IMessageHandler<TMessage>>();
             this.handlingSubscribeDisposedPolicy = options.HandlingSubscribeDisposedPolicy;
-            this.diagnotics = diagnotics;
+            this.diagnostics = diagnostics;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -118,7 +118,7 @@ namespace MessagePipe
 
                 var subscriptionKey = handlers.Add(handler);
                 var subscription = new Subscription(this, subscriptionKey);
-                diagnotics.IncrementSubscribe(this, subscription);
+                diagnostics.IncrementSubscribe(this, subscription);
                 return subscription;
             }
         }
@@ -131,7 +131,7 @@ namespace MessagePipe
                 if (!isDisposed && handlers.TryDispose(out var count))
                 {
                     isDisposed = true;
-                    diagnotics.RemoveTargetDiagnostics(this, count);
+                    diagnostics.RemoveTargetDiagnostics(this, count);
                 }
             }
         }
@@ -158,7 +158,7 @@ namespace MessagePipe
                         if (!core.isDisposed)
                         {
                             core.handlers.Remove(subscriptionKey, true);
-                            core.diagnotics.DecrementSubscribe(core, this);
+                            core.diagnostics.DecrementSubscribe(core, this);
                         }
                     }
                 }
