@@ -85,7 +85,7 @@ namespace MessagePipe
     [Preserve]
     public sealed class MessagePipeDiagnosticsInfo
     {
-        static readonly ILookup<string, StackTraceInfo> EmptyLookup = Array.Empty<StackTraceInfo>().ToLookup(x => "", x => x);
+        static readonly ILookup<string, StackTraceInfo> EmptyLookup = Array.Empty<StackTraceInfo>().ToLookup(_ => "", x => x);
 
         int subscribeCount;
         bool dirty;

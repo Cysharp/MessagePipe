@@ -2,16 +2,13 @@
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Environments;
 using BenchmarkDotNet.Jobs;
-using BenchmarkDotNet.Running;
-using System;
-using System.Reflection;
 using System.Threading.Tasks;
 
 namespace MessagePipe.Benchmark
 {
     class Program
     {
-        static async Task Main(string[] args)
+        static async Task Main()
         {
             await new PublishOps().MeasureAllAsync();
 

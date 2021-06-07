@@ -10,34 +10,34 @@ namespace MessagePipe.AnalyzerTestApp
 
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
-            Observable.Range(1, 10).Subscribe(x => Console.WriteLine("OK Rx"));
+            Observable.Range(1, 10).Subscribe(_ => Console.WriteLine("OK Rx"));
         }
 
         static IDisposable Ret(ISubscriber<int> subscriber)
         {
-            return subscriber.Subscribe(x => Console.WriteLine("OK RETURN"));
+            return subscriber.Subscribe(_ => Console.WriteLine("OK RETURN"));
         }
 
         static IDisposable Ret(ISubscriber<int, int> subscriber)
         {
-            return subscriber.Subscribe(0, x => Console.WriteLine("OK RETURN"));
+            return subscriber.Subscribe(0, _ => Console.WriteLine("OK RETURN"));
         }
 
         static IDisposable Ret(IAsyncSubscriber<int> subscriber)
         {
-            return subscriber.Subscribe(async (x, ct) => Console.WriteLine("OK RETURN"));
+            return subscriber.Subscribe(async (_, _) => Console.WriteLine("OK RETURN"));
         }
 
         static IDisposable Ret(IAsyncSubscriber<int, int> subscriber)
         {
-            return subscriber.Subscribe(0, async (x, ct) => Console.WriteLine("OK RETURN"));
+            return subscriber.Subscribe(0, async (_, _) => Console.WriteLine("OK RETURN"));
         }
 
         static IDisposable Ret(IBufferedSubscriber<int> subscriber)
         {
-            return subscriber.Subscribe(x => Console.WriteLine("OK RETURN"));
+            return subscriber.Subscribe(_ => Console.WriteLine("OK RETURN"));
         }
 
         class MyClass
@@ -50,157 +50,157 @@ namespace MessagePipe.AnalyzerTestApp
 
         static void Subscriber(ISubscriber<int> subscriber)
         {
-            subscriber.Subscribe(x => Console.WriteLine("NG NOT HANDLED"));
+            subscriber.Subscribe(_ => Console.WriteLine("NG NOT HANDLED"));
 
-            var d = subscriber.Subscribe(x => Console.WriteLine("OK ASSIGN"));
+            var d = subscriber.Subscribe(_ => Console.WriteLine("OK ASSIGN"));
 
             IDisposable d1;
-            d1 = subscriber.Subscribe(x => Console.WriteLine("OK ASSIGN2"));
+            d1 = subscriber.Subscribe(_ => Console.WriteLine("OK ASSIGN2"));
 
-            _ = subscriber.Subscribe(x => Console.WriteLine("OK ASSIGN3"));
+            _ = subscriber.Subscribe(_ => Console.WriteLine("OK ASSIGN3"));
 
-            DisposableBag.Create(subscriber.Subscribe(x => Console.WriteLine("OK METHOD ARG1")));
+            DisposableBag.Create(subscriber.Subscribe(_ => Console.WriteLine("OK METHOD ARG1")));
 
             var bag = DisposableBag.CreateBuilder();
-            subscriber.Subscribe(x => Console.WriteLine("OK METHOD CHAIN")).AddTo(bag);
+            subscriber.Subscribe(_ => Console.WriteLine("OK METHOD CHAIN")).AddTo(bag);
 
-            Enumerable.Range(1, 10).Select(x => subscriber.Subscribe(y => Console.WriteLine("OK IN LAMBDA")));
+            Enumerable.Range(1, 10).Select(_ => subscriber.Subscribe(_ => Console.WriteLine("OK IN LAMBDA")));
 
-            new MyClass(subscriber.Subscribe(x => Console.WriteLine("OK CTOR")));
+            new MyClass(subscriber.Subscribe(_ => Console.WriteLine("OK CTOR")));
 
-            using (subscriber.Subscribe(x => Console.WriteLine("OK USING")))
+            using (subscriber.Subscribe(_ => Console.WriteLine("OK USING")))
             {
             }
 
-            using (subscriber.Subscribe(x => Console.WriteLine("OK USING2")))
+            using (subscriber.Subscribe(_ => Console.WriteLine("OK USING2")))
             {
             }
 
-            using var u = subscriber.Subscribe(x => Console.WriteLine("OK USING 3"));
+            using var u = subscriber.Subscribe(_ => Console.WriteLine("OK USING 3"));
         }
 
         static void Subscriber2(ISubscriber<string, int> subscriber)
         {
-            subscriber.Subscribe("a", x => Console.WriteLine("NG NOT HANDLED"));
+            subscriber.Subscribe("a", _ => Console.WriteLine("NG NOT HANDLED"));
 
-            var d = subscriber.Subscribe("a", x => Console.WriteLine("OK ASSIGN"));
+            var d = subscriber.Subscribe("a", _ => Console.WriteLine("OK ASSIGN"));
 
             IDisposable d1;
-            d1 = subscriber.Subscribe("a", x => Console.WriteLine("OK ASSIGN2"));
+            d1 = subscriber.Subscribe("a", _ => Console.WriteLine("OK ASSIGN2"));
 
-            _ = subscriber.Subscribe("a", x => Console.WriteLine("OK ASSIGN3"));
+            _ = subscriber.Subscribe("a", _ => Console.WriteLine("OK ASSIGN3"));
 
-            DisposableBag.Create(subscriber.Subscribe("a", x => Console.WriteLine("OK METHOD ARG1")));
+            DisposableBag.Create(subscriber.Subscribe("a", _ => Console.WriteLine("OK METHOD ARG1")));
 
             var bag = DisposableBag.CreateBuilder();
-            subscriber.Subscribe("a", x => Console.WriteLine("OK METHOD CHAIN")).AddTo(bag);
+            subscriber.Subscribe("a", _ => Console.WriteLine("OK METHOD CHAIN")).AddTo(bag);
 
-            Enumerable.Range(1, 10).Select(x => subscriber.Subscribe("a", y => Console.WriteLine("OK IN LAMBDA")));
+            Enumerable.Range(1, 10).Select(_ => subscriber.Subscribe("a", _ => Console.WriteLine("OK IN LAMBDA")));
 
-            new MyClass(subscriber.Subscribe("a", x => Console.WriteLine("OK CTOR")));
+            new MyClass(subscriber.Subscribe("a", _ => Console.WriteLine("OK CTOR")));
 
-            using (subscriber.Subscribe("a", x => Console.WriteLine("OK USING")))
+            using (subscriber.Subscribe("a", _ => Console.WriteLine("OK USING")))
             {
             }
 
-            using (subscriber.Subscribe("a", x => Console.WriteLine("OK USING2")))
+            using (subscriber.Subscribe("a", _ => Console.WriteLine("OK USING2")))
             {
             }
 
-            using var u = subscriber.Subscribe("a", x => Console.WriteLine("OK USING 3"));
+            using var u = subscriber.Subscribe("a", _ => Console.WriteLine("OK USING 3"));
         }
 
         static void AsyncSubscriber(IAsyncSubscriber<int> subscriber)
         {
-            subscriber.Subscribe(async (x, ct) => Console.WriteLine("NG NOT HANDLED"));
+            subscriber.Subscribe(async (_, _) => Console.WriteLine("NG NOT HANDLED"));
 
-            var d = subscriber.Subscribe(async (x, ct) => Console.WriteLine("OK ASSIGN"));
+            var d = subscriber.Subscribe(async (_, _) => Console.WriteLine("OK ASSIGN"));
 
             IDisposable d1;
-            d1 = subscriber.Subscribe(async (x, ct) => Console.WriteLine("OK ASSIGN2"));
+            d1 = subscriber.Subscribe(async (_, _) => Console.WriteLine("OK ASSIGN2"));
 
-            _ = subscriber.Subscribe(async (x, ct) => Console.WriteLine("OK ASSIGN3"));
+            _ = subscriber.Subscribe(async (_, _) => Console.WriteLine("OK ASSIGN3"));
 
-            DisposableBag.Create(subscriber.Subscribe(async (x, ct) => Console.WriteLine("OK METHOD ARG1")));
+            DisposableBag.Create(subscriber.Subscribe(async (_, _) => Console.WriteLine("OK METHOD ARG1")));
 
             var bag = DisposableBag.CreateBuilder();
-            subscriber.Subscribe(async (x, ct) => Console.WriteLine("OK METHOD CHAIN")).AddTo(bag);
+            subscriber.Subscribe(async (_, _) => Console.WriteLine("OK METHOD CHAIN")).AddTo(bag);
 
-            Enumerable.Range(1, 10).Select(x => subscriber.Subscribe(async (y, ct) => Console.WriteLine("OK IN LAMBDA")));
+            Enumerable.Range(1, 10).Select(_ => subscriber.Subscribe(async (_, _) => Console.WriteLine("OK IN LAMBDA")));
 
-            new MyClass(subscriber.Subscribe(async (x, ct) => Console.WriteLine("OK CTOR")));
+            new MyClass(subscriber.Subscribe(async (_, _) => Console.WriteLine("OK CTOR")));
 
-            using (subscriber.Subscribe(async (x, ct) => Console.WriteLine("OK USING")))
+            using (subscriber.Subscribe(async (_, _) => Console.WriteLine("OK USING")))
             {
             }
 
-            using (subscriber.Subscribe(async (x, ct) => Console.WriteLine("OK USING2")))
+            using (subscriber.Subscribe(async (_, _) => Console.WriteLine("OK USING2")))
             {
             }
 
-            using var u = subscriber.Subscribe(async (x, ct) => Console.WriteLine("OK USING 3"));
+            using var u = subscriber.Subscribe(async (_, _) => Console.WriteLine("OK USING 3"));
         }
 
         static void AsyncSubscriber2(IAsyncSubscriber<string, int> subscriber)
         {
-            subscriber.Subscribe("a", async (x, ct) => Console.WriteLine("NG NOT HANDLED"));
+            subscriber.Subscribe("a", async (_, _) => Console.WriteLine("NG NOT HANDLED"));
 
-            var d = subscriber.Subscribe("a", async (x, ct) => Console.WriteLine("OK ASSIGN"));
+            var d = subscriber.Subscribe("a", async (_, _) => Console.WriteLine("OK ASSIGN"));
 
             IDisposable d1;
-            d1 = subscriber.Subscribe("a", async (x, ct) => Console.WriteLine("OK ASSIGN2"));
+            d1 = subscriber.Subscribe("a", async (_, _) => Console.WriteLine("OK ASSIGN2"));
 
-            _ = subscriber.Subscribe("a", async (x, ct) => Console.WriteLine("OK ASSIGN3"));
+            _ = subscriber.Subscribe("a", async (_, _) => Console.WriteLine("OK ASSIGN3"));
 
-            DisposableBag.Create(subscriber.Subscribe("a", async (x, ct) => Console.WriteLine("OK METHOD ARG1")));
+            DisposableBag.Create(subscriber.Subscribe("a", async (_, _) => Console.WriteLine("OK METHOD ARG1")));
 
             var bag = DisposableBag.CreateBuilder();
-            subscriber.Subscribe("a", async (x, ct) => Console.WriteLine("OK METHOD CHAIN")).AddTo(bag);
+            subscriber.Subscribe("a", async (_, _) => Console.WriteLine("OK METHOD CHAIN")).AddTo(bag);
 
-            Enumerable.Range(1, 10).Select(async (x, ct) => subscriber.Subscribe("a", async (y, ct) => Console.WriteLine("OK IN LAMBDA")));
+            Enumerable.Range(1, 10).Select(async (_, _) => subscriber.Subscribe("a", async (_, _) => Console.WriteLine("OK IN LAMBDA")));
 
-            new MyClass(subscriber.Subscribe("a", async (x, ct) => Console.WriteLine("OK CTOR")));
+            new MyClass(subscriber.Subscribe("a", async (_, _) => Console.WriteLine("OK CTOR")));
 
-            using (subscriber.Subscribe("a", async (x, ct) => Console.WriteLine("OK USING")))
+            using (subscriber.Subscribe("a", async (_, _) => Console.WriteLine("OK USING")))
             {
             }
 
-            using (subscriber.Subscribe("a", async (x, ct) => Console.WriteLine("OK USING2")))
+            using (subscriber.Subscribe("a", async (_, _) => Console.WriteLine("OK USING2")))
             {
             }
 
-            using var u = subscriber.Subscribe("a", async (x, ct) => Console.WriteLine("OK USING 3"));
+            using var u = subscriber.Subscribe("a", async (_, _) => Console.WriteLine("OK USING 3"));
         }
 
         static void BufferedSubscriber(IBufferedSubscriber<int> subscriber)
         {
-            subscriber.Subscribe(x => Console.WriteLine("NG NOT HANDLED"));
+            subscriber.Subscribe(_ => Console.WriteLine("NG NOT HANDLED"));
 
-            var d = subscriber.Subscribe(x => Console.WriteLine("OK ASSIGN"));
+            var d = subscriber.Subscribe(_ => Console.WriteLine("OK ASSIGN"));
 
             IDisposable d1;
-            d1 = subscriber.Subscribe(x => Console.WriteLine("OK ASSIGN2"));
+            d1 = subscriber.Subscribe(_ => Console.WriteLine("OK ASSIGN2"));
 
-            _ = subscriber.Subscribe(x => Console.WriteLine("OK ASSIGN3"));
+            _ = subscriber.Subscribe(_ => Console.WriteLine("OK ASSIGN3"));
 
-            DisposableBag.Create(subscriber.Subscribe(x => Console.WriteLine("OK METHOD ARG1")));
+            DisposableBag.Create(subscriber.Subscribe(_ => Console.WriteLine("OK METHOD ARG1")));
 
             var bag = DisposableBag.CreateBuilder();
-            subscriber.Subscribe(x => Console.WriteLine("OK METHOD CHAIN")).AddTo(bag);
+            subscriber.Subscribe(_ => Console.WriteLine("OK METHOD CHAIN")).AddTo(bag);
 
-            Enumerable.Range(1, 10).Select(x => subscriber.Subscribe(y => Console.WriteLine("OK IN LAMBDA")));
+            Enumerable.Range(1, 10).Select(_ => subscriber.Subscribe(_ => Console.WriteLine("OK IN LAMBDA")));
 
-            new MyClass(subscriber.Subscribe(x => Console.WriteLine("OK CTOR")));
+            new MyClass(subscriber.Subscribe(_ => Console.WriteLine("OK CTOR")));
 
-            using (subscriber.Subscribe(x => Console.WriteLine("OK USING")))
+            using (subscriber.Subscribe(_ => Console.WriteLine("OK USING")))
             {
             }
 
-            using (subscriber.Subscribe(x => Console.WriteLine("OK USING2")))
+            using (subscriber.Subscribe(_ => Console.WriteLine("OK USING2")))
             {
             }
 
-            using var u = subscriber.Subscribe(x => Console.WriteLine("OK USING 3"));
+            using var u = subscriber.Subscribe(_ => Console.WriteLine("OK USING 3"));
         }
     }
 }

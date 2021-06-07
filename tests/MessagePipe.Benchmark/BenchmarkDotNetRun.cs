@@ -78,14 +78,14 @@ namespace MessagePipe.Benchmark
 
             }
 
-            signalBus.Subscribe<Message>(m => { });
-            signalBus.Subscribe<Message>(m => { });
-            signalBus.Subscribe<Message>(m => { });
-            signalBus.Subscribe<Message>(m => { });
-            signalBus.Subscribe<Message>(m => { });
-            signalBus.Subscribe<Message>(m => { });
-            signalBus.Subscribe<Message>(m => { });
-            signalBus.Subscribe<Message>(m => { });
+            signalBus.Subscribe<Message>(_ => { });
+            signalBus.Subscribe<Message>(_ => { });
+            signalBus.Subscribe<Message>(_ => { });
+            signalBus.Subscribe<Message>(_ => { });
+            signalBus.Subscribe<Message>(_ => { });
+            signalBus.Subscribe<Message>(_ => { });
+            signalBus.Subscribe<Message>(_ => { });
+            signalBus.Subscribe<Message>(_ => { });
 
         }
 

@@ -1,9 +1,7 @@
 ﻿using FluentAssertions;
 using MessagePipe.Internal;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -39,7 +37,7 @@ namespace MessagePipe.Tests
         public async Task WithExceptionWhenAll()
         {
             var handlers = Enumerable.Range(1, 10)
-                .Select((x, i) => (i % 2 == 0) ? null : new AsyncHandler { DelaySpan = TimeSpan.FromSeconds(1) })
+                .Select(i => (i % 2 == 0) ? null : new AsyncHandler { DelaySpan = TimeSpan.FromSeconds(1) })
                 .Select((x, i) => (i == 3) ? (IAsyncMessageHandler<int>)new CompletedHandler() : x)
                 .Select((x, i) => (i == 4) ? new ExceptionHandler() : x)
                 .ToArray();
@@ -52,7 +50,7 @@ namespace MessagePipe.Tests
         public async Task RequestWhenAll()
         {
             var handlers = Enumerable.Range(1, 10)
-                .Select((x, i) => new AsyncHandler2 { DelaySpan = (TimeSpan.FromMilliseconds(1000 - (i * 100))) })
+                .Select(i => new AsyncHandler2 { DelaySpan = (TimeSpan.FromMilliseconds(1000 - (i * 100))) })
                 .Select((x, i) => (i == 3) ? (IAsyncRequestHandler<int, int>)new CompletedHandler2() : x)
                 .ToArray();
 
@@ -62,7 +60,7 @@ namespace MessagePipe.Tests
 
             // again(use pool?)
             handlers = Enumerable.Range(1, 10)
-               .Select((x, i) => new AsyncHandler2 { DelaySpan = (TimeSpan.FromMilliseconds(1000 - (i * 100))) })
+               .Select(i => new AsyncHandler2 { DelaySpan = (TimeSpan.FromMilliseconds(1000 - (i * 100))) })
                .Select((x, i) => (i == 3) ? (IAsyncRequestHandler<int, int>)new CompletedHandler2() : x)
                .ToArray();
 
@@ -76,7 +74,7 @@ namespace MessagePipe.Tests
         public async Task RequestWhenAllWithException()
         {
             var handlers = Enumerable.Range(1, 10)
-                .Select((x, i) => new AsyncHandler2 { DelaySpan = (TimeSpan.FromMilliseconds(1000 - (i * 100))) })
+                .Select(i => new AsyncHandler2 { DelaySpan = (TimeSpan.FromMilliseconds(1000 - (i * 100))) })
                 .Select((x, i) => (i == 3) ? (IAsyncRequestHandler<int, int>)new CompletedHandler2() : x)
                 .Select((x, i) => (i == 4) ? new ExceptionHandler2() : x)
                 .ToArray();

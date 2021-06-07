@@ -76,8 +76,8 @@ namespace MessagePipe.Tests
             var (publisher, subscriber) = evFactory.CreateAsyncEvent<int>();
 
             var l = new List<int>();
-            var d1 = subscriber.Subscribe(async (x, ct) => { await Task.Delay(500); lock (l) { l.Add(x); } });
-            var d2 = subscriber.Subscribe(async (x, ct) => { await Task.Delay(300); lock (l) { l.Add(x * 10); } });
+            var d1 = subscriber.Subscribe(async (x, _) => { await Task.Delay(500); lock (l) { l.Add(x); } });
+            var d2 = subscriber.Subscribe(async (x, _) => { await Task.Delay(300); lock (l) { l.Add(x * 10); } });
 
             await publisher.PublishAsync(10);
             await publisher.PublishAsync(20);
@@ -103,8 +103,8 @@ namespace MessagePipe.Tests
             var (publisher, subscriber) = evFactory.CreateAsyncEvent<int>();
 
             var l = new List<int>();
-            var d1 = subscriber.Subscribe(async (x, ct) => { await Task.Delay(500); lock (l) { l.Add(x); } });
-            var d2 = subscriber.Subscribe(async (x, ct) => { await Task.Delay(300); lock (l) { l.Add(x * 10); } });
+            var d1 = subscriber.Subscribe(async (x, _) => { await Task.Delay(500); lock (l) { l.Add(x); } });
+            var d2 = subscriber.Subscribe(async (x, _) => { await Task.Delay(300); lock (l) { l.Add(x * 10); } });
 
             await publisher.PublishAsync(10);
             await publisher.PublishAsync(20);

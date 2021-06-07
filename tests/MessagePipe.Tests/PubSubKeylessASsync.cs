@@ -25,9 +25,9 @@ namespace __MessagePipe.Tests
             var s = provider.GetRequiredService<IAsyncSubscriber<string>>();
 
             var result = new List<string>();
-            var d1 = s.Subscribe(async (x, c) => result.Add("1:" + x));
-            var d2 = s.Subscribe(async (x, c) => result.Add("2:" + x));
-            var d3 = s.Subscribe(async (x, c) => result.Add("3:" + x));
+            var d1 = s.Subscribe(async (x, _) => result.Add("1:" + x));
+            var d2 = s.Subscribe(async (x, _) => result.Add("2:" + x));
+            var d3 = s.Subscribe(async (x, _) => result.Add("3:" + x));
 
             info.SubscribeCount.Should().Be(3);
 
@@ -67,13 +67,13 @@ namespace __MessagePipe.Tests
             var p = provider.GetRequiredService<IAsyncPublisher<string>>();
             var s = provider.GetRequiredService<IAsyncSubscriber<string>>();
 
-            s.Subscribe(async (x, ct) =>
+            s.Subscribe(async (_, ct) =>
             {
                 await Task.Delay(TimeSpan.FromSeconds(3), ct);
                 Console.WriteLine("OK?");
             });
 
-            s.Subscribe(async (x, ct) =>
+            s.Subscribe(async (_, ct) =>
             {
                 await Task.Delay(TimeSpan.FromSeconds(5), ct);
                 Console.WriteLine("OK2?");
