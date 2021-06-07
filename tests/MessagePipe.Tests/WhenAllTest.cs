@@ -44,7 +44,7 @@ namespace MessagePipe.Tests
                 .Select((x, i) => (i == 4) ? new ExceptionHandler() : x)
                 .ToArray();
 
-            await Assert.ThrowsAsync<WhenAllTestExteption>(async () =>
+            await Assert.ThrowsAsync<WhenAllTestException>(async () =>
                await new AsyncHandlerWhenAll<int>(handlers, 999, CancellationToken.None));
         }
 
