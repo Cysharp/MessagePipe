@@ -20,7 +20,7 @@ namespace MessagePipe.Tests
             var s = provider.GetRequiredService<IBufferedSubscriber<IntClass>>();
 
             var l = new List<int>();
-            using (var d1 = s.Subscribe(x => l.Add(x.Value)))
+            using (s.Subscribe(x => l.Add(x.Value)))
             {
                 l.Count.Should().Be(0);
             }
@@ -51,7 +51,7 @@ namespace MessagePipe.Tests
             var s = provider.GetRequiredService<IBufferedAsyncSubscriber<IntClass>>();
 
             var l = new List<int>();
-            using (var d1 = await s.SubscribeAsync(async (x, ct) => { await Task.Yield(); lock (l) { l.Add(x.Value); } }))
+            using (await s.SubscribeAsync(async (x, ct) => { await Task.Yield(); lock (l) { l.Add(x.Value); } }))
             {
                 l.Count.Should().Be(0);
             }

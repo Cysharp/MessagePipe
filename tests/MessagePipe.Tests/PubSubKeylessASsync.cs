@@ -67,8 +67,6 @@ namespace __MessagePipe.Tests
             var p = provider.GetRequiredService<IAsyncPublisher<string>>();
             var s = provider.GetRequiredService<IAsyncSubscriber<string>>();
 
-            var result = new List<string>();
-
             s.Subscribe(async (x, ct) =>
             {
                 await Task.Delay(TimeSpan.FromSeconds(3), ct);

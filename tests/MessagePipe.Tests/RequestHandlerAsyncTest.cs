@@ -19,7 +19,6 @@ namespace __MessagePipe.Tests
         public async Task TestAsyncHandling()
         {
             var provider = TestHelper.BuildServiceProvider();
-            var info = provider.GetRequiredService<MessagePipeDiagnosticsInfo>();
             var pingHandler = provider.GetRequiredService<IAsyncRequestHandler<Ping, Pong>>();
 
             var pong = await pingHandler.InvokeAsync(new Ping("myon!"));
@@ -30,7 +29,6 @@ namespace __MessagePipe.Tests
         public void TestCancellation()
         {
             var provider = TestHelper.BuildServiceProvider();
-            var info = provider.GetRequiredService<MessagePipeDiagnosticsInfo>();
             var pingHandler = provider.GetRequiredService<IAsyncRequestHandler<Ping, Pong>>();
 
             CancellationTokenSource source = new();
