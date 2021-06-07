@@ -8,7 +8,6 @@
         <PackageTags>pubsub;eventaggregator</PackageTags>
         <Description>Redis IDistributedPublisher/Subscriber provider for MessagePipe.</Description>
         <SignAssembly>true</SignAssembly>
-        <AssemblyOriginatorKeyFile>../../opensource.snk</AssemblyOriginatorKeyFile>
     </PropertyGroup>
 
     <ItemGroup>
