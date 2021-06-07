@@ -72,7 +72,7 @@ namespace MessagePipe.AnalyzerTestApp
             {
             }
 
-            using (var uu = subscriber.Subscribe(x => Console.WriteLine("OK USING2")))
+            using (subscriber.Subscribe(x => Console.WriteLine("OK USING2")))
             {
             }
 
@@ -103,7 +103,7 @@ namespace MessagePipe.AnalyzerTestApp
             {
             }
 
-            using (var uu = subscriber.Subscribe("a", x => Console.WriteLine("OK USING2")))
+            using (subscriber.Subscribe("a", x => Console.WriteLine("OK USING2")))
             {
             }
 
@@ -134,7 +134,7 @@ namespace MessagePipe.AnalyzerTestApp
             {
             }
 
-            using (var uu = subscriber.Subscribe(async (x, ct) => Console.WriteLine("OK USING2")))
+            using (subscriber.Subscribe(async (x, ct) => Console.WriteLine("OK USING2")))
             {
             }
 
@@ -165,7 +165,7 @@ namespace MessagePipe.AnalyzerTestApp
             {
             }
 
-            using (var uu = subscriber.Subscribe("a", async (x, ct) => Console.WriteLine("OK USING2")))
+            using (subscriber.Subscribe("a", async (x, ct) => Console.WriteLine("OK USING2")))
             {
             }
 
@@ -196,7 +196,7 @@ namespace MessagePipe.AnalyzerTestApp
             {
             }
 
-            using (var uu = subscriber.Subscribe(x => Console.WriteLine("OK USING2")))
+            using (subscriber.Subscribe(x => Console.WriteLine("OK USING2")))
             {
             }
 

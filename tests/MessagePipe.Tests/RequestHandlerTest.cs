@@ -16,7 +16,6 @@ namespace __MessagePipe.Tests
         public void TestHandling()
         {
             var provider = TestHelper.BuildServiceProvider();
-            var info = provider.GetRequiredService<MessagePipeDiagnosticsInfo>();
             var pingHandler = provider.GetRequiredService<IRequestHandler<Ping, Pong>>();
 
             var pong = pingHandler.Invoke(new Ping("myon!"));
@@ -27,7 +26,6 @@ namespace __MessagePipe.Tests
         public void TestCancellation()
         {
             var provider = TestHelper.BuildServiceProvider();
-            var info = provider.GetRequiredService<MessagePipeDiagnosticsInfo>();
             var pingHandler = provider.GetRequiredService<IRequestHandler<NotImplementedPing, NotImplementedPong>>();
 
             pingHandler.Invoking(x => x.Invoke(new NotImplementedPing())).Should().Throw<NotImplementedException>();

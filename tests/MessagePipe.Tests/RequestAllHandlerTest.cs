@@ -16,7 +16,6 @@ namespace __MessagePipe.Tests
         public void TestHandling()
         {
             var provider = TestHelper.BuildServiceProvider();
-            var info = provider.GetRequiredService<MessagePipeDiagnosticsInfo>();
             var pingHandler = provider.GetRequiredService<IRequestAllHandler<Ping, Pong>>();
 
             var pongs = pingHandler.InvokeAll(new Ping("myon!"));
@@ -28,7 +27,6 @@ namespace __MessagePipe.Tests
         public void TestLazyHandling()
         {
             var provider = TestHelper.BuildServiceProvider();
-            var info = provider.GetRequiredService<MessagePipeDiagnosticsInfo>();
             var pingHandler = provider.GetRequiredService<IRequestAllHandler<Ping, Pong>>();
 
             var pongs = pingHandler.InvokeAllLazy(new Ping("myon!"));
@@ -40,7 +38,6 @@ namespace __MessagePipe.Tests
         public void TestCancellation()
         {
             var provider = TestHelper.BuildServiceProvider();
-            var info = provider.GetRequiredService<MessagePipeDiagnosticsInfo>();
             var pingHandler = provider.GetRequiredService<IRequestAllHandler<NotImplementedPing, NotImplementedPong>>();
 
             pingHandler.Invoking(x => x.InvokeAll(new NotImplementedPing())).Should().Throw<NotImplementedException>();
