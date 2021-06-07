@@ -27,7 +27,7 @@ namespace __MessagePipe.Tests
             var nullPong = handler.InvokeAll(nullPing);
 
             validPong.Should().ContainEquivalentOf(new Pong("ping was null."));
-            validPong.Should().ContainEquivalentOf(new Pong("ping was null!"));
+            nullPong.Should().ContainEquivalentOf(new Pong("ping was null!"));
         }
 
         public class PingPongHandlerFilter : RequestHandlerFilter<Ping, Pong>
