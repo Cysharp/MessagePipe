@@ -14,13 +14,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
+        <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
         <PackageReference Include="Easy.MessageHub" Version="5.0.0" />
         <PackageReference Include="MediatR" Version="9.0.0" />
         <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />
-        <PackageReference Include="Microsoft.Toolkit.Mvvm" Version="7.0.1" />
-        <PackageReference Include="Prism.Core" Version="8.0.0.1909" />
+        <PackageReference Include="Microsoft.Toolkit.Mvvm" Version="7.0.2" />
+        <PackageReference Include="Prism.Core" Version="8.1.97" />
         <PackageReference Include="PubSub" Version="4.0.1" />
         <PackageReference Include="System.Reactive" Version="5.0.0" />
     </ItemGroup>
