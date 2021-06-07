@@ -1,11 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using FluentAssertions;
 
 namespace MessagePipe.Tests
@@ -37,14 +33,12 @@ namespace MessagePipe.Tests
 
             pub.Publish(9999);
 
-            store.Logs.Should().Equal(new[]
-            {
+            store.Logs.Should().Equal(
                 "Order:-10",
                 "Order:999",
                 "Order:1099",
                 "Order:1200",
-                "Handle:9999",
-            });
+                "Handle:9999");
         }
 
 
@@ -68,13 +62,11 @@ namespace MessagePipe.Tests
             var result = handler.Invoke(1999);
             result.Should().Be(19990);
 
-            store.Logs.Should().Equal(new[]
-            {
+            store.Logs.Should().Equal(
                 "Order:-1799",
                 "Order:999",
                 "Order:1099",
-                "Invoke:1999",
-            });
+                "Invoke:1999");
         }
 
         [Fact]
@@ -98,15 +90,13 @@ namespace MessagePipe.Tests
             var result = handler.InvokeAll(1999);
             result.Should().Equal(19990, 199900);
 
-            store.Logs.Should().Equal(new[]
-            {
+            store.Logs.Should().Equal(
                 "Order:-1799",
                 "Order:999",
                 "Order:1099",
                 "Invoke:1999",
                 "Order:-1799",
-                "Invoke2:1999",
-            });
+                "Invoke2:1999");
         }
     }
 

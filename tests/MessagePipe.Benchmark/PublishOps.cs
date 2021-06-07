@@ -202,7 +202,7 @@ namespace MessagePipe.Benchmark
                 if (i == 0) Console.WriteLine("WARM:");
                 if (i == 1) Console.WriteLine("RUN:");
 
-                result = new (string, int)[]
+                result = new[]
                 {
                     Measure("MessagePipe", () => p.Publish(m)),
                     Measure("event", () => ev(m)),

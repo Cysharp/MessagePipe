@@ -22,7 +22,7 @@ namespace MessagePipe.Tests
 
             await new AsyncHandlerWhenAll<int>(handlers, 999, CancellationToken.None);
 
-            handlers.OfType<ICheck>().Select(x => x.ReceivedMessage).Should().Equal(new[] { 999, 999, 999, 999, 999 });
+            handlers.OfType<ICheck>().Select(x => x.ReceivedMessage).Should().Equal(999, 999, 999, 999, 999);
 
             // again(use pool?)
             handlers = Enumerable.Range(1, 10)
@@ -32,7 +32,7 @@ namespace MessagePipe.Tests
 
             await new AsyncHandlerWhenAll<int>(handlers, 999, CancellationToken.None);
 
-            handlers.OfType<ICheck>().Select(x => x.ReceivedMessage).Should().Equal(new[] { 999, 999, 999, 999, 999 });
+            handlers.OfType<ICheck>().Select(x => x.ReceivedMessage).Should().Equal(999, 999, 999, 999, 999);
         }
 
         [Fact]
@@ -58,7 +58,7 @@ namespace MessagePipe.Tests
 
             var xs = await new AsyncRequestHandlerWhenAll<int, int>(handlers, 10, CancellationToken.None);
 
-            xs.Should().Equal(new[] { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 });
+            xs.Should().Equal(100, 100, 100, 100, 100, 100, 100, 100, 100, 100);
 
             // again(use pool?)
             handlers = Enumerable.Range(1, 10)
@@ -69,7 +69,7 @@ namespace MessagePipe.Tests
 
             xs = await new AsyncRequestHandlerWhenAll<int, int>(handlers, 10, CancellationToken.None);
 
-            xs.Should().Equal(new[] { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 });
+            xs.Should().Equal(100, 100, 100, 100, 100, 100, 100, 100, 100, 100);
         }
 
         [Fact]

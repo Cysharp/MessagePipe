@@ -49,7 +49,7 @@ namespace MessagePipe.Tests
             }
             // one
             {
-                var xs = new int[] { 10 };
+                var xs = new[] { 10 };
                 var ys = ArrayUtil.ImmutableRemove(xs, (x, _) => x == 999, (object)null);
 
                 ys.Length.Should().Be(1);
@@ -62,34 +62,34 @@ namespace MessagePipe.Tests
             {
                 var xs = new[] { 10, 20 };
                 var ys = ArrayUtil.ImmutableRemove(xs, (x, _) => x == 10, (object)null);
-                ys.Should().Equal(new[] { 20 });
+                ys.Should().Equal(20);
             }
             // two, last remove
             {
                 var xs = new[] { 10, 20 };
                 var ys = ArrayUtil.ImmutableRemove(xs, (x, _) => x == 20, (object)null);
-                ys.Should().Equal(new[] { 10 });
+                ys.Should().Equal(10);
             }
 
             // three, first remove
             {
                 var xs = new[] { 10, 20, 30 };
                 var ys = ArrayUtil.ImmutableRemove(xs, (x, _) => x == 10, (object)null);
-                ys.Should().Equal(new[] { 20, 30 });
+                ys.Should().Equal(20, 30);
             }
 
             // three, middle remove
             {
                 var xs = new[] { 10, 20, 30 };
                 var ys = ArrayUtil.ImmutableRemove(xs, (x, _) => x == 20, (object)null);
-                ys.Should().Equal(new[] { 10, 30 });
+                ys.Should().Equal(10, 30);
             }
 
             // three, last remove
             {
                 var xs = new[] { 10, 20, 30 };
                 var ys = ArrayUtil.ImmutableRemove(xs, (x, _) => x == 30, (object)null);
-                ys.Should().Equal(new[] { 10, 20 });
+                ys.Should().Equal(10, 20);
             }
 
             // many patterns
