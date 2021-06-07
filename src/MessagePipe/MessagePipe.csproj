@@ -21,6 +21,7 @@
     </ItemGroup>
     <ItemGroup Condition="$(TargetFramework) == 'netstandard2.0'">
         <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="5.0.0" />
+        <PackageReference Include="System.Threading.Channels" Version="5.0.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -41,6 +42,10 @@
     </PropertyGroup>
     <ItemGroup>
         <TargetFiles1 Include="$(MSBuildProjectDirectory)\**\*.cs" Exclude="**\bin\**\*.*;**\obj\**\*.*;_InternalVisibleTo.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <TargetFiles1 Remove="SubscriberExtensions.AsObservable.cs" />
+      <TargetFiles1 Remove="SubscriberExtensions.FirstAsync.cs" />
     </ItemGroup>
 
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">

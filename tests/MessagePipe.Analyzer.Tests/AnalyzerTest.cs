@@ -21,6 +21,17 @@ namespace MessagePipe.Analyzer.Tests
             }.RunAsync();
         }
 
+        static async Task VerifyAsync(string testCode)
+        {
+
+            await new CSharpAnalyzerTest<MessagePipeAnalyzer, XUnitVerifier>
+            {
+                ReferenceAssemblies = ReferenceAssemblies.Default.WithPackages(ImmutableArray.Create(new PackageIdentity("MessagePipe", "1.4.0"))),
+                ExpectedDiagnostics = { new DiagnosticResult("MPA001", DiagnosticSeverity.Error) },
+                TestCode = testCode
+            }.RunAsync();
+        }
+
         static async Task VerifyNoErrorAsync(string testCode)
         {
 
@@ -47,6 +58,22 @@ class C
 
             await VerifyAsync(testCode, 7, 9, 7, 39);
         }
+
+//        [Fact]
+//        public async Task SimpleTest2()
+//        {
+//            var testCode = @"using MessagePipe;
+
+//class C
+//{
+//    public void M(ISubscriber<int> subscriber)
+//    {
+//        [|subscriber.Subscribe(x => { })|];
+//    }
+//}";
+
+//            await VerifyAsync(testCode);
+//        }
 
         [Fact]
         public async Task NoErrorReport()
