@@ -49,7 +49,7 @@ namespace MessagePipe.Internal
                 else
                 {
                     // resize
-                    var newValues = new T[(int)(values.Length * 2)];
+                    var newValues = new T[values.Length * 2];
                     Array.Copy(values, 0, newValues, 0, values.Length);
                     freeIndex.EnsureNewCapacity(newValues.Length);
                     for (int i = values.Length; i < newValues.Length; i++)
