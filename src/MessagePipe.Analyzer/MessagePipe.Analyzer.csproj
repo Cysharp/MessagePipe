@@ -13,7 +13,6 @@
         <PackageTags>analyzer;</PackageTags>
         <Description>Analyzers of MessagePipe to prevent subscription leak.</Description>
         <SignAssembly>true</SignAssembly>
-        <AssemblyOriginatorKeyFile>../../opensource.snk</AssemblyOriginatorKeyFile>
     </PropertyGroup>
 
     <ItemGroup>
