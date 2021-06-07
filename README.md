@@ -454,6 +454,7 @@ However, the extension method allows you to write `Action<T>` directly.
 public static IDisposable Subscribe<TMessage>(this ISubscriber<TMessage> subscriber, Action<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters)
 public static IDisposable Subscribe<TMessage>(this ISubscriber<TMessage> subscriber, Action<TMessage> handler, Func<TMessage, bool> predicate, params MessageHandlerFilter<TMessage>[] filters)
 public static IObservable<TMessage> AsObservable<TMessage>(this ISubscriber<TMessage> subscriber, params MessageHandlerFilter<TMessage>[] filters)
+public static IAsyncEnumerable<TMessage> AsAsyncEnumerable<TMessage>(this IAsyncSubscriber<TMessage> subscriber, params AsyncMessageHandlerFilter<TMessage>[] filters)
 public static ValueTask<TMessage> FirstAsync<TMessage>(this ISubscriber<TMessage> subscriber, CancellationToken cancellationToken, params MessageHandlerFilter<TMessage>[] filters)
 public static ValueTask<TMessage> FirstAsync<TMessage>(this ISubscriber<TMessage> subscriber, CancellationToken cancellationToken, Func<TMessage, bool> predicate, params MessageHandlerFilter<TMessage>[] filters)
 ```
@@ -461,6 +462,8 @@ public static ValueTask<TMessage> FirstAsync<TMessage>(this ISubscriber<TMessage
 Also, the `Func<TMessage, bool>` overload can filter messages by predicate (internally implemented with PredicateFilter, where Order is int.MinValue and is always checked first).
 
 `AsObservable` can convert message pipeline to `IObservable<T>`, it can handle by Reactive Extensions(in Unity, you can use `UniRx`). `AsObervable` exists in sync subscriber(keyless, keyed, buffered).
+
+`AsAsyncEnumerable` can convert message pipeline to `IAsyncEnumerable<T>`, it can handle by async LINQ and async foreach. `AsAsyncEnumerable` exists in async subscriber(keyless, keyed, buffered).
 
 `FirstAsync` gets the first value of message. It is similar as `AsObservable().FirstAsync()`, `AsObservable().Where().FirstAsync()`. If uses `CancellationTokenSource(TimeSpan)` then similar as `AsObservable().Timeout().FirstAsync()`. Argument of `CancellationToken` is required to avoid task leak. 
 
@@ -889,6 +892,7 @@ public sealed class MessagePipeOptions
     AsyncPublishStrategy DefaultAsyncPublishStrategy; // default is Parallel
     HandlingSubscribeDisposedPolicy HandlingSubscribeDisposedPolic; // default is Ignore
     InstanceLifetime InstanceLifetime; // default is Singleton
+    InstanceLifetime RequestHandlerLifetime; // default is Scoped
     bool EnableAutoRegistration;  // default is true
     bool EnableCaptureStackTrace; // default is false
 
@@ -904,7 +908,7 @@ public enum AsyncPublishStrategy
 
 public enum InstanceLifetime
 {
-    Singleton, Scoped
+    Singleton, Scoped, Transient
 }
 
 public enum HandlingSubscribeDisposedPolicy
@@ -953,6 +957,10 @@ When `ISubscriber.Subscribe` after MessageBroker(publisher/subscriber manager) i
 ### InstanceLifetime
 
 Configure MessageBroker(publisher/subscriber manager)'s lifetime of DI cotainer. You can choose `Singleton` or `Scoped`. Default is `Singleton`. When choose `Scoped`, each messagebrokers manage different subscribers and when scope is disposed, unsubscribe all managing subscribers.
+
+### RequestHandlerLifetime
+
+Configure IRequestHandler/IAsyncRequestHandler's lifetime of DI cotainer. You can choose `Singleton` or `Scoped` or `Transient`. Default is `Scoped`.
 
 ### EnableAutoRegistration/SetAutoRegistrationSearchAssemblies/SetAutoRegistrationSearchTypes
 
