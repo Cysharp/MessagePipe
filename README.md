@@ -45,7 +45,10 @@ Host.CreateDefaultBuilder()
 
 Get the `IPublisher<T>` for publisher, Get the `ISubscribe<T>` for subscriber, like a `Logger<T>`. `T` can be any type, primitive(int, string, etc...), struct, class, enum, etc.
 
-```csharp
+<!-- snippet: Scenes.cs -->
+<a id='snippet-Scenes.cs'></a>
+```cs
+using System;
 using MessagePipe;
 
 public struct MyEvent { }
@@ -53,7 +56,7 @@ public struct MyEvent { }
 public class SceneA
 {
     readonly IPublisher<MyEvent> publisher;
-    
+
     public SceneA(IPublisher<MyEvent> publisher)
     {
         this.publisher = publisher;
@@ -67,14 +70,13 @@ public class SceneA
 
 public class SceneB
 {
-    readonly ISubscriber<MyEvent> subscriber;
     readonly IDisposable disposable;
 
     public SceneB(ISubscriber<MyEvent> subscriber)
     {
         var bag = DisposableBag.CreateBuilder(); // composite disposable for manage subscription
-        
-        subscriber.Subscribe(x => Console.WriteLine("here")).AddTo(bag);
+
+        subscriber.Subscribe(_ => Console.WriteLine("here")).AddTo(bag);
 
         disposable = bag.Build();
     }
@@ -85,6 +87,8 @@ public class SceneB
     }
 }
 ```
+<sup><a href='/tests/MessagePipe.Tests/Snippets/Scenes.cs#L1-L38' title='Snippet source file'>snippet source</a> | <a href='#snippet-Scenes.cs' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
 
 It is similar to event, but decoupled by type as key. The return value of Subscribe is `IDisposable`, which makes it easier to unsubscribe than event. You can release many subscriptions at once by `DisposableBag`(`CompositeDisposable`). See the [Managing Subscription and Diagnostics](#managing-subscription-and-diagnostics) section for more details.
 
@@ -186,60 +190,212 @@ Publish/Subscribe
 ---
 Publish/Subscribe interface has keyed(topic) and keyless, sync and async interface.
 
-```csharp
-// keyless-sync
-public interface IPublisher<TMessage>
-{
-    void Publish(TMessage message);
-}
+<!-- snippet: IPublisherSubscriber.cs -->
+<a id='snippet-IPublisherSubscriber.cs'></a>
+```cs
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
-public interface ISubscriber<TMessage>
+namespace MessagePipe
 {
-    IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
-}
+    // handler
 
-// keyless-async
-public interface IAsyncPublisher<TMessage>
-{
-    // async interface's publish is fire-and-forget
-    void Publish(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
-    ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
-    ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
-}
+    public interface IMessageHandler<TMessage>
+    {
+        void Handle(TMessage message);
+    }
 
-public interface IAsyncSubscriber<TMessage>
-{
-    IDisposable Subscribe(IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
-}
+    public interface IAsyncMessageHandler<TMessage>
+    {
+        ValueTask HandleAsync(TMessage message, CancellationToken cancellationToken);
+    }
 
-// keyed-sync
-public interface IPublisher<TKey, TMessage>
-    where TKey : notnull
-{
-    void Publish(TKey key, TMessage message);
-}
+    // Keyless
 
-public interface ISubscriber<TKey, TMessage>
-    where TKey : notnull
-{
-    IDisposable Subscribe(TKey key, IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
-}
+    public interface IPublisher<TMessage>
+    {
+        void Publish(TMessage message);
+    }
 
-// keyed-async
-public interface IAsyncPublisher<TKey, TMessage>
-    where TKey : notnull
-{
-    void Publish(TKey key, TMessage message, CancellationToken cancellationToken = default(CancellationToken));
-    ValueTask PublishAsync(TKey key, TMessage message, CancellationToken cancellationToken = default(CancellationToken));
-    ValueTask PublishAsync(TKey key, TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
-}
+    public interface ISubscriber<TMessage>
+    {
+        IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
+    }
 
-public interface IAsyncSubscriber<TKey, TMessage>
-    where TKey : notnull
-{
-    IDisposable Subscribe(TKey key, IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
+    public interface IAsyncPublisher<TMessage>
+    {
+        void Publish(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
+    }
+
+    public interface IAsyncSubscriber<TMessage>
+    {
+        IDisposable Subscribe(IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
+    }
+
+    // Keyed
+
+    public interface IPublisher<TKey, TMessage>
+        where TKey : notnull
+    {
+        void Publish(TKey key, TMessage message);
+    }
+
+    public interface ISubscriber<TKey, TMessage>
+        where TKey : notnull
+    {
+        IDisposable Subscribe(TKey key, IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
+    }
+
+    public interface IAsyncPublisher<TKey, TMessage>
+        where TKey : notnull
+    {
+        void Publish(TKey key, TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        ValueTask PublishAsync(TKey key, TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        ValueTask PublishAsync(TKey key, TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
+    }
+
+    public interface IAsyncSubscriber<TKey, TMessage>
+        where TKey : notnull
+    {
+        IDisposable Subscribe(TKey key, IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
+    }
+
+    // buffered keyless
+
+    public interface IBufferedPublisher<TMessage>
+    {
+        void Publish(TMessage message);
+    }
+
+    public interface IBufferedSubscriber<TMessage>
+    {
+        IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
+    }
+
+    public interface IBufferedAsyncPublisher<TMessage>
+    {
+        void Publish(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        ValueTask PublishAsync(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        ValueTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
+    }
+
+    public interface IBufferedAsyncSubscriber<TMessage>
+    {
+        ValueTask<IDisposable> SubscribeAsync(IAsyncMessageHandler<TMessage> handler, CancellationToken cancellationToken = default);
+        ValueTask<IDisposable> SubscribeAsync(IAsyncMessageHandler<TMessage> handler, AsyncMessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken = default);
+    }
+
+    // NOTE: buffered Keyed is undefined
+    // because difficult to avoid (unused)key and keep latest value memory leak.
 }
 ```
+<sup><a href='/src/MessagePipe/IPublisherSubscriber.cs#L1-L98' title='Snippet source file'>snippet source</a> | <a href='#snippet-IPublisherSubscriber.cs' title='Start of snippet'>anchor</a></sup>
+<a id='snippet-IPublisherSubscriber.cs-1'></a>
+```cs
+using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+
+namespace MessagePipe
+{
+    // handler
+
+    public interface IMessageHandler<TMessage>
+    {
+        void Handle(TMessage message);
+    }
+
+    public interface IAsyncMessageHandler<TMessage>
+    {
+        UniTask HandleAsync(TMessage message, CancellationToken cancellationToken);
+    }
+
+    // Keyless
+
+    public interface IPublisher<TMessage>
+    {
+        void Publish(TMessage message);
+    }
+
+    public interface ISubscriber<TMessage>
+    {
+        IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
+    }
+
+    public interface IAsyncPublisher<TMessage>
+    {
+        void Publish(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        UniTask PublishAsync(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        UniTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
+    }
+
+    public interface IAsyncSubscriber<TMessage>
+    {
+        IDisposable Subscribe(IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
+    }
+
+    // Keyed
+
+    public interface IPublisher<TKey, TMessage>
+        
+    {
+        void Publish(TKey key, TMessage message);
+    }
+
+    public interface ISubscriber<TKey, TMessage>
+        
+    {
+        IDisposable Subscribe(TKey key, IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
+    }
+
+    public interface IAsyncPublisher<TKey, TMessage>
+        
+    {
+        void Publish(TKey key, TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        UniTask PublishAsync(TKey key, TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        UniTask PublishAsync(TKey key, TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
+    }
+
+    public interface IAsyncSubscriber<TKey, TMessage>
+        
+    {
+        IDisposable Subscribe(TKey key, IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
+    }
+
+    // buffered keyless
+
+    public interface IBufferedPublisher<TMessage>
+    {
+        void Publish(TMessage message);
+    }
+
+    public interface IBufferedSubscriber<TMessage>
+    {
+        IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters);
+    }
+
+    public interface IBufferedAsyncPublisher<TMessage>
+    {
+        void Publish(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        UniTask PublishAsync(TMessage message, CancellationToken cancellationToken = default(CancellationToken));
+        UniTask PublishAsync(TMessage message, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default(CancellationToken));
+    }
+
+    public interface IBufferedAsyncSubscriber<TMessage>
+    {
+        UniTask<IDisposable> SubscribeAsync(IAsyncMessageHandler<TMessage> handler, CancellationToken cancellationToken = default);
+        UniTask<IDisposable> SubscribeAsync(IAsyncMessageHandler<TMessage> handler, AsyncMessageHandlerFilter<TMessage>[] filters, CancellationToken cancellationToken = default);
+    }
+
+    // NOTE: buffered Keyed is undefined
+    // because difficult to avoid (unused)key and keep latest value memory leak.
+}
+```
+<sup><a href='/src/MessagePipe.Unity/Assets/Plugins/MessagePipe/Runtime/IPublisherSubscriber.cs#L1-L98' title='Snippet source file'>snippet source</a> | <a href='#snippet-IPublisherSubscriber.cs-1' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
 
 All are available in the form of `IPublisher/Subscribe<T>` in the DI. async handler can await all subscribers completed by `await PublishAsync`. Asynchronous methods can work sequentially or in parallel, depending on `AsyncPublishStrategy` (defaults is `Parallel`, can be changed by `MessagePipeOptions` or by specifying at publish time). If you don't need to wait, you can call `void Publish` to act as fire-and-forget.
 
@@ -284,7 +440,12 @@ MessagePipe has better properties than a normal C# event
 * To monitor subscription leak by `MessagePipeDiagnosticsInfo`
 * TO prevent subscription leak by `MessagePipe.Analyzer`
 
-```csharp
+<!-- snippet: BetterEvent.cs -->
+<a id='snippet-BetterEvent.cs'></a>
+```cs
+using System;
+using MessagePipe;
+
 public class BetterEvent : IDisposable
 {
     // using MessagePipe instead of C# event/Rx.Subject
@@ -316,6 +477,8 @@ public class BetterEvent : IDisposable
     }
 }
 ```
+<sup><a href='/tests/MessagePipe.Tests/Snippets/BetterEvent.cs#L1-L33' title='Snippet source file'>snippet source</a> | <a href='#snippet-BetterEvent.cs' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
 
 If you want to create event outside of DI, see [Global Provider](#global-provider) section.
 
@@ -333,17 +496,118 @@ Request/Response/All
 ---
 Similar as [MediatR](https://github.com/jbogard/MediatR), implement support of mediator pattern.
 
-```csharp
-public interface IRequestHandler<in TRequest, out TResponse>
-{
-    TResponse Invoke(TRequest request);
-}
+<!-- snippet: IRequestHandler.cs -->
+<a id='snippet-IRequestHandler.cs'></a>
+```cs
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
-public interface IAsyncRequestHandler<in TRequest, TResponse>
+namespace MessagePipe
 {
-    ValueTask<TResponse> InvokeAsync(TRequest request, CancellationToken cancellationToken = default);
+    // Sync
+
+    public interface IRequestHandler
+    {
+    }
+
+    public interface IRequestHandlerCore<in TRequest, out TResponse> : IRequestHandler
+    {
+        TResponse Invoke(TRequest request);
+    }
+
+    public interface IRequestHandler<in TRequest, out TResponse> : IRequestHandlerCore<TRequest, TResponse>
+    {
+    }
+
+    public interface IRequestAllHandler<in TRequest, out TResponse>
+    {
+        TResponse[] InvokeAll(TRequest request);
+        IEnumerable<TResponse> InvokeAllLazy(TRequest request);
+    }
+
+    // Async
+
+    public interface IAsyncRequestHandler
+    {
+    }
+
+    public interface IAsyncRequestHandlerCore<in TRequest, TResponse> : IAsyncRequestHandler
+    {
+        ValueTask<TResponse> InvokeAsync(TRequest request, CancellationToken cancellationToken = default);
+    }
+
+    public interface IAsyncRequestHandler<in TRequest, TResponse> : IAsyncRequestHandlerCore<TRequest, TResponse>
+    {
+    }
+
+    public interface IAsyncRequestAllHandler<in TRequest, TResponse>
+    {
+        ValueTask<TResponse[]> InvokeAllAsync(TRequest request, CancellationToken cancellationToken = default);
+        ValueTask<TResponse[]> InvokeAllAsync(TRequest request, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default);
+        IAsyncEnumerable<TResponse> InvokeAllLazyAsync(TRequest request, CancellationToken cancellationToken = default);
+    }
+
+
 }
 ```
+<sup><a href='/src/MessagePipe/IRequestHandler.cs#L1-L51' title='Snippet source file'>snippet source</a> | <a href='#snippet-IRequestHandler.cs' title='Start of snippet'>anchor</a></sup>
+<a id='snippet-IRequestHandler.cs-1'></a>
+```cs
+using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+
+namespace MessagePipe
+{
+    // Sync
+
+    public interface IRequestHandler
+    {
+    }
+
+    public interface IRequestHandlerCore<in TRequest, out TResponse> : IRequestHandler
+    {
+        TResponse Invoke(TRequest request);
+    }
+
+    public interface IRequestHandler<in TRequest, out TResponse> : IRequestHandlerCore<TRequest, TResponse>
+    {
+    }
+
+    public interface IRequestAllHandler<in TRequest, out TResponse>
+    {
+        TResponse[] InvokeAll(TRequest request);
+        IEnumerable<TResponse> InvokeAllLazy(TRequest request);
+    }
+
+    // Async
+
+    public interface IAsyncRequestHandler
+    {
+    }
+
+    public interface IAsyncRequestHandlerCore<in TRequest, TResponse> : IAsyncRequestHandler
+    {
+        UniTask<TResponse> InvokeAsync(TRequest request, CancellationToken cancellationToken = default);
+    }
+
+    public interface IAsyncRequestHandler<in TRequest, TResponse> : IAsyncRequestHandlerCore<TRequest, TResponse>
+    {
+    }
+
+    public interface IAsyncRequestAllHandler<in TRequest, TResponse>
+    {
+        UniTask<TResponse[]> InvokeAllAsync(TRequest request, CancellationToken cancellationToken = default);
+        UniTask<TResponse[]> InvokeAllAsync(TRequest request, AsyncPublishStrategy publishStrategy, CancellationToken cancellationToken = default);
+        IUniTaskAsyncEnumerable<TResponse> InvokeAllLazyAsync(TRequest request, CancellationToken cancellationToken = default);
+    }
+
+
+}
+```
+<sup><a href='/src/MessagePipe.Unity/Assets/Plugins/MessagePipe/Runtime/IRequestHandler.cs#L1-L51' title='Snippet source file'>snippet source</a> | <a href='#snippet-IRequestHandler.cs-1' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
 
 For example, declare handler for Ping type.
 
