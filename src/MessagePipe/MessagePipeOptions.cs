@@ -15,7 +15,7 @@ namespace MessagePipe
 
     public enum InstanceLifetime
     {
-        Singleton, Scoped
+        Singleton, Scoped, Transient
     }
 
     public enum HandlingSubscribeDisposedPolicy
@@ -37,7 +37,7 @@ namespace MessagePipe
 
     public sealed class MessagePipeOptions
     {
-        /// <summary>PublishAsync</summary>
+        /// <summary>AsyncPublisher.PublishAsync's concurrent starategy, default is Parallel.</summary>
         public AsyncPublishStrategy DefaultAsyncPublishStrategy { get; set; }
 
 #if !UNITY_2018_3_OR_NEWER
@@ -48,14 +48,20 @@ namespace MessagePipe
         /// <summary>For diagnostics usage, enable MessagePipeDiagnosticsInfo.CapturedStacktraces; default is false.</summary>
         public bool EnableCaptureStackTrace { get; set; }
 
+        /// <summary>Choose how work on subscriber.Subscribe when after disposed, default is Ignore.</summary>
         public HandlingSubscribeDisposedPolicy HandlingSubscribeDisposedPolicy { get; set; }
 
+        /// <summary>Default publisher/subscribe's lifetime scope, default is Singleton.</summary>
         public InstanceLifetime InstanceLifetime { get; set; }
+
+        /// <summary>Default IRequestHandler/IAsyncRequestHandler's lifetime scope, default is Scoped.</summary>
+        public InstanceLifetime RequestHandlerLifetime { get; set; }
 
         public MessagePipeOptions()
         {
             this.DefaultAsyncPublishStrategy = AsyncPublishStrategy.Parallel;
             this.InstanceLifetime = InstanceLifetime.Singleton;
+            this.RequestHandlerLifetime = InstanceLifetime.Scoped;
             this.EnableCaptureStackTrace = false;
             this.HandlingSubscribeDisposedPolicy = HandlingSubscribeDisposedPolicy.Ignore;
 #if !UNITY_2018_3_OR_NEWER

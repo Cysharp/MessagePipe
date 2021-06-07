@@ -43,41 +43,45 @@ namespace MessagePipe
 #if !UNITY_2018_3_OR_NEWER
             // open generics implemntations(.NET Only)
 
-            var lifetime = options.InstanceLifetime; // lifetime is Singleton or Scoped
+            {
+                var lifetime = options.InstanceLifetime; // pubsub lifetime
 
-            // keyless PubSub
-            services.Add(typeof(MessageBrokerCore<>), lifetime);
-            services.Add(typeof(IPublisher<>), typeof(MessageBroker<>), lifetime);
-            services.Add(typeof(ISubscriber<>), typeof(MessageBroker<>), lifetime);
-            services.Add(typeof(BufferedMessageBrokerCore<>), lifetime);
-            services.Add(typeof(IBufferedPublisher<>), typeof(BufferedMessageBroker<>), lifetime);
-            services.Add(typeof(IBufferedSubscriber<>), typeof(BufferedMessageBroker<>), lifetime);
+                // keyless PubSub
+                services.Add(typeof(MessageBrokerCore<>), lifetime);
+                services.Add(typeof(IPublisher<>), typeof(MessageBroker<>), lifetime);
+                services.Add(typeof(ISubscriber<>), typeof(MessageBroker<>), lifetime);
+                services.Add(typeof(BufferedMessageBrokerCore<>), lifetime);
+                services.Add(typeof(IBufferedPublisher<>), typeof(BufferedMessageBroker<>), lifetime);
+                services.Add(typeof(IBufferedSubscriber<>), typeof(BufferedMessageBroker<>), lifetime);
 
-            // keyless PubSub async
-            services.Add(typeof(AsyncMessageBrokerCore<>), lifetime);
-            services.Add(typeof(IAsyncPublisher<>), typeof(AsyncMessageBroker<>), lifetime);
-            services.Add(typeof(IAsyncSubscriber<>), typeof(AsyncMessageBroker<>), lifetime);
-            services.Add(typeof(BufferedAsyncMessageBrokerCore<>), lifetime);
-            services.Add(typeof(IBufferedAsyncPublisher<>), typeof(BufferedAsyncMessageBroker<>), lifetime);
-            services.Add(typeof(IBufferedAsyncSubscriber<>), typeof(BufferedAsyncMessageBroker<>), lifetime);
+                // keyless PubSub async
+                services.Add(typeof(AsyncMessageBrokerCore<>), lifetime);
+                services.Add(typeof(IAsyncPublisher<>), typeof(AsyncMessageBroker<>), lifetime);
+                services.Add(typeof(IAsyncSubscriber<>), typeof(AsyncMessageBroker<>), lifetime);
+                services.Add(typeof(BufferedAsyncMessageBrokerCore<>), lifetime);
+                services.Add(typeof(IBufferedAsyncPublisher<>), typeof(BufferedAsyncMessageBroker<>), lifetime);
+                services.Add(typeof(IBufferedAsyncSubscriber<>), typeof(BufferedAsyncMessageBroker<>), lifetime);
 
-            // keyed PubSub
-            services.Add(typeof(MessageBrokerCore<,>), lifetime);
-            services.Add(typeof(IPublisher<,>), typeof(MessageBroker<,>), lifetime);
-            services.Add(typeof(ISubscriber<,>), typeof(MessageBroker<,>), lifetime);
+                // keyed PubSub
+                services.Add(typeof(MessageBrokerCore<,>), lifetime);
+                services.Add(typeof(IPublisher<,>), typeof(MessageBroker<,>), lifetime);
+                services.Add(typeof(ISubscriber<,>), typeof(MessageBroker<,>), lifetime);
 
-            // keyed PubSub async
-            services.Add(typeof(AsyncMessageBrokerCore<,>), lifetime);
-            services.Add(typeof(IAsyncPublisher<,>), typeof(AsyncMessageBroker<,>), lifetime);
-            services.Add(typeof(IAsyncSubscriber<,>), typeof(AsyncMessageBroker<,>), lifetime);
+                // keyed PubSub async
+                services.Add(typeof(AsyncMessageBrokerCore<,>), lifetime);
+                services.Add(typeof(IAsyncPublisher<,>), typeof(AsyncMessageBroker<,>), lifetime);
+                services.Add(typeof(IAsyncSubscriber<,>), typeof(AsyncMessageBroker<,>), lifetime);
+            }
+
+            var lifetime2 = options.RequestHandlerLifetime; // requesthandler lifetime
 
             // RequestHandler
-            services.Add(typeof(IRequestHandler<,>), typeof(RequestHandler<,>), lifetime);
-            services.Add(typeof(IAsyncRequestHandler<,>), typeof(AsyncRequestHandler<,>), lifetime);
+            services.Add(typeof(IRequestHandler<,>), typeof(RequestHandler<,>), lifetime2);
+            services.Add(typeof(IAsyncRequestHandler<,>), typeof(AsyncRequestHandler<,>), lifetime2);
 
             // RequestAll
-            services.Add(typeof(IRequestAllHandler<,>), typeof(RequestAllHandler<,>), lifetime);
-            services.Add(typeof(IAsyncRequestAllHandler<,>), typeof(AsyncRequestAllHandler<,>), lifetime);
+            services.Add(typeof(IRequestAllHandler<,>), typeof(RequestAllHandler<,>), lifetime2);
+            services.Add(typeof(IAsyncRequestAllHandler<,>), typeof(AsyncRequestAllHandler<,>), lifetime2);
 
             // auto registration is .NET only.
             if (options.EnableAutoRegistration)
@@ -86,7 +90,7 @@ namespace MessagePipe
                 // request handler is option's lifetime, filter is transient
                 if (options.autoregistrationAssemblies == null && options.autoregistrationTypes == null)
                 {
-                    AddRequestHandlerAndFilterFromTypes(services, lifetime, TypeCollector.CollectFromCurrentDomain());
+                    AddRequestHandlerAndFilterFromTypes(services, lifetime2, TypeCollector.CollectFromCurrentDomain());
                 }
                 else
                 {
@@ -95,7 +99,7 @@ namespace MessagePipe
                         : Enumerable.Empty<Type>();
                     var types = options.autoregistrationTypes ?? Enumerable.Empty<Type>();
 
-                    AddRequestHandlerAndFilterFromTypes(services, lifetime, fromAssemblies.Concat(types).Distinct());
+                    AddRequestHandlerAndFilterFromTypes(services, lifetime2, fromAssemblies.Concat(types).Distinct());
                 }
             }
 
@@ -181,7 +185,7 @@ namespace MessagePipe
                     }
 
                     registered = true;
-                    services.Add(iType, type, ((MessagePipeOptions)options.ImplementationInstance!).InstanceLifetime);
+                    services.Add(iType, type, ((MessagePipeOptions)options.ImplementationInstance!).RequestHandlerLifetime);
                 }
             }
 
@@ -210,13 +214,17 @@ namespace MessagePipe
 
         internal static void Add(this IServiceCollection services, Type serviceType, InstanceLifetime lifetime)
         {
-            var lt = (lifetime == InstanceLifetime.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
+            var lt = (lifetime == InstanceLifetime.Scoped) ? ServiceLifetime.Scoped
+                   : (lifetime == InstanceLifetime.Singleton) ? ServiceLifetime.Singleton
+                   : ServiceLifetime.Transient;
             services.Add(new ServiceDescriptor(serviceType, serviceType, lt));
         }
 
         internal static void Add(this IServiceCollection services, Type serviceType, Type implementationType, InstanceLifetime lifetime)
         {
-            var lt = (lifetime == InstanceLifetime.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
+            var lt = (lifetime == InstanceLifetime.Scoped) ? ServiceLifetime.Scoped
+                   : (lifetime == InstanceLifetime.Singleton) ? ServiceLifetime.Singleton
+                   : ServiceLifetime.Transient;
             services.Add(new ServiceDescriptor(serviceType, implementationType, lt));
         }
 
@@ -283,7 +291,7 @@ namespace MessagePipe
                     }
                 }
 
-            NEXT_TYPE:
+                NEXT_TYPE:
                 continue;
             }
         }

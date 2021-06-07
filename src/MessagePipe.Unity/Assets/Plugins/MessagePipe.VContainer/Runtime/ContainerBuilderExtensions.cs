@@ -31,7 +31,7 @@ namespace MessagePipe
         /// <summary>Register IPublisher[TMessage] and ISubscriber[TMessage](includes Async/Buffered) to container builder.</summary>
         public static IContainerBuilder RegisterMessageBroker<TMessage>(this IContainerBuilder builder, MessagePipeOptions options)
         {
-            var lifetime = GetLifetime(options);
+            var lifetime = GetLifetime(options.InstanceLifetime);
             var services = new ContainerBuilderProxy(builder);
 
             // keyless PubSub
@@ -60,7 +60,7 @@ namespace MessagePipe
         /// <summary>Register IPublisher[TKey, TMessage] and ISubscriber[TKey, TMessage](includes Async) to container builder.</summary>
         public static IContainerBuilder RegisterMessageBroker<TKey, TMessage>(this IContainerBuilder builder, MessagePipeOptions options)
         {
-            var lifetime = GetLifetime(options);
+            var lifetime = GetLifetime(options.InstanceLifetime);
             var services = new ContainerBuilderProxy(builder);
 
             // keyed PubSub
@@ -80,7 +80,7 @@ namespace MessagePipe
         public static IContainerBuilder RegisterRequestHandler<TRequest, TResponse, THandler>(this IContainerBuilder builder, MessagePipeOptions options)
             where THandler : IRequestHandler
         {
-            var lifetime = GetLifetime(options);
+            var lifetime = GetLifetime(options.RequestHandlerLifetime);
             var services = new ContainerBuilderProxy(builder);
 
             services.Add(typeof(IRequestHandlerCore<TRequest, TResponse>), typeof(THandler), lifetime);
@@ -97,7 +97,7 @@ namespace MessagePipe
         public static IContainerBuilder RegisterAsyncRequestHandler<TRequest, TResponse, THandler>(this IContainerBuilder builder, MessagePipeOptions options)
             where THandler : IAsyncRequestHandler
         {
-            var lifetime = GetLifetime(options);
+            var lifetime = GetLifetime(options.RequestHandlerLifetime);
             var services = new ContainerBuilderProxy(builder);
 
             services.Add(typeof(IAsyncRequestHandlerCore<TRequest, TResponse>), typeof(THandler), lifetime);
@@ -150,9 +150,11 @@ namespace MessagePipe
             return builder;
         }
 
-        static Lifetime GetLifetime(MessagePipeOptions options)
+        static Lifetime GetLifetime(InstanceLifetime lifetime)
         {
-            return options.InstanceLifetime == InstanceLifetime.Scoped ? Lifetime.Scoped : Lifetime.Singleton;
+            return (lifetime == InstanceLifetime.Scoped) ? Lifetime.Scoped
+                : (lifetime == InstanceLifetime.Singleton) ? Lifetime.Singleton
+                : Lifetime.Transient;
         }
     }
 }

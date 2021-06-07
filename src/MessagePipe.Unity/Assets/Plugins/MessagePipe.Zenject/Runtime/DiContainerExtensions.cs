@@ -25,7 +25,12 @@ namespace MessagePipe
                 // Zenject 6 does not allow regsiter multiple singleton, it causes annoying error.
                 // https://github.com/modesttree/Zenject#upgrade-guide-for-zenject-6
                 // so force use Scoped.
-                options.InstanceLifetime = InstanceLifetime.Scoped;
+                options.InstanceLifetime = (options.InstanceLifetime == InstanceLifetime.Singleton)
+                    ? InstanceLifetime.Scoped
+                    : options.RequestHandlerLifetime;
+                options.RequestHandlerLifetime = (options.RequestHandlerLifetime == InstanceLifetime.Singleton)
+                    ? InstanceLifetime.Scoped
+                    : options.RequestHandlerLifetime;
             });
 
             builder.Bind<IServiceProvider>().To<DiContainerProviderProxy>().AsCached();
@@ -85,7 +90,7 @@ namespace MessagePipe
         public static DiContainer BindRequestHandler<TRequest, TResponse, THandler>(this DiContainer builder, MessagePipeOptions options)
             where THandler : IRequestHandler
         {
-            var lifetime = options.InstanceLifetime;
+            var lifetime = options.RequestHandlerLifetime;
             var services = new DiContainerProxy(builder);
 
             services.Add(typeof(IRequestHandlerCore<TRequest, TResponse>), typeof(THandler), lifetime);
@@ -101,7 +106,7 @@ namespace MessagePipe
         public static DiContainer BindAsyncRequestHandler<TRequest, TResponse, THandler>(this DiContainer builder, MessagePipeOptions options)
             where THandler : IAsyncRequestHandler
         {
-            var lifetime = options.InstanceLifetime;
+            var lifetime = options.RequestHandlerLifetime;
             var services = new DiContainerProxy(builder);
 
             services.Add(typeof(IAsyncRequestHandlerCore<TRequest, TResponse>), typeof(THandler), lifetime);
