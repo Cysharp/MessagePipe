@@ -1,13 +1,10 @@
 ﻿#pragma warning disable CS1998
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using FluentAssertions;
-using System.Runtime.CompilerServices;
 using MessagePipe;
 using MessagePipe.Tests;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +14,6 @@ namespace __MessagePipe.Tests
 {
     public class RequestAllHandlerAsyncFilterTest
     {
-        public static string Message;
         [Fact]
         public async Task AsyncFilterTest()
         {
@@ -69,16 +65,16 @@ namespace __MessagePipe.Tests
 
         public class Ping
         {
-            public string AnyValue;
-            public Ping(string anyValue)
+            public string? AnyValue;
+            public Ping(string? anyValue)
             {
                 AnyValue = anyValue;
             }
         }
         public class Pong
         {
-            public string AnyValue;
-            public Pong(string anyValue)
+            public string? AnyValue;
+            public Pong(string? anyValue)
             {
                 AnyValue = anyValue;
             }
