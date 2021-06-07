@@ -106,7 +106,7 @@ namespace MessagePipe
 
         public override ValueTask HandleAsync(T message, CancellationToken cancellationToken, Func<T, CancellationToken, ValueTask> next)
         {
-            filter.Handle(message, async x => await next(x, cancellationToken));
+            filter.Handle(message, x => next(x, cancellationToken));
             return default;
         }
     }
