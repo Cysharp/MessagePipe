@@ -40,6 +40,7 @@ namespace PostBuildUtility
                 {"using System.Threading.Tasks.Sources;", "" },
                 {"System.Threading.Tasks", "Cysharp.Threading.Tasks" },
                 {"IAsyncEnumerable", "IUniTaskAsyncEnumerable" },
+                {"IAsyncEnumerator", "IUniTaskAsyncEnumerator" },
                 {"[EnumeratorCancellation]", "" },
                 {" core.OnCompleted(continuation, state, token, flags);", " core.OnCompleted(continuation, state, token);" },
                 {"core.SetException", "core.TrySetException" },
