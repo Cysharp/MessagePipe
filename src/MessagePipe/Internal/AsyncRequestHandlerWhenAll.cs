@@ -2,13 +2,12 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace MessagePipe.Internal
 {
     internal partial class AsyncRequestHandlerWhenAll<TRequest, TResponse> : ICriticalNotifyCompletion
     {
-        int completedCount = 0;
+        int completedCount;
         ExceptionDispatchInfo? exception;
         Action continuation = ContinuationSentinel.AvailableContinuation;
 
@@ -26,7 +25,6 @@ namespace MessagePipe.Internal
                     if (awaiter.IsCompleted)
                     {
                         result[i] = awaiter.GetResult();
-                        goto SUCCESSFULLY;
                     }
                     else
                     {
@@ -41,7 +39,6 @@ namespace MessagePipe.Internal
                     return;
                 }
 
-                SUCCESSFULLY:
                 IncrementSuccessfully();
             }
         }
@@ -93,7 +90,6 @@ namespace MessagePipe.Internal
             if (c == ContinuationSentinel.CompletedContinuation) // registered TryInvokeContinuation first.
             {
                 continuation();
-                return;
             }
         }
     }
