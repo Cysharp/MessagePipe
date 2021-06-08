@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -74,6 +75,45 @@ namespace MessagePipe.Tests
         }
 
         [Fact]
+        public async Task WithFilter()
+        {
+            {
+                var provider = TestHelper.BuildServiceProvider();
+
+                var p = provider.GetRequiredService<IBufferedPublisher<IntClass>>();
+                var s = provider.GetRequiredService<IBufferedSubscriber<IntClass>>();
+                var filter = new IntHandlerFilterr();
+
+                p.Publish(new IntClass { Value = 100 });
+
+                using var d = s.Subscribe(_ => { }, filter);
+
+                p.Publish(new IntClass { Value = 9999 });
+
+
+                filter.Capture.Should().Equal(100, 9999);
+            }
+            {
+                var provider = TestHelper.BuildServiceProvider();
+
+                var p = provider.GetRequiredService<IBufferedAsyncPublisher<IntClass>>();
+                var s = provider.GetRequiredService<IBufferedAsyncSubscriber<IntClass>>();
+                var filter = new AsyncIntHandlerFilterr();
+
+                p.Publish(new IntClass { Value = 100 });
+
+#pragma warning disable CS1998
+                using var d = await s.SubscribeAsync(async (x, y) => { }, new[] { filter });
+#pragma warning restore CS1998
+
+                p.Publish(new IntClass { Value = 9999 });
+
+
+                filter.Capture.Should().Equal(100, 9999);
+            }
+        }
+
+        [Fact]
         public void EventFactory()
         {
             var provider = TestHelper.BuildServiceProvider();
@@ -141,5 +181,26 @@ namespace MessagePipe.Tests
     public class IntClass
     {
         public int Value { get; set; }
+    }
+
+    public class IntHandlerFilterr : MessageHandlerFilter<IntClass>
+    {
+        public List<int> Capture { get; set; } = new List<int>();
+
+        public override void Handle(IntClass message, Action<IntClass> next)
+        {
+            Capture.Add(message.Value);
+            next(message);
+        }
+    }
+    public class AsyncIntHandlerFilterr : AsyncMessageHandlerFilter<IntClass>
+    {
+        public List<int> Capture { get; set; } = new List<int>();
+
+        public override ValueTask HandleAsync(IntClass message, CancellationToken cancellationToken, Func<IntClass, CancellationToken, ValueTask> next)
+        {
+            Capture.Add(message.Value);
+            return next(message, cancellationToken);
+        }
     }
 }

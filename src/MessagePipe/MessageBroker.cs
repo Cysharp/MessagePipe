@@ -73,7 +73,7 @@ namespace MessagePipe
             core.Publish(message);
         }
 
-        public IDisposable Subscribe(IMessageHandler<TMessage> handler, params MessageHandlerFilter<TMessage>[] filters)
+        public IDisposable Subscribe(IMessageHandler<TMessage> handler)
         {
             if (IsValueType || lastMessage != null)
             {
