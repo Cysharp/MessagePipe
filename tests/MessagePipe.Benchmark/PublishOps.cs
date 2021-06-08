@@ -169,20 +169,20 @@ namespace MessagePipe.Benchmark
                 actionDelegate[i] = new PlainAction().DelegateAction;
                 interfaceArray[i] = new PlainAction();
 
-                asyncS.Subscribe((_, c) => default(ValueTask));
+                asyncS.Subscribe((_, _) => default(ValueTask));
 
                 toolkitStrong.Register<Message>(new object(), lambdaRef2.Delegate);
                 toolkitWeak.Register<Message>(new object(), lambdaRef2.Delegate);
             }
 
-            signalBus.Subscribe<Message>(m => { });
-            signalBus.Subscribe<Message>(m => { });
-            signalBus.Subscribe<Message>(m => { });
-            signalBus.Subscribe<Message>(m => { });
-            signalBus.Subscribe<Message>(m => { });
-            signalBus.Subscribe<Message>(m => { });
-            signalBus.Subscribe<Message>(m => { });
-            signalBus.Subscribe<Message>(m => { });
+            signalBus.Subscribe<Message>(_ => { });
+            signalBus.Subscribe<Message>(_ => { });
+            signalBus.Subscribe<Message>(_ => { });
+            signalBus.Subscribe<Message>(_ => { });
+            signalBus.Subscribe<Message>(_ => { });
+            signalBus.Subscribe<Message>(_ => { });
+            signalBus.Subscribe<Message>(_ => { });
+            signalBus.Subscribe<Message>(_ => { });
 
         }
 

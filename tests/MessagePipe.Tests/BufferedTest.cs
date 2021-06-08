@@ -52,20 +52,20 @@ namespace MessagePipe.Tests
             var s = provider.GetRequiredService<IBufferedAsyncSubscriber<IntClass>>();
 
             var l = new List<int>();
-            using (await s.SubscribeAsync(async (x, ct) => { await Task.Yield(); lock (l) { l.Add(x.Value); } }))
+            using (await s.SubscribeAsync(async (x, _) => { await Task.Yield(); lock (l) { l.Add(x.Value); } }))
             {
                 l.Count.Should().Be(0);
             }
 
             await p.PublishAsync(new IntClass { Value = 9999 }); // set initial value
 
-            using var d2 = await s.SubscribeAsync(async (x, ct) => { await Task.Yield(); lock (l) { l.Add(x.Value); } });
+            using var d2 = await s.SubscribeAsync(async (x, _) => { await Task.Yield(); lock (l) { l.Add(x.Value); } });
 
             l.Should().Equal(9999);
             await p.PublishAsync(new IntClass { Value = 333 });
             l.Should().Equal(9999, 333);
 
-            using var d3 = await s.SubscribeAsync(async (x, ct) => { await Task.Yield(); lock (l) { l.Add(x.Value); } });
+            using var d3 = await s.SubscribeAsync(async (x, _) => { await Task.Yield(); lock (l) { l.Add(x.Value); } });
             l.Should().Equal(9999, 333, 333);
             await p.PublishAsync(new IntClass { Value = 11 });
             l.Should().Equal(9999, 333, 333, 11, 11);
@@ -154,15 +154,15 @@ namespace MessagePipe.Tests
             var (publisher, subscriber) = evFactory.CreateBufferedAsyncEvent(9999);
 
             var l = new List<int>();
-            var d1 = await subscriber.SubscribeAsync(async (x, ct) => l.Add(x));
-            var d2 = await subscriber.SubscribeAsync(async (x, ct) => l.Add(x * 10));
+            var d1 = await subscriber.SubscribeAsync(async (x, _) => l.Add(x));
+            var d2 = await subscriber.SubscribeAsync(async (x, _) => l.Add(x * 10));
 
             l.Should().Equal(9999, 99990);
 
             await publisher.PublishAsync(10);
             await publisher.PublishAsync(20);
 
-            var d3 = await subscriber.SubscribeAsync(async (x, ct) => l.Add(x * 100));
+            var d3 = await subscriber.SubscribeAsync(async (x, _) => l.Add(x * 100));
 
             publisher.Dispose();
 

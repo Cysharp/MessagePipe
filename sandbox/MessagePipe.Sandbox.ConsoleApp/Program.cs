@@ -60,7 +60,7 @@ namespace MessagePipe
 
 
             var host = Host.CreateDefaultBuilder()
-                    .ConfigureServices((ctx, x) =>
+                    .ConfigureServices((_, x) =>
                     {
 
                         x.AddMessagePipe();
@@ -76,7 +76,7 @@ namespace MessagePipe
             args = new[] { "moremore" };
 
             await Host.CreateDefaultBuilder()
-                .ConfigureServices((ctx, x) =>
+                .ConfigureServices((_, x) =>
                 {
 
 
@@ -369,7 +369,7 @@ namespace MessagePipe
             scope.Dispose();
 
             p.Publish(129);
-            s.Subscribe(x => Console.WriteLine("s2???"));
+            s.Subscribe(_ => Console.WriteLine("s2???"));
 
             p2.Publish(1999);
         }

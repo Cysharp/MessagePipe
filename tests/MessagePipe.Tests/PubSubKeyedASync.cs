@@ -25,9 +25,9 @@ namespace __MessagePipe.Tests
             var s = provider.GetRequiredService<IAsyncSubscriber<string, string>>();
 
             var result = new List<string>();
-            var d1 = s.Subscribe(Key1, async (x, ct) => result.Add("1:" + x));
-            var d2 = s.Subscribe(Key2, async (x, ct) => result.Add("2:" + x));
-            var d3 = s.Subscribe(Key1, async (x, ct) => result.Add("3:" + x));
+            var d1 = s.Subscribe(Key1, async (x, _) => result.Add("1:" + x));
+            var d2 = s.Subscribe(Key2, async (x, _) => result.Add("2:" + x));
+            var d3 = s.Subscribe(Key1, async (x, _) => result.Add("3:" + x));
 
             info.SubscribeCount.Should().Be(3);
 
