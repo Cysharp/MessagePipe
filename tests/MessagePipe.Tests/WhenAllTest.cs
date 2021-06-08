@@ -42,7 +42,7 @@ namespace MessagePipe.Tests
                 .Select((x, i) => (i == 4) ? new ExceptionHandler() : x)
                 .ToArray();
 
-            await Assert.ThrowsAsync<WhenAllTestExteption>(async () =>
+            await Assert.ThrowsAsync<WhenAllTestException>(async () =>
                await new AsyncHandlerWhenAll<int>(handlers, 999, CancellationToken.None));
         }
 
@@ -79,7 +79,7 @@ namespace MessagePipe.Tests
                 .Select((x, i) => (i == 4) ? new ExceptionHandler2() : x)
                 .ToArray();
 
-            await Assert.ThrowsAsync<WhenAllTestExteption>(async () =>
+            await Assert.ThrowsAsync<WhenAllTestException>(async () =>
                await new AsyncRequestHandlerWhenAll<int, int>(handlers, 999, CancellationToken.None));
         }
     }
@@ -89,7 +89,7 @@ namespace MessagePipe.Tests
         int ReceivedMessage { get; }
     }
 
-    class WhenAllTestExteption : Exception
+    class WhenAllTestException : Exception
     {
 
     }
@@ -113,7 +113,7 @@ namespace MessagePipe.Tests
         public async ValueTask HandleAsync(int message, CancellationToken cancellationToken)
         {
             await Task.Delay(TimeSpan.FromMilliseconds(400));
-            throw new WhenAllTestExteption();
+            throw new WhenAllTestException();
         }
     }
 
@@ -145,7 +145,7 @@ namespace MessagePipe.Tests
         public async ValueTask<int> InvokeAsync(int message, CancellationToken cancellationToken)
         {
             await Task.Delay(TimeSpan.FromMilliseconds(400));
-            throw new WhenAllTestExteption();
+            throw new WhenAllTestException();
         }
     }
 
