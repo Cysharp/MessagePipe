@@ -3,7 +3,6 @@ using MessagePipe;
 using MessagePipe.Tests;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Generic;
 using Xunit;
 
 // for check diagnostics, modify namespace.
@@ -20,7 +19,7 @@ namespace __MessagePipe.Tests
 
             var pongs = pingHandler.InvokeAll(new Ping("myon!"));
 
-            pongs.Should().BeEquivalentTo(new Pong[] { new Pong("myon!"), new Pong("myon!myon!") });
+            pongs.Should().BeEquivalentTo(new Pong("myon!"), new Pong("myon!myon!"));
 
         }
         [Fact]
@@ -31,7 +30,7 @@ namespace __MessagePipe.Tests
 
             var pongs = pingHandler.InvokeAllLazy(new Ping("myon!"));
 
-            pongs.Should().BeEquivalentTo(new Pong[] { new Pong("myon!"), new Pong("myon!myon!") });
+            pongs.Should().BeEquivalentTo(new Pong("myon!"), new Pong("myon!myon!"));
 
         }
         [Fact]

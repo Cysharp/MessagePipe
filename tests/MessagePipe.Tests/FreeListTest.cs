@@ -23,14 +23,14 @@ namespace MessagePipe.Tests
             var items = list.GetValues();
             items.Count().Should().Be(8);
 
-            items.Where(x => x != null).Should().BeEquivalentTo(new[] { "a", "b", "c", "d", "e" });
+            items.Where(x => x != null).Should().BeEquivalentTo("a", "b", "c", "d", "e");
 
             list.Remove(c, true);
             list.Remove(e, true);
 
             list.GetCount().Should().Be(3);
 
-            list.GetValues().Where(x => x != null).Should().BeEquivalentTo(new[] { "a", "b", "d" });
+            list.GetValues().Where(x => x != null).Should().BeEquivalentTo("a", "b", "d");
 
             foreach (var i in Enumerable.Range(0, 30)) list.Add(i.ToString()); // 30
             list.Remove(a, true);

@@ -164,7 +164,7 @@ namespace MessagePipe.Tests
             p.Publish(200);
             p.Publish(300);
 
-            list.Should().Equal(new[] { 100 });
+            list.Should().Equal(100);
         }
 
         public class Disposable : IDisposable
