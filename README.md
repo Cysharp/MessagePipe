@@ -1118,7 +1118,7 @@ void Configure(DiContainer builder)
     var options = builder.BindMessagePipe(/* configure option */);
     
     // BindMessageBroker: Register for IPublisher<T>/ISubscriber<T>, includes async and buffered.
-    builder.BindMessageBroker<int>(options);
+    builder.BindMessageBroker<int>(options, ZenjectScope.Single);
 
     // also exists BindMessageBroker<TKey, TMessage>, BindRequestHandler, BindAsyncRequestHandler
 
@@ -1130,7 +1130,7 @@ void Configure(DiContainer builder)
 }
 ```
 
-> Zenject version is not supported `InstanceScope.Singleton` for Zenject's limitation. The default is `Scoped`, which cannot be changed.
+> Zenject version is requried to specify a Zenject scope to binding methods. `InstanceLifetime` and `RequestHandlerLifetime` will be ignored.
 
 `BuiltinContainerBuilder` is builtin minimum DI library for MessagePipe, it no needs other DI library to use MessagePipe. Here is installation sample.
 
