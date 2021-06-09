@@ -37,15 +37,23 @@ namespace MessagePipe.Zenject
             builder.Bind(type).AsSingle();
         }
 
-        public void Add(Type type, ZenjectScope scope)
+        public void Add<T>(ZenjectScope scope)
         {
-            var binder = builder.Bind(type);
+            var binder = builder.Bind<T>();
             SetScope(binder, scope);
         }
 
-        public void Add(Type serviceType, Type implementationType, ZenjectScope scope)
+        public void Add<TService, TImplementation>(ZenjectScope scope)
+            where TImplementation : TService
         {
-            var binder = builder.Bind(serviceType).To(implementationType);
+            var binder = builder.Bind<TService>().To<TImplementation>();
+            SetScope(binder, scope);
+        }
+
+        public void Add<TService1, TService2, TImplementation>(ZenjectScope scope)
+            where TImplementation : TService1, TService2
+        {
+            var binder = builder.Bind(typeof(TService1), typeof(TService2)).To<TImplementation>();
             SetScope(binder, scope);
         }
 

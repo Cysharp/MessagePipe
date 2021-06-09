@@ -18,7 +18,7 @@ public class ZenjectTest
     {
         var resolver = TestHelper.BuildZenject((options, builder) =>
         {
-            builder.BindMessageBroker<int>(options);
+            builder.BindMessageBroker<int>(options, ZenjectScope.Single);
         });
 
         var pub = resolver.Resolve<IPublisher<int>>();
@@ -46,7 +46,7 @@ public class ZenjectTest
     {
         var resolver = TestHelper.BuildZenject((options, builder) =>
         {
-            builder.BindMessageBroker<int>(options);
+            builder.BindMessageBroker<int>(options, ZenjectScope.Single);
         });
 
         var pub = resolver.Resolve<IAsyncPublisher<int>>();
@@ -79,7 +79,7 @@ public class ZenjectTest
            options.AddGlobalMessageHandlerFilter<MyFilter<int>>(1200);
        }, (options, builder) =>
        {
-           builder.BindMessageBroker<int>(options);
+           builder.BindMessageBroker<int>(options, ZenjectScope.Single);
            builder.BindMessageHandlerFilter<MyFilter<int>>();
            builder.BindInstance(store);
        });
@@ -112,7 +112,7 @@ public class ZenjectTest
        }, (options, builder) =>
        {
            builder.BindInstance(store);
-           builder.BindRequestHandler<int, int, MyRequestHandler>(options);
+           builder.BindRequestHandler<int, int, MyRequestHandler>(options, ZenjectScope.Single);
        });
 
         var handler = resolver.Resolve<IRequestHandler<int, int>>();
@@ -136,13 +136,13 @@ public class ZenjectTest
 
         var resolver = TestHelper.BuildZenject(options =>
        {
-            // options.InstanceLifetime = InstanceLifetime.Scoped;
-            options.AddGlobalRequestHandlerFilter<MyRequestHandlerFilter>(-1799);
+           // options.InstanceLifetime = InstanceLifetime.Scoped;
+           options.AddGlobalRequestHandlerFilter<MyRequestHandlerFilter>(-1799);
        }, (options, builder) =>
        {
            builder.BindInstance(store);
-           builder.BindRequestHandler<int, int, MyRequestHandler>(options);
-           builder.BindRequestHandler<int, int, MyRequestHandler2>(options);
+           builder.BindRequestHandler<int, int, MyRequestHandler>(options, ZenjectScope.Single);
+           builder.BindRequestHandler<int, int, MyRequestHandler2>(options, ZenjectScope.Single);
        });
 
         var handler = resolver.Resolve<IRequestAllHandler<int, int>>();
@@ -166,7 +166,7 @@ public class ZenjectTest
     {
         var provider = TestHelper.BuildZenject((options, builder) =>
         {
-            builder.BindMessageBroker<IntClass>(options);
+            builder.BindMessageBroker<IntClass>(options, ZenjectScope.Single);
         });
 
         var p = provider.Resolve<IBufferedPublisher<IntClass>>();

@@ -34,24 +34,20 @@ namespace MessagePipe
             var services = new DiContainerProxy(builder);
 
             // keyless PubSub
-            services.Add(typeof(MessageBrokerCore<TMessage>), scope);
-            services.Add(typeof(IPublisher<TMessage>), typeof(MessageBroker<TMessage>), scope);
-            services.Add(typeof(ISubscriber<TMessage>), typeof(MessageBroker<TMessage>), scope);
+            services.Add<MessageBrokerCore<TMessage>>(scope);
+            services.Add<IPublisher<TMessage>, ISubscriber<TMessage>, MessageBroker<TMessage>>(scope);
 
             // keyless PubSub async
-            services.Add(typeof(AsyncMessageBrokerCore<TMessage>), scope);
-            services.Add(typeof(IAsyncPublisher<TMessage>), typeof(AsyncMessageBroker<TMessage>), scope);
-            services.Add(typeof(IAsyncSubscriber<TMessage>), typeof(AsyncMessageBroker<TMessage>), scope);
+            services.Add<AsyncMessageBrokerCore<TMessage>>(scope);
+            services.Add<IAsyncPublisher<TMessage>, IAsyncSubscriber<TMessage>, AsyncMessageBroker<TMessage>>(scope);
 
             // keyless buffered PubSub
-            services.Add(typeof(BufferedMessageBrokerCore<TMessage>), scope);
-            services.Add(typeof(IBufferedPublisher<TMessage>), typeof(BufferedMessageBroker<TMessage>), scope);
-            services.Add(typeof(IBufferedSubscriber<TMessage>), typeof(BufferedMessageBroker<TMessage>), scope);
+            services.Add<BufferedMessageBrokerCore<TMessage>>(scope);
+            services.Add<IBufferedPublisher<TMessage>, IBufferedSubscriber<TMessage>, BufferedMessageBroker<TMessage>>(scope);
 
             // keyless buffered PubSub async
-            services.Add(typeof(BufferedAsyncMessageBrokerCore<TMessage>), scope);
-            services.Add(typeof(IBufferedAsyncPublisher<TMessage>), typeof(BufferedAsyncMessageBroker<TMessage>), scope);
-            services.Add(typeof(IBufferedAsyncSubscriber<TMessage>), typeof(BufferedAsyncMessageBroker<TMessage>), scope);
+            services.Add<BufferedAsyncMessageBrokerCore<TMessage>>(scope);
+            services.Add<IBufferedAsyncPublisher<TMessage>, IBufferedAsyncSubscriber<TMessage>, BufferedAsyncMessageBroker<TMessage>>(scope);
 
             return builder;
         }
@@ -62,44 +58,42 @@ namespace MessagePipe
             var services = new DiContainerProxy(builder);
 
             // keyed PubSub
-            services.Add(typeof(MessageBrokerCore<TKey, TMessage>), scope);
-            services.Add(typeof(IPublisher<TKey, TMessage>), typeof(MessageBroker<TKey, TMessage>), scope);
-            services.Add(typeof(ISubscriber<TKey, TMessage>), typeof(MessageBroker<TKey, TMessage>), scope);
+            services.Add<MessageBrokerCore<TKey, TMessage>>(scope);
+            services.Add<IPublisher<TKey, TMessage>, ISubscriber<TKey, TMessage>, MessageBroker<TKey, TMessage>>(scope);
 
             // keyed PubSub async
-            services.Add(typeof(AsyncMessageBrokerCore<TKey, TMessage>), scope);
-            services.Add(typeof(IAsyncPublisher<TKey, TMessage>), typeof(AsyncMessageBroker<TKey, TMessage>), scope);
-            services.Add(typeof(IAsyncSubscriber<TKey, TMessage>), typeof(AsyncMessageBroker<TKey, TMessage>), scope);
+            services.Add<AsyncMessageBrokerCore<TKey, TMessage>>(scope);
+            services.Add<IAsyncPublisher<TKey, TMessage>, IAsyncSubscriber<TKey, TMessage>, AsyncMessageBroker<TKey, TMessage>>(scope);
 
             return builder;
         }
 
         /// <summary>Register IRequestHandler[TRequest, TResponse](includes All) to container builder.</summary>
         public static DiContainer BindRequestHandler<TRequest, TResponse, THandler>(this DiContainer builder, MessagePipeOptions options, ZenjectScope scope = ZenjectScope.Single)
-            where THandler : IRequestHandler
+            where THandler : IRequestHandlerCore<TRequest, TResponse>
         {
             var services = new DiContainerProxy(builder);
 
-            services.Add(typeof(IRequestHandlerCore<TRequest, TResponse>), typeof(THandler), scope);
+            services.Add<IRequestHandlerCore<TRequest, TResponse>, THandler>(scope);
             if (!builder.HasBinding<IRequestHandler<TRequest, TResponse>>())
             {
-                services.Add(typeof(IRequestHandler<TRequest, TResponse>), typeof(RequestHandler<TRequest, TResponse>), scope);
-                services.Add(typeof(IRequestAllHandler<TRequest, TResponse>), typeof(RequestAllHandler<TRequest, TResponse>), scope);
+                services.Add<IRequestHandler<TRequest, TResponse>, RequestHandler<TRequest, TResponse>>(scope);
+                services.Add<IRequestAllHandler<TRequest, TResponse>, RequestAllHandler<TRequest, TResponse>>(scope);
             }
             return builder;
         }
 
         /// <summary>Register IAsyncRequestHandler[TRequest, TResponse](includes All) to container builder.</summary>
         public static DiContainer BindAsyncRequestHandler<TRequest, TResponse, THandler>(this DiContainer builder, MessagePipeOptions options, ZenjectScope scope = ZenjectScope.Single)
-            where THandler : IAsyncRequestHandler
+            where THandler : IAsyncRequestHandlerCore<TRequest, TResponse>
         {
             var services = new DiContainerProxy(builder);
 
-            services.Add(typeof(IAsyncRequestHandlerCore<TRequest, TResponse>), typeof(THandler), scope);
+            services.Add<IAsyncRequestHandlerCore<TRequest, TResponse>, THandler>(scope);
             if (!builder.HasBinding<IAsyncRequestHandler<TRequest, TResponse>>())
             {
-                services.Add(typeof(IAsyncRequestHandler<TRequest, TResponse>), typeof(AsyncRequestHandler<TRequest, TResponse>), scope);
-                services.Add(typeof(IAsyncRequestAllHandler<TRequest, TResponse>), typeof(AsyncRequestAllHandler<TRequest, TResponse>), scope);
+                services.Add<IAsyncRequestHandler<TRequest, TResponse>, AsyncRequestHandler<TRequest, TResponse>>(scope);
+                services.Add<IAsyncRequestAllHandler<TRequest, TResponse>, AsyncRequestAllHandler<TRequest, TResponse>>(scope);
             }
             return builder;
         }
