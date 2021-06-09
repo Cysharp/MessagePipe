@@ -18,7 +18,7 @@ public class ZenjectTest
     {
         var resolver = TestHelper.BuildZenject((options, builder) =>
         {
-            builder.BindMessageBroker<int>(options, ZenjectScope.Single);
+            builder.BindMessageBroker<int>(options);
         });
 
         var pub = resolver.Resolve<IPublisher<int>>();
@@ -46,7 +46,7 @@ public class ZenjectTest
     {
         var resolver = TestHelper.BuildZenject((options, builder) =>
         {
-            builder.BindMessageBroker<int>(options, ZenjectScope.Single);
+            builder.BindMessageBroker<int>(options);
         });
 
         var pub = resolver.Resolve<IAsyncPublisher<int>>();
@@ -79,7 +79,7 @@ public class ZenjectTest
            options.AddGlobalMessageHandlerFilter<MyFilter<int>>(1200);
        }, (options, builder) =>
        {
-           builder.BindMessageBroker<int>(options, ZenjectScope.Single);
+           builder.BindMessageBroker<int>(options);
            builder.BindMessageHandlerFilter<MyFilter<int>>();
            builder.BindInstance(store);
        });
@@ -112,7 +112,7 @@ public class ZenjectTest
        }, (options, builder) =>
        {
            builder.BindInstance(store);
-           builder.BindRequestHandler<int, int, MyRequestHandler>(options, ZenjectScope.Single);
+           builder.BindRequestHandler<int, int, MyRequestHandler>(options);
        });
 
         var handler = resolver.Resolve<IRequestHandler<int, int>>();
@@ -141,8 +141,8 @@ public class ZenjectTest
        }, (options, builder) =>
        {
            builder.BindInstance(store);
-           builder.BindRequestHandler<int, int, MyRequestHandler>(options, ZenjectScope.Single);
-           builder.BindRequestHandler<int, int, MyRequestHandler2>(options, ZenjectScope.Single);
+           builder.BindRequestHandler<int, int, MyRequestHandler>(options);
+           builder.BindRequestHandler<int, int, MyRequestHandler2>(options);
        });
 
         var handler = resolver.Resolve<IRequestAllHandler<int, int>>();
@@ -166,7 +166,7 @@ public class ZenjectTest
     {
         var provider = TestHelper.BuildZenject((options, builder) =>
         {
-            builder.BindMessageBroker<IntClass>(options, ZenjectScope.Single);
+            builder.BindMessageBroker<IntClass>(options);
         });
 
         var p = provider.Resolve<IBufferedPublisher<IntClass>>();
@@ -193,6 +193,99 @@ public class ZenjectTest
         d3.Dispose();
         p.Publish(new IntClass { Value = 4 });
         CollectionAssert.AreEqual(new[] { 9999, 333, 333, 11, 11, 4 }, l);
+    }
+
+    [Test]
+    public void BindMessageBrokerWithScopeSingle()
+    {
+        var resolver = TestHelper.BuildZenject((options, builder) =>
+        {
+            builder.BindMessageBroker<int>(options, ZenjectScope.Single);
+        });
+
+        var pub1 = resolver.Resolve<IPublisher<int>>();
+        var pub2 = resolver.Resolve<IPublisher<int>>();
+        var sub1 = resolver.Resolve<ISubscriber<int>>();
+        var sub2 = resolver.Resolve<ISubscriber<int>>();
+
+        Assert.AreEqual(pub1, pub2);
+        Assert.AreEqual(pub1, sub1);
+        Assert.AreEqual(pub1, sub2);
+    }
+
+    [Test]
+    public void BindMessageBrokerWithScopeCached()
+    {
+        var resolver = TestHelper.BuildZenject((options, builder) =>
+        {
+            builder.BindMessageBroker<int>(options, ZenjectScope.Cached);
+        });
+
+        var pub1 = resolver.Resolve<IPublisher<int>>();
+        var pub2 = resolver.Resolve<IPublisher<int>>();
+        var sub1 = resolver.Resolve<ISubscriber<int>>();
+        var sub2 = resolver.Resolve<ISubscriber<int>>();
+
+        Assert.AreEqual(pub1, pub2);
+        Assert.AreEqual(pub1, sub1);
+        Assert.AreEqual(pub1, sub2);
+    }
+
+    [Test]
+    public void BindMessageBrokerWithScopeTransient()
+    {
+        var resolver = TestHelper.BuildZenject((options, builder) =>
+        {
+            builder.BindMessageBroker<int>(options, ZenjectScope.Transient);
+        });
+
+        var pub1 = resolver.Resolve<IPublisher<int>>();
+        var pub2 = resolver.Resolve<IPublisher<int>>();
+        var sub1 = resolver.Resolve<ISubscriber<int>>();
+        var sub2 = resolver.Resolve<ISubscriber<int>>();
+
+        Assert.AreNotEqual(pub1, pub2);
+        Assert.AreNotEqual(pub1, sub1);
+        Assert.AreNotEqual(pub1, sub2);
+    }
+
+    [Test]
+    public void BindMessageBrokerDuplicateBindWithScopeSingleThrowsException()
+    {
+        Assert.Throws<ZenjectException>(() =>
+        {
+            var resolver = TestHelper.BuildZenject((options, builder) =>
+            {
+                builder.BindMessageBroker<int>(options, ZenjectScope.Single);
+                builder.BindMessageBroker<int>(options, ZenjectScope.Single);
+            });
+        });
+    }
+
+    [Test]
+    public void BindMessageBrokerDuplicateBindWithScopeCachedDoesNotThrowsException()
+    {
+        Assert.DoesNotThrow(() =>
+        {
+            var sWAresolver = TestHelper.BuildZenject((options, builder) =>
+            {
+                builder.BindMessageBroker<int>(options, ZenjectScope.Cached);
+                builder.BindMessageBroker<int>(options, ZenjectScope.Cached);
+            });
+        });
+    }
+
+    [Test]
+    public void BindMessageBrokerDuplicateBindWithScopeTransientDoesNotThrowsException()
+    {
+        Assert.DoesNotThrow(() =>
+        {
+            var resolver = TestHelper.BuildZenject((options, builder) =>
+            {
+                builder.BindMessageBroker<int>(options, ZenjectScope.Transient);
+                builder.BindMessageBroker<int>(options, ZenjectScope.Transient);
+            });
+        });
     }
 
     public class IntClass
