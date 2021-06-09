@@ -10,10 +10,12 @@ namespace MessagePipe
 {
     // async
 
+    [Preserve]
     public sealed class AsyncRequestHandler<TRequest, TResponse> : IAsyncRequestHandler<TRequest, TResponse>
     {
         readonly IAsyncRequestHandlerCore<TRequest, TResponse> handler;
 
+        [Preserve]
         public AsyncRequestHandler(IAsyncRequestHandlerCore<TRequest, TResponse> handler, FilterAttachedAsyncRequestHandlerFactory handlerFactory)
         {
             this.handler = handlerFactory.CreateAsyncRequestHandler<TRequest, TResponse>(handler);
@@ -25,11 +27,13 @@ namespace MessagePipe
         }
     }
 
+    [Preserve]
     public sealed class AsyncRequestAllHandler<TRequest, TResponse> : IAsyncRequestAllHandler<TRequest, TResponse>
     {
         readonly IAsyncRequestHandlerCore<TRequest, TResponse>[] handlers;
         readonly AsyncPublishStrategy defaultAsyncPublishStrategy;
 
+        [Preserve]
         public AsyncRequestAllHandler(IEnumerable<IAsyncRequestHandlerCore<TRequest, TResponse>> handlers, FilterAttachedAsyncRequestHandlerFactory handlerFactory, MessagePipeOptions options)
         {
             var collection = (handlers as ICollection<IAsyncRequestHandlerCore<TRequest, TResponse>>) ?? handlers.ToArray();
