@@ -21,16 +21,6 @@ namespace MessagePipe
             {
                 configure(x);
                 options = x;
-
-                // Zenject 6 does not allow regsiter multiple singleton, it causes annoying error.
-                // https://github.com/modesttree/Zenject#upgrade-guide-for-zenject-6
-                // so force use Scoped.
-                options.InstanceLifetime = (options.InstanceLifetime == InstanceLifetime.Singleton)
-                    ? InstanceLifetime.Scoped
-                    : options.RequestHandlerLifetime;
-                options.RequestHandlerLifetime = (options.RequestHandlerLifetime == InstanceLifetime.Singleton)
-                    ? InstanceLifetime.Scoped
-                    : options.RequestHandlerLifetime;
             });
 
             builder.Bind<IServiceProvider>().To<DiContainerProviderProxy>().AsCached();
@@ -39,81 +29,77 @@ namespace MessagePipe
         }
 
         /// <summary>Register IPublisher[TMessage] and ISubscriber[TMessage](includes Async/Buffered) to container builder.</summary>
-        public static DiContainer BindMessageBroker<TMessage>(this DiContainer builder, MessagePipeOptions options)
+        public static DiContainer BindMessageBroker<TMessage>(this DiContainer builder, MessagePipeOptions options, ZenjectScope scope = ZenjectScope.Single)
         {
-            var lifetime = options.InstanceLifetime;
             var services = new DiContainerProxy(builder);
 
             // keyless PubSub
-            services.Add(typeof(MessageBrokerCore<TMessage>), lifetime);
-            services.Add(typeof(IPublisher<TMessage>), typeof(MessageBroker<TMessage>), lifetime);
-            services.Add(typeof(ISubscriber<TMessage>), typeof(MessageBroker<TMessage>), lifetime);
+            services.Add(typeof(MessageBrokerCore<TMessage>), scope);
+            services.Add(typeof(IPublisher<TMessage>), typeof(MessageBroker<TMessage>), scope);
+            services.Add(typeof(ISubscriber<TMessage>), typeof(MessageBroker<TMessage>), scope);
 
             // keyless PubSub async
-            services.Add(typeof(AsyncMessageBrokerCore<TMessage>), lifetime);
-            services.Add(typeof(IAsyncPublisher<TMessage>), typeof(AsyncMessageBroker<TMessage>), lifetime);
-            services.Add(typeof(IAsyncSubscriber<TMessage>), typeof(AsyncMessageBroker<TMessage>), lifetime);
+            services.Add(typeof(AsyncMessageBrokerCore<TMessage>), scope);
+            services.Add(typeof(IAsyncPublisher<TMessage>), typeof(AsyncMessageBroker<TMessage>), scope);
+            services.Add(typeof(IAsyncSubscriber<TMessage>), typeof(AsyncMessageBroker<TMessage>), scope);
 
             // keyless buffered PubSub
-            services.Add(typeof(BufferedMessageBrokerCore<TMessage>), lifetime);
-            services.Add(typeof(IBufferedPublisher<TMessage>), typeof(BufferedMessageBroker<TMessage>), lifetime);
-            services.Add(typeof(IBufferedSubscriber<TMessage>), typeof(BufferedMessageBroker<TMessage>), lifetime);
+            services.Add(typeof(BufferedMessageBrokerCore<TMessage>), scope);
+            services.Add(typeof(IBufferedPublisher<TMessage>), typeof(BufferedMessageBroker<TMessage>), scope);
+            services.Add(typeof(IBufferedSubscriber<TMessage>), typeof(BufferedMessageBroker<TMessage>), scope);
 
             // keyless buffered PubSub async
-            services.Add(typeof(BufferedAsyncMessageBrokerCore<TMessage>), lifetime);
-            services.Add(typeof(IBufferedAsyncPublisher<TMessage>), typeof(BufferedAsyncMessageBroker<TMessage>), lifetime);
-            services.Add(typeof(IBufferedAsyncSubscriber<TMessage>), typeof(BufferedAsyncMessageBroker<TMessage>), lifetime);
+            services.Add(typeof(BufferedAsyncMessageBrokerCore<TMessage>), scope);
+            services.Add(typeof(IBufferedAsyncPublisher<TMessage>), typeof(BufferedAsyncMessageBroker<TMessage>), scope);
+            services.Add(typeof(IBufferedAsyncSubscriber<TMessage>), typeof(BufferedAsyncMessageBroker<TMessage>), scope);
 
             return builder;
         }
 
         /// <summary>Register IPublisher[TKey, TMessage] and ISubscriber[TKey, TMessage](includes Async) to container builder.</summary>
-        public static DiContainer BindMessageBroker<TKey, TMessage>(this DiContainer builder, MessagePipeOptions options)
+        public static DiContainer BindMessageBroker<TKey, TMessage>(this DiContainer builder, MessagePipeOptions options, ZenjectScope scope = ZenjectScope.Single)
         {
-            var lifetime = options.InstanceLifetime;
             var services = new DiContainerProxy(builder);
 
             // keyed PubSub
-            services.Add(typeof(MessageBrokerCore<TKey, TMessage>), lifetime);
-            services.Add(typeof(IPublisher<TKey, TMessage>), typeof(MessageBroker<TKey, TMessage>), lifetime);
-            services.Add(typeof(ISubscriber<TKey, TMessage>), typeof(MessageBroker<TKey, TMessage>), lifetime);
+            services.Add(typeof(MessageBrokerCore<TKey, TMessage>), scope);
+            services.Add(typeof(IPublisher<TKey, TMessage>), typeof(MessageBroker<TKey, TMessage>), scope);
+            services.Add(typeof(ISubscriber<TKey, TMessage>), typeof(MessageBroker<TKey, TMessage>), scope);
 
             // keyed PubSub async
-            services.Add(typeof(AsyncMessageBrokerCore<TKey, TMessage>), lifetime);
-            services.Add(typeof(IAsyncPublisher<TKey, TMessage>), typeof(AsyncMessageBroker<TKey, TMessage>), lifetime);
-            services.Add(typeof(IAsyncSubscriber<TKey, TMessage>), typeof(AsyncMessageBroker<TKey, TMessage>), lifetime);
+            services.Add(typeof(AsyncMessageBrokerCore<TKey, TMessage>), scope);
+            services.Add(typeof(IAsyncPublisher<TKey, TMessage>), typeof(AsyncMessageBroker<TKey, TMessage>), scope);
+            services.Add(typeof(IAsyncSubscriber<TKey, TMessage>), typeof(AsyncMessageBroker<TKey, TMessage>), scope);
 
             return builder;
         }
 
         /// <summary>Register IRequestHandler[TRequest, TResponse](includes All) to container builder.</summary>
-        public static DiContainer BindRequestHandler<TRequest, TResponse, THandler>(this DiContainer builder, MessagePipeOptions options)
+        public static DiContainer BindRequestHandler<TRequest, TResponse, THandler>(this DiContainer builder, MessagePipeOptions options, ZenjectScope scope = ZenjectScope.Single)
             where THandler : IRequestHandler
         {
-            var lifetime = options.RequestHandlerLifetime;
             var services = new DiContainerProxy(builder);
 
-            services.Add(typeof(IRequestHandlerCore<TRequest, TResponse>), typeof(THandler), lifetime);
+            services.Add(typeof(IRequestHandlerCore<TRequest, TResponse>), typeof(THandler), scope);
             if (!builder.HasBinding<IRequestHandler<TRequest, TResponse>>())
             {
-                services.Add(typeof(IRequestHandler<TRequest, TResponse>), typeof(RequestHandler<TRequest, TResponse>), lifetime);
-                services.Add(typeof(IRequestAllHandler<TRequest, TResponse>), typeof(RequestAllHandler<TRequest, TResponse>), lifetime);
+                services.Add(typeof(IRequestHandler<TRequest, TResponse>), typeof(RequestHandler<TRequest, TResponse>), scope);
+                services.Add(typeof(IRequestAllHandler<TRequest, TResponse>), typeof(RequestAllHandler<TRequest, TResponse>), scope);
             }
             return builder;
         }
 
         /// <summary>Register IAsyncRequestHandler[TRequest, TResponse](includes All) to container builder.</summary>
-        public static DiContainer BindAsyncRequestHandler<TRequest, TResponse, THandler>(this DiContainer builder, MessagePipeOptions options)
+        public static DiContainer BindAsyncRequestHandler<TRequest, TResponse, THandler>(this DiContainer builder, MessagePipeOptions options, ZenjectScope scope = ZenjectScope.Single)
             where THandler : IAsyncRequestHandler
         {
-            var lifetime = options.RequestHandlerLifetime;
             var services = new DiContainerProxy(builder);
 
-            services.Add(typeof(IAsyncRequestHandlerCore<TRequest, TResponse>), typeof(THandler), lifetime);
+            services.Add(typeof(IAsyncRequestHandlerCore<TRequest, TResponse>), typeof(THandler), scope);
             if (!builder.HasBinding<IAsyncRequestHandler<TRequest, TResponse>>())
             {
-                services.Add(typeof(IAsyncRequestHandler<TRequest, TResponse>), typeof(AsyncRequestHandler<TRequest, TResponse>), lifetime);
-                services.Add(typeof(IAsyncRequestAllHandler<TRequest, TResponse>), typeof(AsyncRequestAllHandler<TRequest, TResponse>), lifetime);
+                services.Add(typeof(IAsyncRequestHandler<TRequest, TResponse>), typeof(AsyncRequestHandler<TRequest, TResponse>), scope);
+                services.Add(typeof(IAsyncRequestAllHandler<TRequest, TResponse>), typeof(AsyncRequestAllHandler<TRequest, TResponse>), scope);
             }
             return builder;
         }

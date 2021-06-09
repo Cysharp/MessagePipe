@@ -37,27 +37,31 @@ namespace MessagePipe.Zenject
             builder.Bind(type).AsSingle();
         }
 
-        public void Add(Type type, InstanceLifetime lifetime)
+        public void Add(Type type, ZenjectScope scope)
         {
-            if (lifetime == InstanceLifetime.Scoped)
-            {
-                builder.Bind(type).AsCached();
-            }
-            else
-            {
-                builder.Bind(type).AsSingle();
-            }
+            var binder = builder.Bind(type);
+            SetScope(binder, scope);
         }
 
-        public void Add(Type serviceType, Type implementationType, InstanceLifetime lifetime)
+        public void Add(Type serviceType, Type implementationType, ZenjectScope scope)
         {
-            if (lifetime == InstanceLifetime.Scoped)
+            var binder = builder.Bind(serviceType).To(implementationType);
+            SetScope(binder, scope);
+        }
+
+        private void SetScope(ScopeConcreteIdArgConditionCopyNonLazyBinder binder, ZenjectScope scope)
+        {
+            if (scope == ZenjectScope.Cached)
             {
-                builder.Bind(serviceType).To(implementationType).AsCached();
+                binder.AsCached();
+            }
+            else if (scope == ZenjectScope.Single)
+            {
+                binder.AsSingle();
             }
             else
             {
-                builder.Bind(serviceType).To(implementationType).AsSingle();
+                binder.AsTransient();
             }
         }
     }
