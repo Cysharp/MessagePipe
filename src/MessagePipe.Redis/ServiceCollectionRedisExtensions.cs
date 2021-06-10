@@ -39,15 +39,11 @@ namespace MessagePipe
             return services;
         }
 
-        static void Add(this IServiceCollection services, Type serviceType, InstanceLifetime scope)
-        {
-            var lifetime = (scope == InstanceLifetime.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
-            services.Add(new ServiceDescriptor(serviceType, serviceType, lifetime));
-        }
-
         static void Add(this IServiceCollection services, Type serviceType, Type implementationType, InstanceLifetime scope)
         {
-            var lifetime = (scope == InstanceLifetime.Scoped) ? ServiceLifetime.Scoped : ServiceLifetime.Singleton;
+            var lifetime = (scope == InstanceLifetime.Scoped) ? ServiceLifetime.Scoped
+                : (scope == InstanceLifetime.Singleton) ? ServiceLifetime.Singleton
+                : ServiceLifetime.Transient;
             services.Add(new ServiceDescriptor(serviceType, implementationType, lifetime));
         }
     }
