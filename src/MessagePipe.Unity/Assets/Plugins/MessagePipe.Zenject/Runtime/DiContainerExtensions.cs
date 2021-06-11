@@ -27,7 +27,7 @@ namespace MessagePipe
                 // so force use Scoped.
                 options.InstanceLifetime = (options.InstanceLifetime == InstanceLifetime.Singleton)
                     ? InstanceLifetime.Scoped
-                    : options.RequestHandlerLifetime;
+                    : options.InstanceLifetime;
                 options.RequestHandlerLifetime = (options.RequestHandlerLifetime == InstanceLifetime.Singleton)
                     ? InstanceLifetime.Scoped
                     : options.RequestHandlerLifetime;

@@ -195,6 +195,48 @@ public class ZenjectTest
         CollectionAssert.AreEqual(new[] { 9999, 333, 333, 11, 11, 4 }, l);
     }
 
+    [Test]
+    public void InstanceLifetimeSingleToScopedInBindMessagePipe()
+    {
+        var builder = new DiContainer();
+        var option = builder.BindMessagePipe(configure =>
+        {
+            configure.InstanceLifetime = InstanceLifetime.Singleton;
+            configure.RequestHandlerLifetime = InstanceLifetime.Singleton;
+        });
+
+        Assert.AreEqual(InstanceLifetime.Scoped, option.InstanceLifetime);
+        Assert.AreEqual(InstanceLifetime.Scoped, option.RequestHandlerLifetime);
+    }
+
+    [Test]
+    public void InstanceLifetimeScopedToScopedInBindMessagePipe()
+    {
+        var builder = new DiContainer();
+        var option = builder.BindMessagePipe(configure =>
+        {
+            configure.InstanceLifetime = InstanceLifetime.Scoped;
+            configure.RequestHandlerLifetime = InstanceLifetime.Scoped;
+        });
+
+        Assert.AreEqual(InstanceLifetime.Scoped, option.InstanceLifetime);
+        Assert.AreEqual(InstanceLifetime.Scoped, option.RequestHandlerLifetime);
+    }
+
+    [Test]
+    public void InstanceLifetimeTransientToTransientInBindMessagePipe()
+    {
+        var builder = new DiContainer();
+        var option = builder.BindMessagePipe(configure =>
+        {
+            configure.InstanceLifetime = InstanceLifetime.Transient;
+            configure.RequestHandlerLifetime = InstanceLifetime.Transient;
+        });
+
+        Assert.AreEqual(InstanceLifetime.Transient, option.InstanceLifetime);
+        Assert.AreEqual(InstanceLifetime.Transient, option.RequestHandlerLifetime);
+    }
+
     public class IntClass
     {
         public int Value { get; set; }
