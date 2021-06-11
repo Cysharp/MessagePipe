@@ -14,7 +14,7 @@ using System.Collections;
 public class ZenjectTest
 {
     [Test]
-    public void SimpelePush()
+    public void SimplePush()
     {
         var resolver = TestHelper.BuildZenject((options, builder) =>
         {
@@ -136,8 +136,8 @@ public class ZenjectTest
 
         var resolver = TestHelper.BuildZenject(options =>
        {
-            // options.InstanceLifetime = InstanceLifetime.Scoped;
-            options.AddGlobalRequestHandlerFilter<MyRequestHandlerFilter>(-1799);
+           // options.InstanceLifetime = InstanceLifetime.Scoped;
+           options.AddGlobalRequestHandlerFilter<MyRequestHandlerFilter>(-1799);
        }, (options, builder) =>
        {
            builder.BindInstance(store);
