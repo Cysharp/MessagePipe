@@ -1,6 +1,8 @@
 ﻿using MessagePack;
+using MessagePipe.InProcess.Internal;
 using System;
 using System.Buffers;
+using System.Runtime.CompilerServices;
 
 namespace MessagePipe.InProcess
 {
@@ -29,7 +31,7 @@ namespace MessagePipe.InProcess
             this.hashCode = CalcHashCode();
         }
 
-        public ReadOnlySpan<byte> KeySpan => buffer.AsSpan(keyIndex, keyOffset- keyIndex);
+        public ReadOnlySpan<byte> KeySpan => buffer.AsSpan(keyIndex, keyOffset - keyIndex);
         public ReadOnlyMemory<byte> ValueMemory => buffer.AsMemory(keyOffset, buffer.Length - keyOffset);
 
         public bool Equals(IInProcessKey? other)
@@ -59,32 +61,58 @@ namespace MessagePipe.InProcess
 
     internal static class MessageBuilder
     {
+        // Message Frame-----
+        // Length: msgpack-int32(5), without self(MsgPack Body Only)
+        // Body(PubSub): MessagePack Array[3](Type(byte), Key, Value)
+
+        const byte PubSubType = 1;
+        const byte RequestResponseType = 2;
+
         public static IInProcessKey CreateKey<TKey>(TKey key, MessagePackSerializerOptions options)
         {
             var bytes = MessagePackSerializer.Serialize(key, options);
             return new InProcessMessage(bytes, 0, bytes.Length);
         }
 
-        public static void WriteMessage<TKey, TMessaege>(IBufferWriter<byte> buffer, TKey key, TMessaege message, MessagePackSerializerOptions options)
+        public static byte[] BuildPubSubMessage<TKey, TMessaege>(TKey key, TMessaege message, MessagePackSerializerOptions options)
         {
-            var writer = new MessagePackWriter(buffer);
-            writer.WriteArrayHeader(2);
-            MessagePackSerializer.Serialize(ref writer, key, options);
-            MessagePackSerializer.Serialize(ref writer, message, options);
-            writer.Flush();
+            using (var bufferWriter = new ArrayPoolBufferWriter())
+            {
+                var writer = new MessagePackWriter(bufferWriter);
+                writer.WriteArrayHeader(3);
+                writer.Write(PubSubType);
+                MessagePackSerializer.Serialize(ref writer, key, options);
+                MessagePackSerializer.Serialize(ref writer, message, options);
+                writer.Flush();
+
+                var finalBuffer = new byte[4 + bufferWriter.WrittenCount];
+                Unsafe.WriteUnaligned(ref finalBuffer[0], bufferWriter.WrittenCount);
+                bufferWriter.WrittenSpan.CopyTo(finalBuffer.AsSpan(4));
+                return finalBuffer;
+            }
         }
 
-        public static InProcessMessage ReadMessage(byte[] buffer, MessagePackSerializerOptions options)
+        public static int FetchMessageLength(ReadOnlySpan<byte> xs)
+        {
+            return Unsafe.ReadUnaligned<int>(ref Unsafe.AsRef(xs[0]));
+        }
+
+        public static InProcessMessage ReadPubSubMessage(byte[] buffer)
         {
             var reader = new MessagePackReader(buffer);
-            if (reader.ReadArrayHeader() != 2)
+            if (reader.ReadArrayHeader() != 3)
             {
                 throw new InvalidOperationException("Invalid messagepack buffer.");
             }
 
+            if (reader.ReadByte() != PubSubType) // Read TypeCode
+            {
+                throw new InvalidOperationException("Invalid pubsub message type.");
+            }
+
             var keyIndex = (int)reader.Consumed;
             reader.Skip();
-            var keyOffset = (int)(reader.Consumed - keyIndex + 1);
+            var keyOffset = (int)reader.Consumed;
             reader.Skip();
 
             return new InProcessMessage(buffer, keyIndex, keyOffset);

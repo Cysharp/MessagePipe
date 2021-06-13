@@ -1,8 +1,11 @@
 ﻿using MessagePipe.InProcess.Internal;
 using System;
+using System.IO;
 using System.IO.Pipes;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Channels;
+using System.Threading.Tasks;
 
 namespace MessagePipe.InProcess.Workers
 {
@@ -56,9 +59,7 @@ namespace MessagePipe.InProcess.Workers
                 RunPublishLoop();
             }
 
-            var bufferWriter = new ArrayPoolBufferWriter();
-            MessageBuilder.WriteMessage(bufferWriter, key, message, options.MessagePackSerializerOptions);
-            var buffer = bufferWriter.WrittenSpan.ToArray();
+            var buffer = MessageBuilder.BuildPubSubMessage(key, message, options.MessagePackSerializerOptions);
             channel.Writer.TryWrite(buffer);
         }
 
@@ -69,7 +70,7 @@ namespace MessagePipe.InProcess.Workers
             var token = cancellationTokenSource.Token;
             var pipeStream = client.Value;
 
-            await pipeStream.ConnectAsync(10000, token).ConfigureAwait(false); // TODO:Timeout
+            await pipeStream.ConnectAsync(Timeout.Infinite, token).ConfigureAwait(false);
 
             while (await reader.WaitToReadAsync(token).ConfigureAwait(false))
             {
@@ -103,18 +104,35 @@ namespace MessagePipe.InProcess.Workers
         // Receive from udp socket and push value to subscribers.
         async void RunReceiveLoop()
         {
+        RECONNECT:
             var token = cancellationTokenSource.Token;
             var pipeStream = server.Value;
             await pipeStream.WaitForConnectionAsync(token).ConfigureAwait(false);
             var buffer = new byte[65536];
             while (!token.IsCancellationRequested)
             {
-                ReadOnlyMemory<byte> value;
+                ReadOnlyMemory<byte> value = Array.Empty<byte>();
                 try
                 {
-                    // TODO:Read Fully
-                    var readLen = await pipeStream.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
-                    value = buffer.AsMemory(0, readLen);
+                    var readLen = await pipeStream.ReadAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
+                    if (readLen == 0) goto RECONNECT; // end of stream(disconnect, wait reconnect)
+
+                    var messageLen = MessageBuilder.FetchMessageLength(buffer);
+                    if (readLen == (messageLen + 4))
+                    {
+                        value = buffer.AsMemory(4, messageLen); // skip length header
+                    }
+                    else
+                    {
+                        // read more
+                        if (buffer.Length < (messageLen + 4))
+                        {
+                            Array.Resize(ref buffer, messageLen + 4);
+                        }
+                        var remain = messageLen - (readLen - 4);
+                        await ReadFullyAsync(buffer, pipeStream, readLen, remain, token).ConfigureAwait(false);
+                        value = buffer.AsMemory(4, messageLen);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -127,7 +145,7 @@ namespace MessagePipe.InProcess.Workers
 
                 try
                 {
-                    var message = MessageBuilder.ReadMessage(value.ToArray(), options.MessagePackSerializerOptions);
+                    var message = MessageBuilder.ReadPubSubMessage(value.ToArray()); // can avoid copy?
                     publisher.Publish(message, message, CancellationToken.None);
                 }
                 catch (Exception ex)
@@ -135,6 +153,16 @@ namespace MessagePipe.InProcess.Workers
                     if (ex is OperationCanceledException) continue;
                     options.UnhandledErrorHandler("", ex);
                 }
+            }
+        }
+
+        static async Task ReadFullyAsync(byte[] buffer, Stream stream, int index, int remain, CancellationToken token)
+        {
+            while (remain > 0)
+            {
+                var len = await stream.ReadAsync(buffer, index, remain, token).ConfigureAwait(false);
+                index += len;
+                remain -= len;
             }
         }
 

@@ -6,36 +6,76 @@ using System.Threading.Tasks;
 
 namespace MessagePipe.InProcess.Workers
 {
+    // TODO:TCP STREAM AND READ
+
     internal sealed class SocketTcpServer : IDisposable
     {
-        const int MinBuffer = 4096;
+        const int MaxConnections = 0x7fffffff;
 
         readonly Socket socket;
-        readonly byte[] buffer;
 
-        SocketTcpServer(int bufferSize)
+        SocketTcpServer(AddressFamily addressFamily)
         {
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            socket.ReceiveBufferSize = bufferSize;
-            buffer = new byte[Math.Max(bufferSize, MinBuffer)];
+            socket = new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp);
         }
 
-        public static SocketTcpServer Bind(int port, int bufferSize)
+        public static SocketTcpServer Listen(string host, int port)
         {
-            var server = new SocketTcpServer(bufferSize);
-            server.socket.Bind(new IPEndPoint(IPAddress.Any, port));
+            var ip = new IPEndPoint(IPAddress.Parse(host), port);
+            var server = new SocketTcpServer(ip.AddressFamily);
+
+            server.socket.Bind(ip);
+            server.socket.Listen(MaxConnections);
             return server;
         }
 
-        public async Task<ReadOnlyMemory<byte>> ReceiveAsync(CancellationToken cancellationToken)
+        public async void StartAcceptLoopAsync(Action<SocketTcpClient> onAccept, CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                var remote = await socket.AcceptAsync();
+                onAccept(new SocketTcpClient(remote));
+            }
+        }
+
+        public void Dispose()
+        {
+            socket.Dispose();
+        }
+    }
+
+    internal sealed class SocketTcpClient : IDisposable
+    {
+        readonly Socket socket;
+
+        SocketTcpClient(AddressFamily addressFamily)
+        {
+            socket = new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp);
+        }
+
+        internal SocketTcpClient(Socket socket)
+        {
+            this.socket = socket;
+        }
+
+        public static SocketTcpClient Connect(string host, int port)
+        {
+            var ip = new IPEndPoint(IPAddress.Parse(host), port);
+            var client = new SocketTcpClient(ip.AddressFamily);
+            client.socket.Connect(ip);
+            return client;
+        }
+
+        public async Task<int> ReceiveAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
 #if NET5_0_OR_GREATER
-            var i = await socket.ReceiveAsync(buffer, SocketFlags.None, cancellationToken).ConfigureAwait(false);
-            return buffer.AsMemory(0, i);
+            var xs = new ArraySegment<byte>(buffer, offset, count);
+            var i = await socket.ReceiveAsync(xs, SocketFlags.None, cancellationToken).ConfigureAwait(false);
+            return i;
 #else
-            var tcs = new TaskCompletionSource<ReadOnlyMemory<byte>>();
-
-            socket.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, x =>
+            var tcs = new TaskCompletionSource<int>();
+            
+            socket.BeginReceive(buffer, offset, count, SocketFlags.None, x =>
             {
                 int i;
                 try
@@ -47,39 +87,11 @@ namespace MessagePipe.InProcess.Workers
                     tcs.TrySetException(ex);
                     return;
                 }
-                var r = buffer.AsMemory(0, i);
-                tcs.TrySetResult(r);
+                tcs.TrySetResult(i);
             }, null);
 
             return await tcs.Task;
 #endif
-        }
-
-        public void Dispose()
-        {
-            socket.Dispose();
-        }
-    }
-
-    internal sealed class SocketTcpClient : IDisposable
-    {
-        const int MinBuffer = 4096;
-
-        readonly Socket socket;
-        readonly byte[] buffer;
-
-        SocketTcpClient(int bufferSize)
-        {
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            socket.SendBufferSize = bufferSize;
-            buffer = new byte[Math.Max(bufferSize, MinBuffer)];
-        }
-
-        public static SocketTcpClient Connect(string host, int port, int bufferSize)
-        {
-            var client = new SocketTcpClient(bufferSize);
-            client.socket.Connect(new IPEndPoint(IPAddress.Parse(host), port));
-            return client;
         }
 
         public ValueTask<int> SendAsync(byte[] buffer, CancellationToken cancellationToken = default)

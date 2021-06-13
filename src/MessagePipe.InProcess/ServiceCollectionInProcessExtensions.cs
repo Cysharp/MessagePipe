@@ -26,6 +26,25 @@ namespace MessagePipe
             return services;
         }
 
+        public static IServiceCollection AddMessagePipeInProcessTcp(this IServiceCollection services, string host, int port)
+        {
+            return AddMessagePipeInProcessTcp(services, host, port, _ => { });
+        }
+
+        public static IServiceCollection AddMessagePipeInProcessTcp(this IServiceCollection services, string host, int port, Action<MessagePipeInProcessTcpOptions> configure)
+        {
+            var options = new MessagePipeInProcessTcpOptions(host, port);
+            configure(options);
+
+            services.AddSingleton(options);
+            services.Add(typeof(TcpWorker), options.InstanceLifetime);
+
+            services.Add(typeof(IDistributedPublisher<,>), typeof(TcpDistributedPublisher<,>), options.InstanceLifetime);
+            services.Add(typeof(IDistributedSubscriber<,>), typeof(TcpDistributedSubscriber<,>), options.InstanceLifetime);
+
+            return services;
+        }
+
         public static IServiceCollection AddMessagePipeInProcessNamedPipe(this IServiceCollection services, string pipeName)
         {
             return AddMessagePipeInProcessNamedPipe(services, pipeName, _ => { });

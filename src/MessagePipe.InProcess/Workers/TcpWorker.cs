@@ -2,40 +2,41 @@
 using System;
 using System.Threading;
 using System.Threading.Channels;
+using System.Threading.Tasks;
 
 namespace MessagePipe.InProcess.Workers
 {
     [Preserve]
-    public sealed class UdpWorker : IDisposable
+    public sealed class TcpWorker : IDisposable
     {
         readonly CancellationTokenSource cancellationTokenSource;
         readonly IAsyncPublisher<IInProcessKey, IInProcessValue> publisher;
-        readonly MessagePipeInProcessUdpOptions options;
+        readonly MessagePipeInProcessTcpOptions options;
 
         // Channel is used from publisher for thread safety of write packet
         int initializedServer = 0;
-        Lazy<SocketUdpServer> server;
+        Lazy<SocketTcpServer> server;
         Channel<byte[]> channel;
 
         int initializedReceiver = 0;
-        Lazy<SocketUdpClient> client;
+        Lazy<SocketTcpClient> client;
 
         // create from DI
         [Preserve]
-        public UdpWorker(MessagePipeInProcessUdpOptions options, IAsyncPublisher<IInProcessKey, IInProcessValue> publisher)
+        public TcpWorker(MessagePipeInProcessTcpOptions options, IAsyncPublisher<IInProcessKey, IInProcessValue> publisher)
         {
             this.cancellationTokenSource = new CancellationTokenSource();
             this.options = options;
             this.publisher = publisher;
 
-            this.server = new Lazy<SocketUdpServer>(() =>
+            this.server = new Lazy<SocketTcpServer>(() =>
             {
-                return SocketUdpServer.Bind(options.Port, 0x10000);
+                return SocketTcpServer.Listen(options.Host, options.Port);
             });
 
-            this.client = new Lazy<SocketUdpClient>(() =>
+            this.client = new Lazy<SocketTcpClient>(() =>
             {
-                return SocketUdpClient.Connect(options.Host, options.Port, 0x10000);
+                return SocketTcpClient.Connect(options.Host, options.Port);
             });
 
             this.channel = Channel.CreateUnbounded<byte[]>(new UnboundedChannelOptions()
@@ -58,19 +59,19 @@ namespace MessagePipe.InProcess.Workers
             channel.Writer.TryWrite(buffer);
         }
 
-        // Send packet to udp socket from publisher
+        // Send packet to tcp socket from publisher
         async void RunPublishLoop()
         {
             var reader = channel.Reader;
             var token = cancellationTokenSource.Token;
-            var udpClient = client.Value;
+            var tcpClient = client.Value;
             while (await reader.WaitToReadAsync(token).ConfigureAwait(false))
             {
                 while (reader.TryRead(out var item))
                 {
                     try
                     {
-                        await udpClient.SendAsync(item, token).ConfigureAwait(false);
+                        await tcpClient.SendAsync(item, token).ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {
@@ -88,29 +89,40 @@ namespace MessagePipe.InProcess.Workers
         {
             if (Interlocked.Increment(ref initializedReceiver) == 1) // first incr, channel not yet started
             {
-                _ = server.Value; // init
-                RunReceiveLoop();
+                var s = server.Value; // init
+                s.StartAcceptLoopAsync(RunReceiveLoop, cancellationTokenSource.Token);
             }
         }
 
-        // Receive from udp socket and push value to subscribers.
-        async void RunReceiveLoop()
+        // Receive from tcp socket and push value to subscribers.
+        async void RunReceiveLoop(SocketTcpClient client)
         {
             var token = cancellationTokenSource.Token;
-            var udpServer = server.Value;
+            var buffer = new byte[65536];
             while (!token.IsCancellationRequested)
             {
-                ReadOnlyMemory<byte> value;
+                ReadOnlyMemory<byte> value = Array.Empty<byte>();
                 try
                 {
-                    value = await udpServer.ReceiveAsync(token).ConfigureAwait(false);
-                    if (value.Length == 0) return; // invalid data?
-                    var len = MessageBuilder.FetchMessageLength(value.Span);
-                    if (len != value.Length - 4)
+                    var readLen = await client.ReceiveAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
+                    if (readLen == 0) return; // end of stream(disconnect)
+
+                    var messageLen = MessageBuilder.FetchMessageLength(buffer);
+                    if (readLen == (messageLen + 4))
                     {
-                        throw new InvalidOperationException("Receive invalid message size.");
+                        value = buffer.AsMemory(4, messageLen); // skip length header
                     }
-                    value = value.Slice(4);
+                    else
+                    {
+                        // read more
+                        if (buffer.Length < (messageLen + 4))
+                        {
+                            Array.Resize(ref buffer, messageLen + 4);
+                        }
+                        var remain = messageLen - (readLen - 4);
+                        await ReadFullyAsync(buffer, client, readLen, remain, token).ConfigureAwait(false);
+                        value = buffer.AsMemory(4, messageLen);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -131,6 +143,16 @@ namespace MessagePipe.InProcess.Workers
                     if (ex is OperationCanceledException) continue;
                     options.UnhandledErrorHandler("", ex);
                 }
+            }
+        }
+
+        static async Task ReadFullyAsync(byte[] buffer, SocketTcpClient client, int index, int remain, CancellationToken token)
+        {
+            while (remain > 0)
+            {
+                var len = await client.ReceiveAsync(buffer, index, remain, token).ConfigureAwait(false);
+                index += len;
+                remain -= len;
             }
         }
 

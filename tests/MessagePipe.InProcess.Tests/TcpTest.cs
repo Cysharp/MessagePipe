@@ -10,11 +10,11 @@ using Xunit.Abstractions;
 
 namespace MessagePipe.InProcess.Tests
 {
-    public class NamedPipeTest
+    public class TcpTest
     {
         readonly ITestOutputHelper helper;
 
-        public NamedPipeTest(ITestOutputHelper testOutputHelper)
+        public TcpTest(ITestOutputHelper testOutputHelper)
         {
             this.helper = testOutputHelper;
         }
@@ -22,7 +22,7 @@ namespace MessagePipe.InProcess.Tests
         [Fact]
         public async Task SimpleIntInt()
         {
-            var provider = TestHelper.BuildServiceProviderNamedPipe("foobar", helper);
+            var provider = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1784, helper);
             using (provider as IDisposable)
             {
                 var p1 = provider.GetRequiredService<IDistributedPublisher<int, int>>();
@@ -56,7 +56,7 @@ namespace MessagePipe.InProcess.Tests
         [Fact]
         public async Task SimpleStringString()
         {
-            var provider = TestHelper.BuildServiceProviderNamedPipe("barbaz", helper);
+            var provider = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1436, helper);
             using (provider as IDisposable)
             {
                 var p1 = provider.GetRequiredService<IDistributedPublisher<string, string>>();
@@ -80,7 +80,7 @@ namespace MessagePipe.InProcess.Tests
         [Fact]
         public async Task HugeSizeTest()
         {
-            var provider = TestHelper.BuildServiceProviderNamedPipe("barbaz", helper);
+            var provider = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1436, helper);
             using (provider as IDisposable)
             {
                 var p1 = provider.GetRequiredService<IDistributedPublisher<string, string>>();
@@ -105,7 +105,7 @@ namespace MessagePipe.InProcess.Tests
         [Fact]
         public async Task MoreHugeSizeTest()
         {
-            var provider = TestHelper.BuildServiceProviderNamedPipe("barbaz", helper);
+            var provider = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1436, helper);
             using (provider as IDisposable)
             {
                 var p1 = provider.GetRequiredService<IDistributedPublisher<string, string>>();
