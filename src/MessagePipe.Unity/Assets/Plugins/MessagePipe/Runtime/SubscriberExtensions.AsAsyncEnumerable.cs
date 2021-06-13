@@ -38,7 +38,7 @@ namespace MessagePipe
             this.filters = filters;
         }
 
-        public IAsyncEnumerator<TMessage> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+        public IUniTaskAsyncEnumerator<TMessage> GetAsyncEnumerator(CancellationToken cancellationToken = default)
         {
             var disposable = DisposableBag.CreateSingleAssignment();
             var e = new AsyncMessageHandlerEnumerator<TMessage>(disposable, cancellationToken);
@@ -58,7 +58,7 @@ namespace MessagePipe
             this.filters = filters;
         }
 
-        public IAsyncEnumerator<TMessage> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+        public IUniTaskAsyncEnumerator<TMessage> GetAsyncEnumerator(CancellationToken cancellationToken = default)
         {
             var disposable = DisposableBag.CreateSingleAssignment();
             var e = new AsyncMessageHandlerEnumerator<TMessage>(disposable, cancellationToken);
@@ -87,7 +87,7 @@ namespace MessagePipe
             this.filters = filters;
         }
 
-        public IAsyncEnumerator<TMessage> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+        public IUniTaskAsyncEnumerator<TMessage> GetAsyncEnumerator(CancellationToken cancellationToken = default)
         {
             var disposable = DisposableBag.CreateSingleAssignment();
             var e = new AsyncMessageHandlerEnumerator<TMessage>(disposable, cancellationToken);
@@ -96,7 +96,7 @@ namespace MessagePipe
         }
     }
 
-    internal class AsyncMessageHandlerEnumerator<TMessage> : IAsyncEnumerator<TMessage>, IAsyncMessageHandler<TMessage>
+    internal class AsyncMessageHandlerEnumerator<TMessage> : IUniTaskAsyncEnumerator<TMessage>, IAsyncMessageHandler<TMessage>
     {
         Channel<TMessage> channel;
         CancellationToken cancellationToken;
@@ -118,7 +118,7 @@ namespace MessagePipe
 #endif
         }
 
-        TMessage IAsyncEnumerator<TMessage>.Current
+        TMessage IUniTaskAsyncEnumerator<TMessage>.Current
         {
             get
             {
@@ -130,7 +130,7 @@ namespace MessagePipe
             }
         }
 
-        UniTask<bool> IAsyncEnumerator<TMessage>.MoveNextAsync()
+        UniTask<bool> IUniTaskAsyncEnumerator<TMessage>.MoveNextAsync()
         {
             return channel.Reader.WaitToReadAsync(cancellationToken);
         }

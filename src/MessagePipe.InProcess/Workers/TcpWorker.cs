@@ -18,7 +18,7 @@ namespace MessagePipe.InProcess.Workers
         Lazy<SocketTcpServer> server;
         Channel<byte[]> channel;
 
-        int initializedReceiver = 0;
+        int initializedClient = 0;
         Lazy<SocketTcpClient> client;
 
         // create from DI
@@ -49,7 +49,7 @@ namespace MessagePipe.InProcess.Workers
 
         public void Publish<TKey, TMessage>(TKey key, TMessage message)
         {
-            if (Interlocked.Increment(ref initializedServer) == 1) // first incr, channel not yet started
+            if (Interlocked.Increment(ref initializedClient) == 1) // first incr, channel not yet started
             {
                 _ = client.Value; // init
                 RunPublishLoop();
@@ -87,7 +87,7 @@ namespace MessagePipe.InProcess.Workers
 
         public void StartReceiver()
         {
-            if (Interlocked.Increment(ref initializedReceiver) == 1) // first incr, channel not yet started
+            if (Interlocked.Increment(ref initializedServer) == 1) // first incr, channel not yet started
             {
                 var s = server.Value; // init
                 s.StartAcceptLoopAsync(RunReceiveLoop, cancellationTokenSource.Token);
@@ -136,6 +136,9 @@ namespace MessagePipe.InProcess.Workers
                 try
                 {
                     var message = MessageBuilder.ReadPubSubMessage(value.ToArray());
+
+                    
+
                     publisher.Publish(message, message, CancellationToken.None);
                 }
                 catch (Exception ex)

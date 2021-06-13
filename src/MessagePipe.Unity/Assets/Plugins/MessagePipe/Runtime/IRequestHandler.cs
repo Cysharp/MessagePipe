@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -47,5 +48,19 @@ namespace MessagePipe
         IUniTaskAsyncEnumerable<TResponse> InvokeAllLazyAsync(TRequest request, CancellationToken cancellationToken = default);
     }
 
+    // Remote
 
+    public interface IRemoteRequestHandler<in TRequest, TResponse>
+        // where TAsyncRequestHandler : IAsyncRequestHandler<TRequest, TResponse>
+    {
+        UniTask<TResponse> InvokeAsync(TRequest request, CancellationToken cancellationToken = default);
+    }
+
+    public class RemoteRequestException : Exception
+    {
+        public RemoteRequestException(string message)
+            : base(message)
+        {
+        }
+    }
 }

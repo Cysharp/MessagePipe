@@ -8,7 +8,7 @@ namespace MessagePipe.InProcess
 {
     public interface IInProcessKey : IEquatable<IInProcessKey>
     {
-        ReadOnlySpan<byte> KeySpan { get; }
+        ReadOnlyMemory<byte> KeyMemory { get; }
     }
 
     public interface IInProcessValue
@@ -23,21 +23,24 @@ namespace MessagePipe.InProcess
         readonly int keyOffset;
         readonly int hashCode;
 
-        public InProcessMessage(byte[] buffer, int keyIndex, int keyOffset)
+        public MessageType MessageType { get; }
+
+        public InProcessMessage(MessageType messageType, byte[] buffer, int keyIndex, int keyOffset)
         {
+            this.MessageType = messageType;
             this.buffer = buffer;
             this.keyIndex = keyIndex;
             this.keyOffset = keyOffset;
             this.hashCode = CalcHashCode();
         }
 
-        public ReadOnlySpan<byte> KeySpan => buffer.AsSpan(keyIndex, keyOffset - keyIndex);
+        public ReadOnlyMemory<byte> KeyMemory => buffer.AsMemory(keyIndex, keyOffset - keyIndex);
         public ReadOnlyMemory<byte> ValueMemory => buffer.AsMemory(keyOffset, buffer.Length - keyOffset);
 
         public bool Equals(IInProcessKey? other)
         {
             if (other == null) return false;
-            return KeySpan.SequenceEqual(other.KeySpan);
+            return KeyMemory.Span.SequenceEqual(other.KeyMemory.Span);
         }
 
         public override int GetHashCode()
@@ -59,19 +62,27 @@ namespace MessagePipe.InProcess
         }
     }
 
+    internal enum MessageType : byte
+    {
+        PubSub = 1,
+        RemoteRequest = 2,
+        RemoteResponse = 3,
+        RemoteError = 4,
+    }
+
     internal static class MessageBuilder
     {
         // Message Frame-----
-        // Length: msgpack-int32(5), without self(MsgPack Body Only)
-        // Body(PubSub): MessagePack Array[3](Type(byte), Key, Value)
-
-        const byte PubSubType = 1;
-        const byte RequestResponseType = 2;
+        // Length: int32(4), without self(MsgPack Body Only)
+        // Body(PubSub): MessagePack Array[3](Type(byte), key, message)
+        // Body(Reques): MessagePack Array[3](Type(byte), (messageId:int, key:string), request)
+        // Body(Respon): MessagePack Array[3](Type(byte), messageId:int, response)
+        // Body(RError): MessagePack Array[3](Type(byte), messageId:int, error:string)
 
         public static IInProcessKey CreateKey<TKey>(TKey key, MessagePackSerializerOptions options)
         {
             var bytes = MessagePackSerializer.Serialize(key, options);
-            return new InProcessMessage(bytes, 0, bytes.Length);
+            return new InProcessMessage(MessageType.PubSub, bytes, 0, bytes.Length);
         }
 
         public static byte[] BuildPubSubMessage<TKey, TMessaege>(TKey key, TMessaege message, MessagePackSerializerOptions options)
@@ -80,9 +91,63 @@ namespace MessagePipe.InProcess
             {
                 var writer = new MessagePackWriter(bufferWriter);
                 writer.WriteArrayHeader(3);
-                writer.Write(PubSubType);
+                writer.Write((byte)MessageType.PubSub);
                 MessagePackSerializer.Serialize(ref writer, key, options);
                 MessagePackSerializer.Serialize(ref writer, message, options);
+                writer.Flush();
+
+                var finalBuffer = new byte[4 + bufferWriter.WrittenCount];
+                Unsafe.WriteUnaligned(ref finalBuffer[0], bufferWriter.WrittenCount);
+                bufferWriter.WrittenSpan.CopyTo(finalBuffer.AsSpan(4));
+                return finalBuffer;
+            }
+        }
+
+        public static byte[] BuildRemoteRequestMessage<TRequest>(Type key, int messageId, TRequest message, MessagePackSerializerOptions options)
+        {
+            using (var bufferWriter = new ArrayPoolBufferWriter())
+            {
+                var writer = new MessagePackWriter(bufferWriter);
+                writer.WriteArrayHeader(3);
+                writer.Write((byte)MessageType.RemoteRequest);
+                MessagePackSerializer.Serialize(ref writer, (messageId, key.AssemblyQualifiedName), options);
+                MessagePackSerializer.Serialize(ref writer, message, options);
+                writer.Flush();
+
+                var finalBuffer = new byte[4 + bufferWriter.WrittenCount];
+                Unsafe.WriteUnaligned(ref finalBuffer[0], bufferWriter.WrittenCount);
+                bufferWriter.WrittenSpan.CopyTo(finalBuffer.AsSpan(4));
+                return finalBuffer;
+            }
+        }
+
+        public static byte[] BuildRemoteResponseMessage(int messageId, Type responseType, object message, MessagePackSerializerOptions options)
+        {
+            using (var bufferWriter = new ArrayPoolBufferWriter())
+            {
+                var writer = new MessagePackWriter(bufferWriter);
+                writer.WriteArrayHeader(3);
+                writer.Write((byte)MessageType.RemoteResponse);
+                MessagePackSerializer.Serialize(ref writer, messageId, options);
+                MessagePackSerializer.Serialize(responseType, ref writer, message, options);
+                writer.Flush();
+
+                var finalBuffer = new byte[4 + bufferWriter.WrittenCount];
+                Unsafe.WriteUnaligned(ref finalBuffer[0], bufferWriter.WrittenCount);
+                bufferWriter.WrittenSpan.CopyTo(finalBuffer.AsSpan(4));
+                return finalBuffer;
+            }
+        }
+
+        public static byte[] BuildRemoteResponseError(int messageId, string exception, MessagePackSerializerOptions options)
+        {
+            using (var bufferWriter = new ArrayPoolBufferWriter())
+            {
+                var writer = new MessagePackWriter(bufferWriter);
+                writer.WriteArrayHeader(3);
+                writer.Write((byte)MessageType.RemoteError);
+                MessagePackSerializer.Serialize(ref writer, messageId, options);
+                MessagePackSerializer.Serialize(ref writer, exception, options);
                 writer.Flush();
 
                 var finalBuffer = new byte[4 + bufferWriter.WrittenCount];
@@ -105,17 +170,15 @@ namespace MessagePipe.InProcess
                 throw new InvalidOperationException("Invalid messagepack buffer.");
             }
 
-            if (reader.ReadByte() != PubSubType) // Read TypeCode
-            {
-                throw new InvalidOperationException("Invalid pubsub message type.");
-            }
+            var b = reader.ReadByte();
+            var msgType = (MessageType)b;
 
             var keyIndex = (int)reader.Consumed;
             reader.Skip();
             var keyOffset = (int)reader.Consumed;
             reader.Skip();
 
-            return new InProcessMessage(buffer, keyIndex, keyOffset);
+            return new InProcessMessage(msgType, buffer, keyIndex, keyOffset);
         }
     }
 }

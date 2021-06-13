@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -47,5 +48,19 @@ namespace MessagePipe
         IAsyncEnumerable<TResponse> InvokeAllLazyAsync(TRequest request, CancellationToken cancellationToken = default);
     }
 
+    // Remote
 
+    public interface IRemoteRequestHandler<in TRequest, TResponse>
+        // where TAsyncRequestHandler : IAsyncRequestHandler<TRequest, TResponse>
+    {
+        ValueTask<TResponse> InvokeAsync(TRequest request, CancellationToken cancellationToken = default);
+    }
+
+    public class RemoteRequestException : Exception
+    {
+        public RemoteRequestException(string message)
+            : base(message)
+        {
+        }
+    }
 }

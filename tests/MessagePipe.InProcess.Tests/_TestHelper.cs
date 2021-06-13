@@ -33,6 +33,7 @@ namespace MessagePipe.InProcess.Tests
             sc.AddMessagePipe();
             sc.AddMessagePipeInProcessNamedPipe(pipeName, x =>
             {
+                x.AsServer = true;
                 x.UnhandledErrorHandler = (msg, e) => helper.WriteLine(msg + e);
             });
             return sc.BuildServiceProvider();

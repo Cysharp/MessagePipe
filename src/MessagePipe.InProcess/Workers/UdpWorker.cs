@@ -17,7 +17,7 @@ namespace MessagePipe.InProcess.Workers
         Lazy<SocketUdpServer> server;
         Channel<byte[]> channel;
 
-        int initializedReceiver = 0;
+        int initializedClient = 0;
         Lazy<SocketUdpClient> client;
 
         // create from DI
@@ -48,7 +48,7 @@ namespace MessagePipe.InProcess.Workers
 
         public void Publish<TKey, TMessage>(TKey key, TMessage message)
         {
-            if (Interlocked.Increment(ref initializedServer) == 1) // first incr, channel not yet started
+            if (Interlocked.Increment(ref initializedClient) == 1) // first incr, channel not yet started
             {
                 _ = client.Value; // init
                 RunPublishLoop();
@@ -86,7 +86,7 @@ namespace MessagePipe.InProcess.Workers
 
         public void StartReceiver()
         {
-            if (Interlocked.Increment(ref initializedReceiver) == 1) // first incr, channel not yet started
+            if (Interlocked.Increment(ref initializedServer) == 1) // first incr, channel not yet started
             {
                 _ = server.Value; // init
                 RunReceiveLoop();

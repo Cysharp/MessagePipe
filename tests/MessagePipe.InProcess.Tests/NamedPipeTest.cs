@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -80,7 +81,7 @@ namespace MessagePipe.InProcess.Tests
         [Fact]
         public async Task HugeSizeTest()
         {
-            var provider = TestHelper.BuildServiceProviderNamedPipe("barbaz", helper);
+            var provider = TestHelper.BuildServiceProviderNamedPipe("z42fds", helper);
             using (provider as IDisposable)
             {
                 var p1 = provider.GetRequiredService<IDistributedPublisher<string, string>>();
@@ -105,7 +106,7 @@ namespace MessagePipe.InProcess.Tests
         [Fact]
         public async Task MoreHugeSizeTest()
         {
-            var provider = TestHelper.BuildServiceProviderNamedPipe("barbaz", helper);
+            var provider = TestHelper.BuildServiceProviderNamedPipe("fdsew", helper);
             using (provider as IDisposable)
             {
                 var p1 = provider.GetRequiredService<IDistributedPublisher<string, string>>();
@@ -127,6 +128,46 @@ namespace MessagePipe.InProcess.Tests
                 await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
 
                 result.Should().Equal(ldata);
+            }
+        }
+
+        // remote request
+
+        [Fact]
+        public async Task RemoteRequestTest()
+        {
+            var provider = TestHelper.BuildServiceProviderNamedPipe("aewrw", helper);
+            using (provider as IDisposable)
+            {
+                var remoteHandler = provider.GetRequiredService<IRemoteRequestHandler<int, string>>();
+
+                var v = await remoteHandler.InvokeAsync(9999);
+                v.Should().Be("ECHO:9999");
+
+                var v2 = await remoteHandler.InvokeAsync(4444);
+                v2.Should().Be("ECHO:4444");
+
+                var ex = await Assert.ThrowsAsync<RemoteRequestException>(async () =>
+                {
+                    var v3 = await remoteHandler.InvokeAsync(-1);
+                });
+                ex.Message.Should().Contain("NO -1");
+            }
+        }
+    }
+
+    public class MyAsyncHandler : IAsyncRequestHandler<int, string>
+    {
+        public async ValueTask<string> InvokeAsync(int request, CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(1);
+            if (request == -1)
+            {
+                throw new Exception("NO -1");
+            }
+            else
+            {
+                return "ECHO:" + request.ToString();
             }
         }
     }

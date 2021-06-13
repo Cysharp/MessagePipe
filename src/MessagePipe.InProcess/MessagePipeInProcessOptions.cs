@@ -25,16 +25,20 @@ namespace MessagePipe.InProcess
     public sealed class MessagePipeInProcessNamedPipeOptions
     {
         public string PipeName { get; }
+        public string ServerName { get; set; }
         public MessagePackSerializerOptions MessagePackSerializerOptions { get; set; }
         public InstanceLifetime InstanceLifetime { get; set; }
+        public bool? AsServer { get; set; }
         public Action<string, Exception> UnhandledErrorHandler { get; set; }
 
         public MessagePipeInProcessNamedPipeOptions(string pipeName)
         {
             this.PipeName = pipeName;
+            this.ServerName = ".";
             this.MessagePackSerializerOptions = ContractlessStandardResolver.Options;
             this.InstanceLifetime = InstanceLifetime.Scoped;
             this.UnhandledErrorHandler = (msg, x) => Console.WriteLine(msg + x);
+            this.AsServer = null;
         }
     }
 
