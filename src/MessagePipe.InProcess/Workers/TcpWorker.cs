@@ -1,5 +1,9 @@
-﻿using MessagePipe.InProcess.Internal;
+﻿using MessagePack;
+using MessagePipe.InProcess.Internal;
+using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -9,6 +13,7 @@ namespace MessagePipe.InProcess.Workers
     [Preserve]
     public sealed class TcpWorker : IDisposable
     {
+        readonly IServiceProvider provider;
         readonly CancellationTokenSource cancellationTokenSource;
         readonly IAsyncPublisher<IInProcessKey, IInProcessValue> publisher;
         readonly MessagePipeInProcessTcpOptions options;
@@ -21,10 +26,15 @@ namespace MessagePipe.InProcess.Workers
         int initializedClient = 0;
         Lazy<SocketTcpClient> client;
 
+        // request-response
+        int messageId = 0;
+        ConcurrentDictionary<int, TaskCompletionSource<IInProcessValue>> responseCompletions = new ConcurrentDictionary<int, TaskCompletionSource<IInProcessValue>>();
+
         // create from DI
         [Preserve]
-        public TcpWorker(MessagePipeInProcessTcpOptions options, IAsyncPublisher<IInProcessKey, IInProcessValue> publisher)
+        public TcpWorker(IServiceProvider provider, MessagePipeInProcessTcpOptions options, IAsyncPublisher<IInProcessKey, IInProcessValue> publisher)
         {
+            this.provider = provider;
             this.cancellationTokenSource = new CancellationTokenSource();
             this.options = options;
             this.publisher = publisher;
@@ -45,6 +55,11 @@ namespace MessagePipe.InProcess.Workers
                 SingleReader = true,
                 SingleWriter = false
             });
+
+            if (options.AsServer != null && options.AsServer.Value)
+            {
+                StartReceiver();
+            }
         }
 
         public void Publish<TKey, TMessage>(TKey key, TMessage message)
@@ -59,12 +74,31 @@ namespace MessagePipe.InProcess.Workers
             channel.Writer.TryWrite(buffer);
         }
 
+        public async Task<TResponse> RequestAsync<TRequest, TResponse>(Type handlerType, TRequest request, CancellationToken cancellationToken)
+        {
+            if (Interlocked.Increment(ref initializedClient) == 1) // first incr, channel not yet started
+            {
+                _ = client.Value; // init
+                RunPublishLoop();
+            }
+
+            var mid = Interlocked.Increment(ref messageId);
+            var tcs = new TaskCompletionSource<IInProcessValue>();
+            responseCompletions[mid] = tcs;
+            var buffer = MessageBuilder.BuildRemoteRequestMessage(handlerType, mid, request, options.MessagePackSerializerOptions);
+            channel.Writer.TryWrite(buffer);
+            var memoryValue = await tcs.Task.ConfigureAwait(false);
+            return MessagePackSerializer.Deserialize<TResponse>(memoryValue.ValueMemory, options.MessagePackSerializerOptions);
+        }
+
         // Send packet to tcp socket from publisher
         async void RunPublishLoop()
         {
             var reader = channel.Reader;
             var token = cancellationTokenSource.Token;
             var tcpClient = client.Value;
+            RunReceiveLoop(tcpClient); // also setup receive loop
+
             while (await reader.WaitToReadAsync(token).ConfigureAwait(false))
             {
                 while (reader.TryRead(out var item))
@@ -135,11 +169,62 @@ namespace MessagePipe.InProcess.Workers
 
                 try
                 {
-                    var message = MessageBuilder.ReadPubSubMessage(value.ToArray());
+                    var message = MessageBuilder.ReadPubSubMessage(value.ToArray()); // can avoid copy?
+                    switch (message.MessageType)
+                    {
+                        case MessageType.PubSub:
+                            publisher.Publish(message, message, CancellationToken.None);
+                            break;
+                        case MessageType.RemoteRequest:
+                            {
+                                // NOTE: should use without reflection(Expression.Compile)
+                                var (mid, typeName) = MessagePackSerializer.Deserialize<(int, string)>(message.KeyMemory, options.MessagePackSerializerOptions);
+                                byte[] resultBytes;
+                                try
+                                {
+                                    var t = Type.GetType(typeName);
+                                    if (t == null) throw new InvalidOperationException("Type is not found:" + typeName);
+                                    var interfaceType = t.GetInterfaces().First(x => x.IsGenericType && x.Name.StartsWith("IAsyncRequestHandler"));
+                                    var coreInterfaceType = t.GetInterfaces().First(x => x.IsGenericType && x.Name.StartsWith("IAsyncRequestHandlerCore"));
+                                    var service = provider.GetRequiredService(interfaceType); // IAsyncRequestHandler<TRequest,TResponse>
+                                    var genericArgs = interfaceType.GetGenericArguments(); // [TRequest, TResponse]
+                                    var request = MessagePackSerializer.Deserialize(genericArgs[0], message.ValueMemory, options.MessagePackSerializerOptions);
+                                    var responseTask = coreInterfaceType.GetMethod("InvokeAsync")!.Invoke(service, new[] { request, CancellationToken.None });
+                                    var task = typeof(ValueTask<>).MakeGenericType(genericArgs[1]).GetMethod("AsTask")!.Invoke(responseTask, null);
+                                    await ((Task)task!); // Task<T> -> Task
+                                    var result = task.GetType().GetProperty("Result")!.GetValue(task);
+                                    resultBytes = MessageBuilder.BuildRemoteResponseMessage(mid, genericArgs[1], result!, options.MessagePackSerializerOptions);
+                                }
+                                catch (Exception ex)
+                                {
+                                    // NOTE: ok to send stacktrace?
+                                    resultBytes = MessageBuilder.BuildRemoteResponseError(mid, ex.ToString(), options.MessagePackSerializerOptions);
+                                }
 
-                    
-
-                    publisher.Publish(message, message, CancellationToken.None);
+                                await client.SendAsync(resultBytes).ConfigureAwait(false);
+                            }
+                            break;
+                        case MessageType.RemoteResponse:
+                        case MessageType.RemoteError:
+                            {
+                                var mid = MessagePackSerializer.Deserialize<int>(message.KeyMemory, options.MessagePackSerializerOptions);
+                                if (responseCompletions.TryRemove(mid, out var tcs))
+                                {
+                                    if (message.MessageType == MessageType.RemoteResponse)
+                                    {
+                                        tcs.TrySetResult(message); // synchronous completion, use memory buffer immediately.
+                                    }
+                                    else
+                                    {
+                                        var errorMsg = MessagePackSerializer.Deserialize<string>(message.ValueMemory, options.MessagePackSerializerOptions);
+                                        tcs.TrySetException(new RemoteRequestException(errorMsg));
+                                    }
+                                }
+                            }
+                            break;
+                        default:
+                            break;
+                    }
                 }
                 catch (Exception ex)
                 {

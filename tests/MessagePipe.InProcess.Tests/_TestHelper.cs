@@ -16,12 +16,13 @@ namespace MessagePipe.InProcess.Tests
             });
             return sc.BuildServiceProvider();
         }
-        public static IServiceProvider BuildServiceProviderTcp(string host, int port, ITestOutputHelper helper)
+        public static IServiceProvider BuildServiceProviderTcp(string host, int port, ITestOutputHelper helper, bool asServer = true)
         {
             var sc = new ServiceCollection();
             sc.AddMessagePipe();
             sc.AddMessagePipeInProcessTcp(host, port, x =>
             {
+                x.AsServer = asServer;
                 x.UnhandledErrorHandler = (msg, e) => helper.WriteLine(msg + e);
             });
             return sc.BuildServiceProvider();

@@ -61,8 +61,7 @@ namespace MessagePipe.InProcess.Workers
 
             if (options.AsServer != null && options.AsServer.Value)
             {
-                Interlocked.Increment(ref initializedServer);
-                RunReceiveLoop(server.Value, x => server.Value.WaitForConnectionAsync(x));
+                StartReceiver();
             }
         }
 

@@ -48,6 +48,7 @@ namespace MessagePipe.InProcess
         public int Port { get; }
         public MessagePackSerializerOptions MessagePackSerializerOptions { get; set; }
         public InstanceLifetime InstanceLifetime { get; set; }
+        public bool? AsServer { get; set; }
         public Action<string, Exception> UnhandledErrorHandler { get; set; }
 
         public MessagePipeInProcessTcpOptions(string host, int port)
@@ -57,6 +58,7 @@ namespace MessagePipe.InProcess
             this.MessagePackSerializerOptions = ContractlessStandardResolver.Options;
             this.InstanceLifetime = InstanceLifetime.Scoped;
             this.UnhandledErrorHandler = (msg, x) => Console.WriteLine(msg + x);
+            this.AsServer = null;
         }
     }
 }
