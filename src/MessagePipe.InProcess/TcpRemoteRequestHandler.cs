@@ -10,18 +10,16 @@ namespace MessagePipe.InProcess
     public sealed class TcpRemoteRequestHandler<TRequest, TResponse> : IRemoteRequestHandler<TRequest, TResponse>
     {
         readonly TcpWorker worker;
-        readonly Type handlerType;
 
         [Preserve]
-        public TcpRemoteRequestHandler(TcpWorker worker, IAsyncRequestHandler<TRequest, TResponse> handler)
+        public TcpRemoteRequestHandler(TcpWorker worker)
         {
             this.worker = worker;
-            this.handlerType = handler.GetType();
         }
 
         public async ValueTask<TResponse> InvokeAsync(TRequest request, CancellationToken cancellationToken = default)
         {
-            return await worker.RequestAsync<TRequest, TResponse>(handlerType, request, cancellationToken);
+            return await worker.RequestAsync<TRequest, TResponse>(request, cancellationToken);
         }
     }
 }

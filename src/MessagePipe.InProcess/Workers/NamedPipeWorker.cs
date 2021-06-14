@@ -82,7 +82,7 @@ namespace MessagePipe.InProcess.Workers
             channel.Writer.TryWrite(buffer);
         }
 
-        public async Task<TResponse> RequestAsync<TRequest, TResponse>(Type handlerType, TRequest request, CancellationToken cancellationToken)
+        public async Task<TResponse> RequestAsync<TRequest, TResponse>(TRequest request, CancellationToken cancellationToken)
         {
             if (Interlocked.Increment(ref initializedClient) == 1) // first incr, channel not yet started
             {
@@ -93,7 +93,7 @@ namespace MessagePipe.InProcess.Workers
             var mid = Interlocked.Increment(ref messageId);
             var tcs = new TaskCompletionSource<IInProcessValue>();
             responseCompletions[mid] = tcs;
-            var buffer = MessageBuilder.BuildRemoteRequestMessage(handlerType, mid, request, options.MessagePackSerializerOptions);
+            var buffer = MessageBuilder.BuildRemoteRequestMessage(typeof(TRequest), typeof(TResponse), mid, request, options.MessagePackSerializerOptions);
             channel.Writer.TryWrite(buffer);
             var memoryValue = await tcs.Task.ConfigureAwait(false);
             return MessagePackSerializer.Deserialize<TResponse>(memoryValue.ValueMemory, options.MessagePackSerializerOptions);
@@ -223,12 +223,11 @@ namespace MessagePipe.InProcess.Workers
                         case MessageType.RemoteRequest:
                             {
                                 // NOTE: should use without reflection(Expression.Compile)
-                                var (mid, typeName) = MessagePackSerializer.Deserialize<(int, string)>(message.KeyMemory, options.MessagePackSerializerOptions);
+                                var (mid, (reqTypeName,resTypeName)) = MessagePackSerializer.Deserialize<(int, (string,string))>(message.KeyMemory, options.MessagePackSerializerOptions);
                                 byte[] resultBytes;
                                 try
                                 {
-                                    var t = Type.GetType(typeName);
-                                    if (t == null) throw new InvalidOperationException("Type is not found:" + typeName);
+                                    var t = AsyncRequestHandlerRegistory.Get(reqTypeName, resTypeName);
                                     var interfaceType = t.GetInterfaces().First(x => x.IsGenericType && x.Name.StartsWith("IAsyncRequestHandler"));
                                     var coreInterfaceType = t.GetInterfaces().First(x => x.IsGenericType && x.Name.StartsWith("IAsyncRequestHandlerCore"));
                                     var service = provider.GetRequiredService(interfaceType); // IAsyncRequestHandler<TRequest,TResponse>

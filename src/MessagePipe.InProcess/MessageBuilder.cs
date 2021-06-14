@@ -75,7 +75,7 @@ namespace MessagePipe.InProcess
         // Message Frame-----
         // Length: int32(4), without self(MsgPack Body Only)
         // Body(PubSub): MessagePack Array[3](Type(byte), key, message)
-        // Body(Reques): MessagePack Array[3](Type(byte), (messageId:int, key:string), request)
+        // Body(Reques): MessagePack Array[3](Type(byte), (messageId:int, (reqType,resType):(string,string)), request)
         // Body(Respon): MessagePack Array[3](Type(byte), messageId:int, response)
         // Body(RError): MessagePack Array[3](Type(byte), messageId:int, error:string)
 
@@ -103,14 +103,14 @@ namespace MessagePipe.InProcess
             }
         }
 
-        public static byte[] BuildRemoteRequestMessage<TRequest>(Type key, int messageId, TRequest message, MessagePackSerializerOptions options)
+        public static byte[] BuildRemoteRequestMessage<TRequest>(Type requestType, Type responseType, int messageId, TRequest message, MessagePackSerializerOptions options)
         {
             using (var bufferWriter = new ArrayPoolBufferWriter())
             {
                 var writer = new MessagePackWriter(bufferWriter);
                 writer.WriteArrayHeader(3);
                 writer.Write((byte)MessageType.RemoteRequest);
-                MessagePackSerializer.Serialize(ref writer, (messageId, key.AssemblyQualifiedName), options);
+                MessagePackSerializer.Serialize(ref writer, (messageId, (requestType.FullName, responseType.FullName)), options);
                 MessagePackSerializer.Serialize(ref writer, message, options);
                 writer.Flush();
 
