@@ -27,13 +27,13 @@ namespace MessagePipe.InProcess.Tests
             return sc.BuildServiceProvider();
         }
 
-        public static IServiceProvider BuildServiceProviderNamedPipe(string pipeName, ITestOutputHelper helper)
+        public static IServiceProvider BuildServiceProviderNamedPipe(string pipeName, ITestOutputHelper helper, bool asServer = true)
         {
             var sc = new ServiceCollection();
             sc.AddMessagePipe();
             sc.AddMessagePipeInProcessNamedPipe(pipeName, x =>
             {
-                x.AsServer = true;
+                x.AsServer = asServer;
                 x.UnhandledErrorHandler = (msg, e) => helper.WriteLine(msg + e);
             });
             return sc.BuildServiceProvider();

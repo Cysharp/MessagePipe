@@ -17,6 +17,7 @@ namespace MessagePipe.InProcess.Workers
     [Preserve]
     public sealed class NamedPipeWorker : IDisposable
     {
+        readonly string pipeName;
         readonly IServiceProvider provider;
         readonly CancellationTokenSource cancellationTokenSource;
         readonly IAsyncPublisher<IInProcessKey, IInProcessValue> publisher;
@@ -38,15 +39,13 @@ namespace MessagePipe.InProcess.Workers
         [Preserve]
         public NamedPipeWorker(IServiceProvider provider, MessagePipeInProcessNamedPipeOptions options, IAsyncPublisher<IInProcessKey, IInProcessValue> publisher)
         {
+            this.pipeName = options.PipeName;
             this.provider = provider;
             this.cancellationTokenSource = new CancellationTokenSource();
             this.options = options;
             this.publisher = publisher;
 
-            this.server = new Lazy<NamedPipeServerStream>(() =>
-            {
-                return new NamedPipeServerStream(options.PipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
-            });
+            this.server = CreateLazyServerStream();
 
             this.client = new Lazy<NamedPipeClientStream>(() =>
             {
@@ -65,6 +64,11 @@ namespace MessagePipe.InProcess.Workers
                 Interlocked.Increment(ref initializedServer);
                 RunReceiveLoop(server.Value, x => server.Value.WaitForConnectionAsync(x));
             }
+        }
+
+        Lazy<NamedPipeServerStream> CreateLazyServerStream()
+        {
+            return new Lazy<NamedPipeServerStream>(() => new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous));
         }
 
         public void Publish<TKey, TMessage>(TKey key, TMessage message)
@@ -111,7 +115,14 @@ namespace MessagePipe.InProcess.Workers
             var token = cancellationTokenSource.Token;
             var pipeStream = client.Value;
 
-            await pipeStream.ConnectAsync(Timeout.Infinite, token).ConfigureAwait(false);
+            try
+            {
+                await pipeStream.ConnectAsync(Timeout.Infinite, token).ConfigureAwait(false);
+            }
+            catch (IOException)
+            {
+                return; // connection closed.
+            }
             RunReceiveLoop(pipeStream, null); // client connected, setup receive loop
 
             while (await reader.WaitToReadAsync(token).ConfigureAwait(false))
@@ -121,6 +132,10 @@ namespace MessagePipe.InProcess.Workers
                     try
                     {
                         await pipeStream.WriteAsync(item, 0, item.Length, token).ConfigureAwait(false);
+                    }
+                    catch (IOException)
+                    {
+                        return; // connection closed.
                     }
                     catch (Exception ex)
                     {
@@ -137,11 +152,18 @@ namespace MessagePipe.InProcess.Workers
         // Receive from udp socket and push value to subscribers.
         async void RunReceiveLoop(Stream pipeStream, Func<CancellationToken, Task>? waitForConnection)
         {
-        RECONNECT:
+            RECONNECT:
             var token = cancellationTokenSource.Token;
             if (waitForConnection != null)
             {
-                await waitForConnection(token).ConfigureAwait(false);
+                try
+                {
+                    await waitForConnection(token).ConfigureAwait(false);
+                }
+                catch (IOException)
+                {
+                    return; // connection closed.
+                }
             }
             var buffer = new byte[65536];
             while (!token.IsCancellationRequested)
@@ -150,7 +172,16 @@ namespace MessagePipe.InProcess.Workers
                 try
                 {
                     var readLen = await pipeStream.ReadAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
-                    if (readLen == 0) goto RECONNECT; // end of stream(disconnect, wait reconnect)
+                    if (readLen == 0)
+                    {
+                        if (waitForConnection != null)
+                        {
+                            server.Value.Dispose();
+                            server = CreateLazyServerStream();
+                            pipeStream = server.Value;
+                            goto RECONNECT; // end of stream(disconnect, wait reconnect)
+                        }
+                    }
 
                     var messageLen = MessageBuilder.FetchMessageLength(buffer);
                     if (readLen == (messageLen + 4))
@@ -168,6 +199,10 @@ namespace MessagePipe.InProcess.Workers
                         await ReadFullyAsync(buffer, pipeStream, readLen, remain, token).ConfigureAwait(false);
                         value = buffer.AsMemory(4, messageLen);
                     }
+                }
+                catch (IOException)
+                {
+                    return; // connection closed.
                 }
                 catch (Exception ex)
                 {
@@ -236,6 +271,10 @@ namespace MessagePipe.InProcess.Workers
                         default:
                             break;
                     }
+                }
+                catch (IOException)
+                {
+                    return; // connection closed.
                 }
                 catch (Exception ex)
                 {

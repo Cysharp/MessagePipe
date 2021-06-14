@@ -55,6 +55,43 @@ namespace MessagePipe.InProcess.Tests
         }
 
         [Fact]
+        public async Task ConnectTwice()
+        {
+            var providerServer = TestHelper.BuildServiceProviderNamedPipe("zb", helper, asServer: false);
+            var providerClient = TestHelper.BuildServiceProviderNamedPipe("zb", helper, asServer: false);
+            var p1 = providerClient.GetRequiredService<IDistributedPublisher<int, int>>();
+            var s1 = providerServer.GetRequiredService<IDistributedSubscriber<int, int>>();
+
+            var result = new List<int>();
+            await s1.SubscribeAsync(1, x =>
+            {
+                result.Add(x);
+            });
+
+            await p1.PublishAsync(1, 9999);
+            var scope = (providerClient as IDisposable);
+
+            await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
+
+            scope?.Dispose();
+
+            await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
+
+
+            var providerClient2 = TestHelper.BuildServiceProviderNamedPipe("zb", helper, asServer: false);
+            var p2 = providerClient2.GetRequiredService<IDistributedPublisher<int, int>>();
+
+            await p2.PublishAsync(1, 4999);
+
+            await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
+            result.Should().Equal(9999, 4999);
+
+            (providerServer as IDisposable)?.Dispose();
+            (providerClient2 as IDisposable)?.Dispose();
+        }
+
+
+        [Fact]
         public async Task SimpleStringString()
         {
             var provider = TestHelper.BuildServiceProviderNamedPipe("barbaz", helper);
