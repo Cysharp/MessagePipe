@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace MessagePipe.InProcess.Tests
+namespace MessagePipe.Interprocess.Tests
 {
     public class UdpTest
     {

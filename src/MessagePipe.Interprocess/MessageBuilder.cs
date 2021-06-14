@@ -1,22 +1,22 @@
 ﻿using MessagePack;
-using MessagePipe.InProcess.Internal;
+using MessagePipe.Interprocess.Internal;
 using System;
 using System.Buffers;
 using System.Runtime.CompilerServices;
 
-namespace MessagePipe.InProcess
+namespace MessagePipe.Interprocess
 {
-    public interface IInProcessKey : IEquatable<IInProcessKey>
+    public interface IInterprocessKey : IEquatable<IInterprocessKey>
     {
         ReadOnlyMemory<byte> KeyMemory { get; }
     }
 
-    public interface IInProcessValue
+    public interface IInterprocessValue
     {
         ReadOnlyMemory<byte> ValueMemory { get; }
     }
 
-    internal sealed class InProcessMessage : IInProcessKey, IInProcessValue
+    internal sealed class InterprocessMessage : IInterprocessKey, IInterprocessValue
     {
         readonly byte[] buffer;
         int keyIndex;
@@ -25,7 +25,7 @@ namespace MessagePipe.InProcess
 
         public MessageType MessageType { get; }
 
-        public InProcessMessage(MessageType messageType, byte[] buffer, int keyIndex, int keyOffset)
+        public InterprocessMessage(MessageType messageType, byte[] buffer, int keyIndex, int keyOffset)
         {
             this.MessageType = messageType;
             this.buffer = buffer;
@@ -37,7 +37,7 @@ namespace MessagePipe.InProcess
         public ReadOnlyMemory<byte> KeyMemory => buffer.AsMemory(keyIndex, keyOffset - keyIndex);
         public ReadOnlyMemory<byte> ValueMemory => buffer.AsMemory(keyOffset, buffer.Length - keyOffset);
 
-        public bool Equals(IInProcessKey? other)
+        public bool Equals(IInterprocessKey? other)
         {
             if (other == null) return false;
             return KeyMemory.Span.SequenceEqual(other.KeyMemory.Span);
@@ -79,10 +79,10 @@ namespace MessagePipe.InProcess
         // Body(Respon): MessagePack Array[3](Type(byte), messageId:int, response)
         // Body(RError): MessagePack Array[3](Type(byte), messageId:int, error:string)
 
-        public static IInProcessKey CreateKey<TKey>(TKey key, MessagePackSerializerOptions options)
+        public static IInterprocessKey CreateKey<TKey>(TKey key, MessagePackSerializerOptions options)
         {
             var bytes = MessagePackSerializer.Serialize(key, options);
-            return new InProcessMessage(MessageType.PubSub, bytes, 0, bytes.Length);
+            return new InterprocessMessage(MessageType.PubSub, bytes, 0, bytes.Length);
         }
 
         public static byte[] BuildPubSubMessage<TKey, TMessaege>(TKey key, TMessaege message, MessagePackSerializerOptions options)
@@ -162,7 +162,7 @@ namespace MessagePipe.InProcess
             return Unsafe.ReadUnaligned<int>(ref Unsafe.AsRef(xs[0]));
         }
 
-        public static InProcessMessage ReadPubSubMessage(byte[] buffer)
+        public static InterprocessMessage ReadPubSubMessage(byte[] buffer)
         {
             var reader = new MessagePackReader(buffer);
             if (reader.ReadArrayHeader() != 3)
@@ -178,7 +178,7 @@ namespace MessagePipe.InProcess
             var keyOffset = (int)reader.Consumed;
             reader.Skip();
 
-            return new InProcessMessage(msgType, buffer, keyIndex, keyOffset);
+            return new InterprocessMessage(msgType, buffer, keyIndex, keyOffset);
         }
     }
 }

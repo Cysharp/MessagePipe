@@ -1,5 +1,5 @@
 ﻿using MessagePack;
-using MessagePipe.InProcess.Internal;
+using MessagePipe.Interprocess.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Concurrent;
@@ -8,15 +8,15 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
-namespace MessagePipe.InProcess.Workers
+namespace MessagePipe.Interprocess.Workers
 {
     [Preserve]
     public sealed class TcpWorker : IDisposable
     {
         readonly IServiceProvider provider;
         readonly CancellationTokenSource cancellationTokenSource;
-        readonly IAsyncPublisher<IInProcessKey, IInProcessValue> publisher;
-        readonly MessagePipeInProcessTcpOptions options;
+        readonly IAsyncPublisher<IInterprocessKey, IInterprocessValue> publisher;
+        readonly MessagePipeInterprocessTcpOptions options;
 
         // Channel is used from publisher for thread safety of write packet
         int initializedServer = 0;
@@ -28,11 +28,11 @@ namespace MessagePipe.InProcess.Workers
 
         // request-response
         int messageId = 0;
-        ConcurrentDictionary<int, TaskCompletionSource<IInProcessValue>> responseCompletions = new ConcurrentDictionary<int, TaskCompletionSource<IInProcessValue>>();
+        ConcurrentDictionary<int, TaskCompletionSource<IInterprocessValue>> responseCompletions = new ConcurrentDictionary<int, TaskCompletionSource<IInterprocessValue>>();
 
         // create from DI
         [Preserve]
-        public TcpWorker(IServiceProvider provider, MessagePipeInProcessTcpOptions options, IAsyncPublisher<IInProcessKey, IInProcessValue> publisher)
+        public TcpWorker(IServiceProvider provider, MessagePipeInterprocessTcpOptions options, IAsyncPublisher<IInterprocessKey, IInterprocessValue> publisher)
         {
             this.provider = provider;
             this.cancellationTokenSource = new CancellationTokenSource();
@@ -83,7 +83,7 @@ namespace MessagePipe.InProcess.Workers
             }
 
             var mid = Interlocked.Increment(ref messageId);
-            var tcs = new TaskCompletionSource<IInProcessValue>();
+            var tcs = new TaskCompletionSource<IInterprocessValue>();
             responseCompletions[mid] = tcs;
             var buffer = MessageBuilder.BuildRemoteRequestMessage(typeof(TRequest), typeof(TResponse), mid, request, options.MessagePackSerializerOptions);
             channel.Writer.TryWrite(buffer);

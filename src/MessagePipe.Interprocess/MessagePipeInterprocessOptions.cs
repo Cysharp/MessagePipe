@@ -2,9 +2,9 @@
 using MessagePack.Resolvers;
 using System;
 
-namespace MessagePipe.InProcess
+namespace MessagePipe.Interprocess
 {
-    public sealed class MessagePipeInProcessUdpOptions
+    public sealed class MessagePipeInterprocessUdpOptions
     {
         public string Host { get; }
         public int Port { get; }
@@ -12,7 +12,7 @@ namespace MessagePipe.InProcess
         public InstanceLifetime InstanceLifetime { get; set; }
         public Action<string, Exception> UnhandledErrorHandler { get; set; }
 
-        public MessagePipeInProcessUdpOptions(string host, int port)
+        public MessagePipeInterprocessUdpOptions(string host, int port)
         {
             this.Host = host;
             this.Port = port;
@@ -22,7 +22,7 @@ namespace MessagePipe.InProcess
         }
     }
 
-    public sealed class MessagePipeInProcessNamedPipeOptions
+    public sealed class MessagePipeInterprocessNamedPipeOptions
     {
         public string PipeName { get; }
         public string ServerName { get; set; }
@@ -31,7 +31,7 @@ namespace MessagePipe.InProcess
         public bool? AsServer { get; set; }
         public Action<string, Exception> UnhandledErrorHandler { get; set; }
 
-        public MessagePipeInProcessNamedPipeOptions(string pipeName)
+        public MessagePipeInterprocessNamedPipeOptions(string pipeName)
         {
             this.PipeName = pipeName;
             this.ServerName = ".";
@@ -42,7 +42,7 @@ namespace MessagePipe.InProcess
         }
     }
 
-    public sealed class MessagePipeInProcessTcpOptions
+    public sealed class MessagePipeInterprocessTcpOptions
     {
         public string Host { get; }
         public int Port { get; }
@@ -51,7 +51,7 @@ namespace MessagePipe.InProcess
         public bool? AsServer { get; set; }
         public Action<string, Exception> UnhandledErrorHandler { get; set; }
 
-        public MessagePipeInProcessTcpOptions(string host, int port)
+        public MessagePipeInterprocessTcpOptions(string host, int port)
         {
             this.Host = host;
             this.Port = port;

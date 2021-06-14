@@ -4,18 +4,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace MessagePipe.InProcess.Tests
+namespace MessagePipe.Interprocess.Tests
 {
-    public class NamedPipeTest
+    public class TcpTest
     {
         readonly ITestOutputHelper helper;
 
-        public NamedPipeTest(ITestOutputHelper testOutputHelper)
+        public TcpTest(ITestOutputHelper testOutputHelper)
         {
             this.helper = testOutputHelper;
         }
@@ -23,7 +22,7 @@ namespace MessagePipe.InProcess.Tests
         [Fact]
         public async Task SimpleIntInt()
         {
-            var provider = TestHelper.BuildServiceProviderNamedPipe("foobar", helper);
+            var provider = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1784, helper);
             using (provider as IDisposable)
             {
                 var p1 = provider.GetRequiredService<IDistributedPublisher<int, int>>();
@@ -55,10 +54,47 @@ namespace MessagePipe.InProcess.Tests
         }
 
         [Fact]
+        public async Task TwoPublisher()
+        {
+            var provider = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1992, helper, asServer: false);
+            var provider2 = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1992, helper, asServer: false);
+            using (provider as IDisposable)
+            using (provider2 as IDisposable)
+            {
+                var p1 = provider.GetRequiredService<IDistributedPublisher<int, int>>();
+                var s1 = provider.GetRequiredService<IDistributedSubscriber<int, int>>();
+                var p2 = provider2.GetRequiredService<IDistributedPublisher<int, int>>();
+
+                var result = new List<int>();
+                await s1.SubscribeAsync(1, x =>
+                {
+                    result.Add(x);
+                });
+
+                var result2 = new List<int>();
+                await s1.SubscribeAsync(4, x =>
+                {
+                    result2.Add(x);
+                });
+
+                await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
+                await p1.PublishAsync(1, 9999);
+                await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
+                await p2.PublishAsync(4, 888);
+                await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
+                await p2.PublishAsync(1, 4999);
+                await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
+
+                result.Should().Equal(9999, 4999);
+                result2.Should().Equal(888);
+            }
+        }
+
+        [Fact]
         public async Task ConnectTwice()
         {
-            var providerServer = TestHelper.BuildServiceProviderNamedPipe("zb", helper, asServer: false);
-            var providerClient = TestHelper.BuildServiceProviderNamedPipe("zb", helper, asServer: false);
+            var providerServer = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1184, helper);
+            var providerClient = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1184, helper,asServer:false);
             var p1 = providerClient.GetRequiredService<IDistributedPublisher<int, int>>();
             var s1 = providerServer.GetRequiredService<IDistributedSubscriber<int, int>>();
 
@@ -78,7 +114,7 @@ namespace MessagePipe.InProcess.Tests
             await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
 
 
-            var providerClient2 = TestHelper.BuildServiceProviderNamedPipe("zb", helper, asServer: false);
+            var providerClient2 = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1184, helper, asServer: false);
             var p2 = providerClient2.GetRequiredService<IDistributedPublisher<int, int>>();
 
             await p2.PublishAsync(1, 4999);
@@ -94,7 +130,7 @@ namespace MessagePipe.InProcess.Tests
         [Fact]
         public async Task SimpleStringString()
         {
-            var provider = TestHelper.BuildServiceProviderNamedPipe("barbaz", helper);
+            var provider = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1436, helper);
             using (provider as IDisposable)
             {
                 var p1 = provider.GetRequiredService<IDistributedPublisher<string, string>>();
@@ -118,7 +154,7 @@ namespace MessagePipe.InProcess.Tests
         [Fact]
         public async Task HugeSizeTest()
         {
-            var provider = TestHelper.BuildServiceProviderNamedPipe("z42fds", helper);
+            var provider = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1436, helper);
             using (provider as IDisposable)
             {
                 var p1 = provider.GetRequiredService<IDistributedPublisher<string, string>>();
@@ -143,7 +179,7 @@ namespace MessagePipe.InProcess.Tests
         [Fact]
         public async Task MoreHugeSizeTest()
         {
-            var provider = TestHelper.BuildServiceProviderNamedPipe("fdsew", helper);
+            var provider = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1436, helper);
             using (provider as IDisposable)
             {
                 var p1 = provider.GetRequiredService<IDistributedPublisher<string, string>>();
@@ -168,12 +204,11 @@ namespace MessagePipe.InProcess.Tests
             }
         }
 
-        // remote request
 
         [Fact]
         public async Task RemoteRequestTest()
         {
-            var provider = TestHelper.BuildServiceProviderNamedPipe("aewrw", helper);
+            var provider = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1355, helper, asServer: true);
             using (provider as IDisposable)
             {
                 var remoteHandler = provider.GetRequiredService<IRemoteRequestHandler<int, string>>();
@@ -189,22 +224,6 @@ namespace MessagePipe.InProcess.Tests
                     var v3 = await remoteHandler.InvokeAsync(-1);
                 });
                 ex.Message.Should().Contain("NO -1");
-            }
-        }
-    }
-
-    public class MyAsyncHandler : IAsyncRequestHandler<int, string>
-    {
-        public async ValueTask<string> InvokeAsync(int request, CancellationToken cancellationToken = default)
-        {
-            await Task.Delay(1);
-            if (request == -1)
-            {
-                throw new Exception("NO -1");
-            }
-            else
-            {
-                return "ECHO:" + request.ToString();
             }
         }
     }

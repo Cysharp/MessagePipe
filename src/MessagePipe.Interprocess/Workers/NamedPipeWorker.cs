@@ -1,5 +1,5 @@
 ﻿using MessagePack;
-using MessagePipe.InProcess.Internal;
+using MessagePipe.Interprocess.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Concurrent;
@@ -12,7 +12,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
-namespace MessagePipe.InProcess.Workers
+namespace MessagePipe.Interprocess.Workers
 {
     [Preserve]
     public sealed class NamedPipeWorker : IDisposable
@@ -20,8 +20,8 @@ namespace MessagePipe.InProcess.Workers
         readonly string pipeName;
         readonly IServiceProvider provider;
         readonly CancellationTokenSource cancellationTokenSource;
-        readonly IAsyncPublisher<IInProcessKey, IInProcessValue> publisher;
-        readonly MessagePipeInProcessNamedPipeOptions options;
+        readonly IAsyncPublisher<IInterprocessKey, IInterprocessValue> publisher;
+        readonly MessagePipeInterprocessNamedPipeOptions options;
 
         // Channel is used from publisher for thread safety of write packet
         int initializedServer = 0;
@@ -33,11 +33,11 @@ namespace MessagePipe.InProcess.Workers
 
         // request-response
         int messageId = 0;
-        ConcurrentDictionary<int, TaskCompletionSource<IInProcessValue>> responseCompletions = new ConcurrentDictionary<int, TaskCompletionSource<IInProcessValue>>();
+        ConcurrentDictionary<int, TaskCompletionSource<IInterprocessValue>> responseCompletions = new ConcurrentDictionary<int, TaskCompletionSource<IInterprocessValue>>();
 
         // create from DI
         [Preserve]
-        public NamedPipeWorker(IServiceProvider provider, MessagePipeInProcessNamedPipeOptions options, IAsyncPublisher<IInProcessKey, IInProcessValue> publisher)
+        public NamedPipeWorker(IServiceProvider provider, MessagePipeInterprocessNamedPipeOptions options, IAsyncPublisher<IInterprocessKey, IInterprocessValue> publisher)
         {
             this.pipeName = options.PipeName;
             this.provider = provider;
@@ -91,7 +91,7 @@ namespace MessagePipe.InProcess.Workers
             }
 
             var mid = Interlocked.Increment(ref messageId);
-            var tcs = new TaskCompletionSource<IInProcessValue>();
+            var tcs = new TaskCompletionSource<IInterprocessValue>();
             responseCompletions[mid] = tcs;
             var buffer = MessageBuilder.BuildRemoteRequestMessage(typeof(TRequest), typeof(TResponse), mid, request, options.MessagePackSerializerOptions);
             channel.Writer.TryWrite(buffer);

@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MessagePipe.InProcess.Workers
+namespace MessagePipe.Interprocess.Workers
 {
     internal sealed class SocketUdpServer : IDisposable
     {

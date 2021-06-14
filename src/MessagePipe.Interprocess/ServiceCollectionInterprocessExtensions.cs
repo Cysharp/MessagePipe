@@ -1,20 +1,20 @@
-﻿using MessagePipe.InProcess;
-using MessagePipe.InProcess.Workers;
+﻿using MessagePipe.Interprocess;
+using MessagePipe.Interprocess.Workers;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
 namespace MessagePipe
 {
-    public static class ServiceCollectionInProcessExtensions
+    public static class ServiceCollectionInterprocessExtensions
     {
-        public static IServiceCollection AddMessagePipeInProcessUdp(this IServiceCollection services, string host, int port)
+        public static IServiceCollection AddMessagePipeInterprocessUdp(this IServiceCollection services, string host, int port)
         {
-            return AddMessagePipeInProcessUdp(services, host, port, _ => { });
+            return AddMessagePipeInterprocessUdp(services, host, port, _ => { });
         }
 
-        public static IServiceCollection AddMessagePipeInProcessUdp(this IServiceCollection services, string host, int port, Action<MessagePipeInProcessUdpOptions> configure)
+        public static IServiceCollection AddMessagePipeInterprocessUdp(this IServiceCollection services, string host, int port, Action<MessagePipeInterprocessUdpOptions> configure)
         {
-            var options = new MessagePipeInProcessUdpOptions(host, port);
+            var options = new MessagePipeInterprocessUdpOptions(host, port);
             configure(options);
 
             services.AddSingleton(options);
@@ -26,14 +26,14 @@ namespace MessagePipe
             return services;
         }
 
-        public static IServiceCollection AddMessagePipeInProcessTcp(this IServiceCollection services, string host, int port)
+        public static IServiceCollection AddMessagePipeInterprocessTcp(this IServiceCollection services, string host, int port)
         {
-            return AddMessagePipeInProcessTcp(services, host, port, _ => { });
+            return AddMessagePipeInterprocessTcp(services, host, port, _ => { });
         }
 
-        public static IServiceCollection AddMessagePipeInProcessTcp(this IServiceCollection services, string host, int port, Action<MessagePipeInProcessTcpOptions> configure)
+        public static IServiceCollection AddMessagePipeInterprocessTcp(this IServiceCollection services, string host, int port, Action<MessagePipeInterprocessTcpOptions> configure)
         {
-            var options = new MessagePipeInProcessTcpOptions(host, port);
+            var options = new MessagePipeInterprocessTcpOptions(host, port);
             configure(options);
 
             services.AddSingleton(options);
@@ -46,14 +46,14 @@ namespace MessagePipe
             return services;
         }
 
-        public static IServiceCollection AddMessagePipeInProcessNamedPipe(this IServiceCollection services, string pipeName)
+        public static IServiceCollection AddMessagePipeInterprocessNamedPipe(this IServiceCollection services, string pipeName)
         {
-            return AddMessagePipeInProcessNamedPipe(services, pipeName, _ => { });
+            return AddMessagePipeInterprocessNamedPipe(services, pipeName, _ => { });
         }
 
-        public static IServiceCollection AddMessagePipeInProcessNamedPipe(this IServiceCollection services, string pipeName, Action<MessagePipeInProcessNamedPipeOptions> configure)
+        public static IServiceCollection AddMessagePipeInterprocessNamedPipe(this IServiceCollection services, string pipeName, Action<MessagePipeInterprocessNamedPipeOptions> configure)
         {
-            var options = new MessagePipeInProcessNamedPipeOptions(pipeName);
+            var options = new MessagePipeInterprocessNamedPipeOptions(pipeName);
             configure(options);
 
             services.AddSingleton(options);

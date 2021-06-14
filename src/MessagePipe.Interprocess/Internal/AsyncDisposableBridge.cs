@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace MessagePipe.InProcess.Internal
+namespace MessagePipe.Interprocess.Internal
 {
     internal sealed class AsyncDisposableBridge : IAsyncDisposable
     {

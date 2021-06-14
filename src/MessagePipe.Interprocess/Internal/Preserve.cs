@@ -1,4 +1,4 @@
-﻿namespace MessagePipe.InProcess.Internal
+﻿namespace MessagePipe.Interprocess.Internal
 {
     // Preserve for Unity IL2CPP
 

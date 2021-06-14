@@ -7,7 +7,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace InProcessServer
+namespace InterprocessServer
 {
     class Program : ConsoleAppBase
     {
@@ -23,7 +23,7 @@ namespace InProcessServer
                     x.AddSingleton<GuidHolder>(x => new GuidHolder { guid = id });
                     x.AddMessagePipe();
 
-                    x.AddMessagePipeInProcessNamedPipe("mypipe", x =>
+                    x.AddMessagePipeInterprocessNamedPipe("mypipe", x =>
                     {
                         x.AsServer = isServer;
                     });

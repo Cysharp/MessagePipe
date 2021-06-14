@@ -7,7 +7,7 @@
 
         <!-- NuGet Packaging -->
         <PackageTags>pubsub;eventaggregator</PackageTags>
-        <Description>InProcess extensions for MessagePipe.</Description>
+        <Description>Interprocess extensions for MessagePipe.</Description>
         <SignAssembly>true</SignAssembly>
     </PropertyGroup>
 

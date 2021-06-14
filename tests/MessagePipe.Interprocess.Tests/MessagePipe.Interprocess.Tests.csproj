@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net5.0</TargetFramework>
@@ -18,7 +18,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\MessagePipe.InProcess\MessagePipe.InProcess.csproj" />
+        <ProjectReference Include="..\..\src\MessagePipe.Interprocess\MessagePipe.Interprocess.csproj" />
         <ProjectReference Include="..\..\src\MessagePipe\MessagePipe.csproj" />
     </ItemGroup>
 

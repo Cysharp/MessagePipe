@@ -1,10 +1,10 @@
-﻿using MessagePipe.InProcess.Internal;
-using MessagePipe.InProcess.Workers;
+﻿using MessagePipe.Interprocess.Internal;
+using MessagePipe.Interprocess.Workers;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MessagePipe.InProcess
+namespace MessagePipe.Interprocess
 {
     [Preserve]
     public sealed class TcpDistributedPublisher<TKey, TMessage> : IDistributedPublisher<TKey, TMessage>
@@ -28,13 +28,13 @@ namespace MessagePipe.InProcess
     public sealed class TcpDistributedSubscriber<TKey, TMessage> : IDistributedSubscriber<TKey, TMessage>
     {
         // Pubsished from UdpWorker.
-        readonly MessagePipeInProcessTcpOptions options;
-        readonly IAsyncSubscriber<IInProcessKey, IInProcessValue> subscriberCore;
+        readonly MessagePipeInterprocessTcpOptions options;
+        readonly IAsyncSubscriber<IInterprocessKey, IInterprocessValue> subscriberCore;
         readonly FilterAttachedMessageHandlerFactory syncHandlerFactory;
         readonly FilterAttachedAsyncMessageHandlerFactory asyncHandlerFactory;
 
         [Preserve]
-        public TcpDistributedSubscriber(TcpWorker worker, MessagePipeInProcessTcpOptions options, IAsyncSubscriber<IInProcessKey, IInProcessValue> subscriberCore, FilterAttachedMessageHandlerFactory syncHandlerFactory, FilterAttachedAsyncMessageHandlerFactory asyncHandlerFactory)
+        public TcpDistributedSubscriber(TcpWorker worker, MessagePipeInterprocessTcpOptions options, IAsyncSubscriber<IInterprocessKey, IInterprocessValue> subscriberCore, FilterAttachedMessageHandlerFactory syncHandlerFactory, FilterAttachedAsyncMessageHandlerFactory asyncHandlerFactory)
         {
             this.options = options;
             this.subscriberCore = subscriberCore;
@@ -68,7 +68,7 @@ namespace MessagePipe.InProcess
             return SubscribeCore(key, transform);
         }
 
-        ValueTask<IAsyncDisposable> SubscribeCore(TKey key, IAsyncMessageHandler<IInProcessValue> handler)
+        ValueTask<IAsyncDisposable> SubscribeCore(TKey key, IAsyncMessageHandler<IInterprocessValue> handler)
         {
             var byteKey = MessageBuilder.CreateKey(key, options.MessagePackSerializerOptions);
             var d = subscriberCore.Subscribe(byteKey, handler);

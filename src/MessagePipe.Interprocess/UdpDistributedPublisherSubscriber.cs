@@ -1,18 +1,18 @@
-﻿using MessagePipe.InProcess.Internal;
-using MessagePipe.InProcess.Workers;
+﻿using MessagePipe.Interprocess.Internal;
+using MessagePipe.Interprocess.Workers;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MessagePipe.InProcess
+namespace MessagePipe.Interprocess
 {
     [Preserve]
-    public sealed class NamedPipeDistributedPublisher<TKey, TMessage> : IDistributedPublisher<TKey, TMessage>
+    public sealed class UdpDistributedPublisher<TKey, TMessage> : IDistributedPublisher<TKey, TMessage>
     {
-        readonly NamedPipeWorker worker;
+        readonly UdpWorker worker;
 
         [Preserve]
-        public NamedPipeDistributedPublisher(NamedPipeWorker worker)
+        public UdpDistributedPublisher(UdpWorker worker)
         {
             this.worker = worker;
         }
@@ -25,16 +25,16 @@ namespace MessagePipe.InProcess
     }
 
     [Preserve]
-    public sealed class NamedPipeDistributedSubscriber<TKey, TMessage> : IDistributedSubscriber<TKey, TMessage>
+    public sealed class UdpDistributedSubscriber<TKey, TMessage> : IDistributedSubscriber<TKey, TMessage>
     {
-        // Pubsished from worker.
-        readonly MessagePipeInProcessNamedPipeOptions options;
-        readonly IAsyncSubscriber<IInProcessKey, IInProcessValue> subscriberCore;
+        // Pubsished from UdpWorker.
+        readonly MessagePipeInterprocessUdpOptions options;
+        readonly IAsyncSubscriber<IInterprocessKey, IInterprocessValue> subscriberCore;
         readonly FilterAttachedMessageHandlerFactory syncHandlerFactory;
         readonly FilterAttachedAsyncMessageHandlerFactory asyncHandlerFactory;
 
         [Preserve]
-        public NamedPipeDistributedSubscriber(NamedPipeWorker worker, MessagePipeInProcessNamedPipeOptions options, IAsyncSubscriber<IInProcessKey, IInProcessValue> subscriberCore, FilterAttachedMessageHandlerFactory syncHandlerFactory, FilterAttachedAsyncMessageHandlerFactory asyncHandlerFactory)
+        public UdpDistributedSubscriber(UdpWorker worker, MessagePipeInterprocessUdpOptions options, IAsyncSubscriber<IInterprocessKey, IInterprocessValue> subscriberCore, FilterAttachedMessageHandlerFactory syncHandlerFactory, FilterAttachedAsyncMessageHandlerFactory asyncHandlerFactory)
         {
             this.options = options;
             this.subscriberCore = subscriberCore;
@@ -68,7 +68,7 @@ namespace MessagePipe.InProcess
             return SubscribeCore(key, transform);
         }
 
-        ValueTask<IAsyncDisposable> SubscribeCore(TKey key, IAsyncMessageHandler<IInProcessValue> handler)
+        ValueTask<IAsyncDisposable> SubscribeCore(TKey key, IAsyncMessageHandler<IInterprocessValue> handler)
         {
             var byteKey = MessageBuilder.CreateKey(key, options.MessagePackSerializerOptions);
             var d = subscriberCore.Subscribe(byteKey, handler);
@@ -76,5 +76,5 @@ namespace MessagePipe.InProcess
         }
     }
 
-
+    
 }

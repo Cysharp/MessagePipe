@@ -1,10 +1,10 @@
-﻿using MessagePipe.InProcess.Internal;
-using MessagePipe.InProcess.Workers;
+﻿using MessagePipe.Interprocess.Internal;
+using MessagePipe.Interprocess.Workers;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MessagePipe.InProcess
+namespace MessagePipe.Interprocess
 {
     [Preserve]
     public sealed class NamedPipeRemoteRequestHandler<TRequest, TResponse> : IRemoteRequestHandler<TRequest, TResponse>

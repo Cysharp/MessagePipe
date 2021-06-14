@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Buffers;
 
-namespace MessagePipe.InProcess.Internal
+namespace MessagePipe.Interprocess.Internal
 {
     internal class ArrayPoolBufferWriter : IBufferWriter<byte>, IDisposable
     {

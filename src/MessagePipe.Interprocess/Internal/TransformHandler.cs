@@ -2,9 +2,9 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MessagePipe.InProcess.Internal
+namespace MessagePipe.Interprocess.Internal
 {
-    internal sealed class TransformSyncMessageHandler<TMessage> : IAsyncMessageHandler<IInProcessValue>
+    internal sealed class TransformSyncMessageHandler<TMessage> : IAsyncMessageHandler<IInterprocessValue>
     {
         readonly IMessageHandler<TMessage> handler;
         readonly MessagePackSerializerOptions options;
@@ -15,7 +15,7 @@ namespace MessagePipe.InProcess.Internal
             this.options = options;
         }
 
-        public ValueTask HandleAsync(IInProcessValue message, CancellationToken cancellationToken)
+        public ValueTask HandleAsync(IInterprocessValue message, CancellationToken cancellationToken)
         {
             var msg = MessagePackSerializer.Deserialize<TMessage>(message.ValueMemory, options);
             handler.Handle(msg);
@@ -23,7 +23,7 @@ namespace MessagePipe.InProcess.Internal
         }
     }
 
-    internal sealed class TransformAsyncMessageHandler<TMessage> : IAsyncMessageHandler<IInProcessValue>
+    internal sealed class TransformAsyncMessageHandler<TMessage> : IAsyncMessageHandler<IInterprocessValue>
     {
         readonly IAsyncMessageHandler<TMessage> handler;
         readonly MessagePackSerializerOptions options;
@@ -34,7 +34,7 @@ namespace MessagePipe.InProcess.Internal
             this.options = options;
         }
 
-        public ValueTask HandleAsync(IInProcessValue message, CancellationToken cancellationToken)
+        public ValueTask HandleAsync(IInterprocessValue message, CancellationToken cancellationToken)
         {
             var msg = MessagePackSerializer.Deserialize<TMessage>(message.ValueMemory, options);
             return handler.HandleAsync(msg, cancellationToken);

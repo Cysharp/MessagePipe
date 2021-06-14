@@ -52,12 +52,12 @@
         }
     */
     //"MultiProjectConfigurations": {
-    //    "InProcess": {
+    //    "Interprocess": {
     //        "Projects": {
-    //            ["InProcessServer": {
+    //            ["InterprocessServer": {
     //                "CommandLineArguments": "SERVER"
     //            },
-    //            "InProcessServer": {
+    //            "InterprocessServer": {
     //                "CommandLineArguments": "CLIENT"
     //            }
     //        }

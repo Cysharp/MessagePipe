@@ -1,16 +1,16 @@
-﻿using MessagePipe.InProcess.Internal;
+﻿using MessagePipe.Interprocess.Internal;
 using System;
 using System.Threading;
 using System.Threading.Channels;
 
-namespace MessagePipe.InProcess.Workers
+namespace MessagePipe.Interprocess.Workers
 {
     [Preserve]
     public sealed class UdpWorker : IDisposable
     {
         readonly CancellationTokenSource cancellationTokenSource;
-        readonly IAsyncPublisher<IInProcessKey, IInProcessValue> publisher;
-        readonly MessagePipeInProcessUdpOptions options;
+        readonly IAsyncPublisher<IInterprocessKey, IInterprocessValue> publisher;
+        readonly MessagePipeInterprocessUdpOptions options;
 
         // Channel is used from publisher for thread safety of write packet
         int initializedServer = 0;
@@ -22,7 +22,7 @@ namespace MessagePipe.InProcess.Workers
 
         // create from DI
         [Preserve]
-        public UdpWorker(MessagePipeInProcessUdpOptions options, IAsyncPublisher<IInProcessKey, IInProcessValue> publisher)
+        public UdpWorker(MessagePipeInterprocessUdpOptions options, IAsyncPublisher<IInterprocessKey, IInterprocessValue> publisher)
         {
             this.cancellationTokenSource = new CancellationTokenSource();
             this.options = options;

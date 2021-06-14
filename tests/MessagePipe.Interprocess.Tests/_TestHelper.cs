@@ -2,7 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using Xunit.Abstractions;
 
-namespace MessagePipe.InProcess.Tests
+namespace MessagePipe.Interprocess.Tests
 {
     public static class TestHelper
     {
@@ -10,7 +10,7 @@ namespace MessagePipe.InProcess.Tests
         {
             var sc = new ServiceCollection();
             sc.AddMessagePipe();
-            sc.AddMessagePipeInProcessUdp(host, port, x =>
+            sc.AddMessagePipeInterprocessUdp(host, port, x =>
             {
                 x.UnhandledErrorHandler = (msg, e) => helper.WriteLine(msg + e);
             });
@@ -20,7 +20,7 @@ namespace MessagePipe.InProcess.Tests
         {
             var sc = new ServiceCollection();
             sc.AddMessagePipe();
-            sc.AddMessagePipeInProcessTcp(host, port, x =>
+            sc.AddMessagePipeInterprocessTcp(host, port, x =>
             {
                 x.AsServer = asServer;
                 x.UnhandledErrorHandler = (msg, e) => helper.WriteLine(msg + e);
@@ -32,7 +32,7 @@ namespace MessagePipe.InProcess.Tests
         {
             var sc = new ServiceCollection();
             sc.AddMessagePipe();
-            sc.AddMessagePipeInProcessNamedPipe(pipeName, x =>
+            sc.AddMessagePipeInterprocessNamedPipe(pipeName, x =>
             {
                 x.AsServer = asServer;
                 x.UnhandledErrorHandler = (msg, e) => helper.WriteLine(msg + e);
