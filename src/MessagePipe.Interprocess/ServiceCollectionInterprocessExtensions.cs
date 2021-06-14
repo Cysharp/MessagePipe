@@ -1,4 +1,6 @@
-﻿using MessagePipe.Interprocess;
+﻿#if !UNITY_2018_3_OR_NEWER
+
+using MessagePipe.Interprocess;
 using MessagePipe.Interprocess.Workers;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -83,3 +85,5 @@ namespace MessagePipe
         }
     }
 }
+
+#endif

@@ -7,7 +7,7 @@
     "Version": 3,
 
     /*  Create an item in the dropdown list for each project in the solution?  */
-    "ListAllProjects": true,
+    "ListAllProjects": true
 
     /*
         Dictionary of named configurations with one or multiple startup projects

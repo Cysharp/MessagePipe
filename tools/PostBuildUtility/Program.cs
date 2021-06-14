@@ -34,6 +34,7 @@ namespace PostBuildUtility
                 {"ValueTaskAwaiter", "Cysharp.Threading.Tasks.UniTask.Awaiter" },
                 {"ValueTaskSourceStatus", "UniTaskStatus" },
                 {"IValueTaskSource", "IUniTaskSource" },
+                {"TaskCompletionSource", "UniTaskCompletionSource" },
                 {"ManualResetValueTaskSourceCore", "UniTaskCompletionSourceCore" },
                 {"ValueTask", "UniTask" },
                 {"IAsyncDisposable", "IUniTaskAsyncDisposable" },
@@ -77,6 +78,17 @@ namespace PostBuildUtility
                 {"lastMessage!", "lastMessage"},
                 {"state!", "state"},
                 {"object?", "object"},
+                {"IInterprocessKey?", "IInterprocessKey"},
+                {"Func<CancellationToken, Task>?", "Func<CancellationToken, System.Threading.Tasks.Task>" },
+                {"(genArgs[0].FullName!, genArgs[1].FullName)!", "(genArgs[0].FullName, genArgs[1].FullName)" },
+                {"(requestType.FullName!, responseType.FullName!)", "(requestType.FullName, responseType.FullName)" },
+
+                {"task!", "task" },
+                {"!.Invoke", ".Invoke" },
+                {"!.GetValue", ".GetValue" },
+
+                // final transform
+                {"Cysharp.Threading.Tasks.Task", "System.Threading.Tasks.Task" }
             };
 
             System.Console.WriteLine("Start to replace code, remove nullability and use UniTask.");

@@ -1,7 +1,11 @@
 ﻿using MessagePipe.Interprocess.Internal;
 using System;
 using System.Threading;
+#if !UNITY_2018_3_OR_NEWER
 using System.Threading.Channels;
+#else
+using Cysharp.Threading.Tasks;
+#endif
 
 namespace MessagePipe.Interprocess.Workers
 {
@@ -38,12 +42,16 @@ namespace MessagePipe.Interprocess.Workers
                 return SocketUdpClient.Connect(options.Host, options.Port, 0x10000);
             });
 
+#if !UNITY_2018_3_OR_NEWER
             this.channel = Channel.CreateUnbounded<byte[]>(new UnboundedChannelOptions()
             {
-                AllowSynchronousContinuations = true,
                 SingleReader = true,
-                SingleWriter = false
+                SingleWriter = false,
+                AllowSynchronousContinuations = true
             });
+#else
+            this.channel = Channel.CreateSingleConsumerUnbounded<byte[]>();
+#endif
         }
 
         public void Publish<TKey, TMessage>(TKey key, TMessage message)

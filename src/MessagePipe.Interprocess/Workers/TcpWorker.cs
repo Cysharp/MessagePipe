@@ -1,11 +1,13 @@
 ﻿using MessagePack;
 using MessagePipe.Interprocess.Internal;
+#if !UNITY_2018_3_OR_NEWER
 using Microsoft.Extensions.DependencyInjection;
+using System.Threading.Channels;
+#endif
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace MessagePipe.Interprocess.Workers
@@ -49,12 +51,16 @@ namespace MessagePipe.Interprocess.Workers
                 return SocketTcpClient.Connect(options.Host, options.Port);
             });
 
+#if !UNITY_2018_3_OR_NEWER
             this.channel = Channel.CreateUnbounded<byte[]>(new UnboundedChannelOptions()
             {
-                AllowSynchronousContinuations = true,
                 SingleReader = true,
-                SingleWriter = false
+                SingleWriter = false,
+                AllowSynchronousContinuations = true
             });
+#else
+            this.channel = Channel.CreateSingleConsumerUnbounded<byte[]>();
+#endif
 
             if (options.AsServer != null && options.AsServer.Value)
             {
@@ -74,7 +80,7 @@ namespace MessagePipe.Interprocess.Workers
             channel.Writer.TryWrite(buffer);
         }
 
-        public async Task<TResponse> RequestAsync<TRequest, TResponse>(TRequest request, CancellationToken cancellationToken)
+        public async ValueTask<TResponse> RequestAsync<TRequest, TResponse>(TRequest request, CancellationToken cancellationToken)
         {
             if (Interlocked.Increment(ref initializedClient) == 1) // first incr, channel not yet started
             {
@@ -190,7 +196,7 @@ namespace MessagePipe.Interprocess.Workers
                                     var request = MessagePackSerializer.Deserialize(genericArgs[0], message.ValueMemory, options.MessagePackSerializerOptions);
                                     var responseTask = coreInterfaceType.GetMethod("InvokeAsync")!.Invoke(service, new[] { request, CancellationToken.None });
                                     var task = typeof(ValueTask<>).MakeGenericType(genericArgs[1]).GetMethod("AsTask")!.Invoke(responseTask, null);
-                                    await ((Task)task!); // Task<T> -> Task
+                                    await ((System.Threading.Tasks.Task)task!); // Task<T> -> Task
                                     var result = task.GetType().GetProperty("Result")!.GetValue(task);
                                     resultBytes = MessageBuilder.BuildRemoteResponseMessage(mid, genericArgs[1], result!, options.MessagePackSerializerOptions);
                                 }
@@ -233,7 +239,7 @@ namespace MessagePipe.Interprocess.Workers
             }
         }
 
-        static async Task ReadFullyAsync(byte[] buffer, SocketTcpClient client, int index, int remain, CancellationToken token)
+        static async ValueTask ReadFullyAsync(byte[] buffer, SocketTcpClient client, int index, int remain, CancellationToken token)
         {
             while (remain > 0)
             {

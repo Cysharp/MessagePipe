@@ -27,7 +27,7 @@ namespace MessagePipe.Interprocess.Workers
             return server;
         }
 
-        public async Task<ReadOnlyMemory<byte>> ReceiveAsync(CancellationToken cancellationToken)
+        public async ValueTask<ReadOnlyMemory<byte>> ReceiveAsync(CancellationToken cancellationToken)
         {
 #if NET5_0_OR_GREATER
             var i = await socket.ReceiveAsync(buffer, SocketFlags.None, cancellationToken).ConfigureAwait(false);
@@ -102,7 +102,11 @@ namespace MessagePipe.Interprocess.Workers
                  }
                  tcs.TrySetResult(i);
              }, null);
+#if !UNITY_2018_3_OR_NEWER
             return new ValueTask<int>(tcs.Task);
+#else
+            return tcs.Task;
+#endif
 #endif
         }
 

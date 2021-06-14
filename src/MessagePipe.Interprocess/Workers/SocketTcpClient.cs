@@ -66,7 +66,7 @@ namespace MessagePipe.Interprocess.Workers
             return client;
         }
 
-        public async Task<int> ReceiveAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        public async ValueTask<int> ReceiveAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
 #if NET5_0_OR_GREATER
             var xs = new ArraySegment<byte>(buffer, offset, count);
@@ -114,7 +114,12 @@ namespace MessagePipe.Interprocess.Workers
                  }
                  tcs.TrySetResult(i);
              }, null);
+
+#if !UNITY_2018_3_OR_NEWER
             return new ValueTask<int>(tcs.Task);
+#else
+            return tcs.Task;
+#endif
 #endif
         }
 
