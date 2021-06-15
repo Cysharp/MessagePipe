@@ -165,6 +165,20 @@ namespace MessagePipe
         {
             singleton.Add((serviceType, implementationType));
         }
+
+
+
+        public void Add(Type serviceType, Type implementationType, InstanceLifetime lifetime)
+        {
+            if (lifetime == InstanceLifetime.Scoped || lifetime == InstanceLifetime.Singleton)
+            {
+                singleton.Add((serviceType, implementationType));
+            }
+            else // Transient
+            {
+                transient.Add((serviceType, implementationType));
+            }
+        }
     }
 
     class BuiltinContainerBuilderServiceProvider : IServiceProvider

@@ -147,7 +147,13 @@ namespace MessagePipe
             {
                 builder.Register<T>(Lifetime.Transient);
             }
+
             return builder;
+        }
+
+        public static IServiceCollection AsServiceCollection<T>(this IContainerBuilder builder)
+        {
+            return new ContainerBuilderProxy(builder);
         }
 
         static Lifetime GetLifetime(InstanceLifetime lifetime)

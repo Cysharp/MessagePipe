@@ -1,4 +1,4 @@
-{
+ {
     "name": "MessagePipe.VContainer",
     "rootNamespace": "MessagePipe",
     "references": [
@@ -12,6 +12,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+           {
+            "name": "com.cysharp.messagepipe.interprocess",
+            "expression": "",
+            "define": "MESSAGEPIPE_INTERPROCESS_SUPPORT"
+        }
+    ],
     "noEngineReferences": true
 }

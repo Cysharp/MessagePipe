@@ -4,7 +4,7 @@ using VContainer;
 
 namespace MessagePipe.VContainer
 {
-    internal struct ContainerBuilderProxy : IServiceCollection
+    internal class ContainerBuilderProxy : IServiceCollection
     {
         readonly IContainerBuilder builder;
 
@@ -44,6 +44,15 @@ namespace MessagePipe.VContainer
         public void Add(Type serviceType, Type implementationType, Lifetime lifetime)
         {
             builder.Register(implementationType, lifetime).As(serviceType);
+        }
+
+        public void Add(Type serviceType, Type implementationType, InstanceLifetime lifetime)
+        {
+            var l = (lifetime == InstanceLifetime.Singleton) ? Lifetime.Singleton
+                  : (lifetime == InstanceLifetime.Scoped) ? Lifetime.Scoped
+                  : Lifetime.Transient;
+
+            builder.Register(implementationType, l).As(serviceType);
         }
     }
 

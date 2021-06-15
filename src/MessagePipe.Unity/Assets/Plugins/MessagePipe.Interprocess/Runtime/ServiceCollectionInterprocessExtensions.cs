@@ -1,9 +1,9 @@
-#if !UNITY_2018_3_OR_NEWER
-
+using System;
 using MessagePipe.Interprocess;
 using MessagePipe.Interprocess.Workers;
+#if !UNITY_2018_3_OR_NEWER
 using Microsoft.Extensions.DependencyInjection;
-using System;
+#endif
 
 namespace MessagePipe
 {
@@ -70,20 +70,49 @@ namespace MessagePipe
 
         static void Add(this IServiceCollection services, Type serviceType, InstanceLifetime scope)
         {
-            var lifetime = (scope == InstanceLifetime.Scoped) ? ServiceLifetime.Scoped
-                : (scope == InstanceLifetime.Singleton) ? ServiceLifetime.Singleton
-                : ServiceLifetime.Transient;
-            services.Add(new ServiceDescriptor(serviceType, serviceType, lifetime));
+            services.Add(serviceType, serviceType, scope);
         }
 
-        static void Add(this IServiceCollection services, Type serviceType, Type implementationType, InstanceLifetime scope)
+#if UNITY_2018_3_OR_NEWER
+
+        public static IServiceCollection AddUpdInterprocessMessageBroker<TKey, TMessage>(this IServiceCollection services, MessagePipeOptions options)
         {
-            var lifetime = (scope == InstanceLifetime.Scoped) ? ServiceLifetime.Scoped
-                : (scope == InstanceLifetime.Singleton) ? ServiceLifetime.Singleton
-                : ServiceLifetime.Transient;
-            services.Add(new ServiceDescriptor(serviceType, implementationType, lifetime));
+            services.Add(typeof(IDistributedPublisher<TKey, TMessage>), typeof(UdpDistributedPublisher<TKey, TMessage>), options.InstanceLifetime);
+            services.Add(typeof(IDistributedSubscriber<TKey, TMessage>), typeof(UdpDistributedSubscriber<TKey, TMessage>), options.InstanceLifetime);
+
+            return services;
         }
-    }
-}
+
+        public static IServiceCollection AddTcpInterprocessMessageBroker<TKey, TMessage>(this IServiceCollection services, MessagePipeOptions options)
+        {
+            services.Add(typeof(IDistributedPublisher<TKey, TMessage>), typeof(TcpDistributedPublisher<TKey, TMessage>), options.InstanceLifetime);
+            services.Add(typeof(IDistributedSubscriber<TKey, TMessage>), typeof(TcpDistributedSubscriber<TKey, TMessage>), options.InstanceLifetime);
+
+            return services;
+        }
+
+        public static IServiceCollection AddNamedPipeInterprocessMessageBroker<TKey, TMessage>(this IServiceCollection services, MessagePipeOptions options)
+        {
+            services.Add(typeof(IDistributedPublisher<TKey, TMessage>), typeof(NamedPipeDistributedPublisher<TKey, TMessage>), options.InstanceLifetime);
+            services.Add(typeof(IDistributedSubscriber<TKey, TMessage>), typeof(NamedPipeDistributedSubscriber<TKey, TMessage>), options.InstanceLifetime);
+
+            return services;
+        }
+
+        public static IServiceCollection AddTcpRemoteRequestHandler<TRequest, TResponse>(this IServiceCollection services, MessagePipeOptions options)
+        {
+            services.Add(typeof(IRemoteRequestHandler<TRequest, TResponse>), typeof(TcpRemoteRequestHandler<TRequest, TResponse>), options.InstanceLifetime);
+
+            return services;
+        }
+
+        public static IServiceCollection AddNamedPipeRemoteRequestHandler<TRequest, TResponse>(this IServiceCollection services, MessagePipeOptions options)
+        {
+            services.Add(typeof(IRemoteRequestHandler<TRequest, TResponse>), typeof(NamedPipeRemoteRequestHandler<TRequest, TResponse>), options.InstanceLifetime);
+
+            return services;
+        }
 
 #endif
+    }
+}
