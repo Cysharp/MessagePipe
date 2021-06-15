@@ -14,7 +14,7 @@ using System.Collections;
 public class ZenjectTest
 {
     [Test]
-    public void SimpelePush()
+    public void SimplePush()
     {
         var resolver = TestHelper.BuildZenject((options, builder) =>
         {
@@ -136,8 +136,8 @@ public class ZenjectTest
 
         var resolver = TestHelper.BuildZenject(options =>
        {
-            // options.InstanceLifetime = InstanceLifetime.Scoped;
-            options.AddGlobalRequestHandlerFilter<MyRequestHandlerFilter>(-1799);
+           // options.InstanceLifetime = InstanceLifetime.Scoped;
+           options.AddGlobalRequestHandlerFilter<MyRequestHandlerFilter>(-1799);
        }, (options, builder) =>
        {
            builder.BindInstance(store);
@@ -193,6 +193,48 @@ public class ZenjectTest
         d3.Dispose();
         p.Publish(new IntClass { Value = 4 });
         CollectionAssert.AreEqual(new[] { 9999, 333, 333, 11, 11, 4 }, l);
+    }
+
+    [Test]
+    public void InstanceLifetimeSingleToScopedInBindMessagePipe()
+    {
+        var builder = new DiContainer();
+        var option = builder.BindMessagePipe(configure =>
+        {
+            configure.InstanceLifetime = InstanceLifetime.Singleton;
+            configure.RequestHandlerLifetime = InstanceLifetime.Singleton;
+        });
+
+        Assert.AreEqual(InstanceLifetime.Scoped, option.InstanceLifetime);
+        Assert.AreEqual(InstanceLifetime.Scoped, option.RequestHandlerLifetime);
+    }
+
+    [Test]
+    public void InstanceLifetimeScopedToScopedInBindMessagePipe()
+    {
+        var builder = new DiContainer();
+        var option = builder.BindMessagePipe(configure =>
+        {
+            configure.InstanceLifetime = InstanceLifetime.Scoped;
+            configure.RequestHandlerLifetime = InstanceLifetime.Scoped;
+        });
+
+        Assert.AreEqual(InstanceLifetime.Scoped, option.InstanceLifetime);
+        Assert.AreEqual(InstanceLifetime.Scoped, option.RequestHandlerLifetime);
+    }
+
+    [Test]
+    public void InstanceLifetimeTransientToTransientInBindMessagePipe()
+    {
+        var builder = new DiContainer();
+        var option = builder.BindMessagePipe(configure =>
+        {
+            configure.InstanceLifetime = InstanceLifetime.Transient;
+            configure.RequestHandlerLifetime = InstanceLifetime.Transient;
+        });
+
+        Assert.AreEqual(InstanceLifetime.Transient, option.InstanceLifetime);
+        Assert.AreEqual(InstanceLifetime.Transient, option.RequestHandlerLifetime);
     }
 
     public class IntClass

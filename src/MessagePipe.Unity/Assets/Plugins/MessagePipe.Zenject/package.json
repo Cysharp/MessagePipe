@@ -2,7 +2,7 @@
     "name": "com.cysharp.messagepipe.zenject",
     "displayName": "MessagePipe.Zenject",
     "author": { "name": "Cysharp, Inc.", "url": "https://cysharp.co.jp/en/" },
-    "version": "1.5.0",
+    "version": "1.5.1",
     "unity": "2018.4",
     "description": "MessagePipe Runtime support for Zenject.",
     "keywords": [ "pubsub", "event", "Scripting", "DI" ],

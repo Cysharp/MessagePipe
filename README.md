@@ -1152,8 +1152,8 @@ var provider = builder.BuildServiceProvider();
 GlobalMessagePipe.SetProvider(provider);
 
 // --- to use MessagePipe, you can use from GlobalMessagePipe.
-var p = GlobalMessagePipe.GetPublisher<IPublisher<int>>();
-var s = GlobalMessagePipe.GetSubscriber<ISubscriber<int>>();
+var p = GlobalMessagePipe.GetPublisher<int>();
+var s = GlobalMessagePipe.GetSubscriber<int>();
 
 var d = s.Subscribe(x => Debug.Log(x));
 
