@@ -82,7 +82,8 @@ namespace MessagePipe.Interprocess.Workers
                     }
                     catch (Exception ex)
                     {
-                        if (ex is OperationCanceledException) continue;
+                        if (ex is OperationCanceledException) return;
+                        if (token.IsCancellationRequested) return;
 
                         // network error, terminate.
                         options.UnhandledErrorHandler("network error, publish loop will terminate." + Environment.NewLine, ex);
@@ -122,8 +123,9 @@ namespace MessagePipe.Interprocess.Workers
                 }
                 catch (Exception ex)
                 {
-                    if (ex is OperationCanceledException) continue;
-
+                    if (ex is OperationCanceledException) return;
+                    if (token.IsCancellationRequested) return;
+                    
                     // network error, terminate.
                     options.UnhandledErrorHandler("network error, receive loop will terminate." + Environment.NewLine, ex);
                     return;
@@ -136,7 +138,8 @@ namespace MessagePipe.Interprocess.Workers
                 }
                 catch (Exception ex)
                 {
-                    if (ex is OperationCanceledException) continue;
+                    if (ex is OperationCanceledException) return;
+                    if (token.IsCancellationRequested) return;
                     options.UnhandledErrorHandler("", ex);
                 }
             }

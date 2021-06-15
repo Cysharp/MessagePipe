@@ -10,7 +10,7 @@ namespace MessagePipe.Interprocess.Tests
         {
             var sc = new ServiceCollection();
             sc.AddMessagePipe();
-            sc.AddMessagePipeInterprocessUdp(host, port, x =>
+            sc.AddMessagePipeUdpInterprocess(host, port, x =>
             {
                 x.UnhandledErrorHandler = (msg, e) => helper.WriteLine(msg + e);
             });
@@ -20,9 +20,9 @@ namespace MessagePipe.Interprocess.Tests
         {
             var sc = new ServiceCollection();
             sc.AddMessagePipe();
-            sc.AddMessagePipeInterprocessTcp(host, port, x =>
+            sc.AddMessagePipeTcpInterprocess(host, port, x =>
             {
-                x.AsServer = asServer;
+                x.HostAsServer = asServer;
                 x.UnhandledErrorHandler = (msg, e) => helper.WriteLine(msg + e);
             });
             return sc.BuildServiceProvider();
@@ -32,9 +32,9 @@ namespace MessagePipe.Interprocess.Tests
         {
             var sc = new ServiceCollection();
             sc.AddMessagePipe();
-            sc.AddMessagePipeInterprocessNamedPipe(pipeName, x =>
+            sc.AddMessagePipeNamedPipeInterprocess(pipeName, x =>
             {
-                x.AsServer = asServer;
+                x.HostAsServer = asServer;
                 x.UnhandledErrorHandler = (msg, e) => helper.WriteLine(msg + e);
             });
             return sc.BuildServiceProvider();

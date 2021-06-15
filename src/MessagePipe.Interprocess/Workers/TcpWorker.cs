@@ -62,7 +62,7 @@ namespace MessagePipe.Interprocess.Workers
             this.channel = Channel.CreateSingleConsumerUnbounded<byte[]>();
 #endif
 
-            if (options.AsServer != null && options.AsServer.Value)
+            if (options.HostAsServer != null && options.HostAsServer.Value)
             {
                 StartReceiver();
             }

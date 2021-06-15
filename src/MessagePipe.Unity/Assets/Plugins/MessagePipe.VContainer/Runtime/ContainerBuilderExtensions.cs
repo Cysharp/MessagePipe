@@ -151,7 +151,7 @@ namespace MessagePipe
             return builder;
         }
 
-        public static IServiceCollection AsServiceCollection<T>(this IContainerBuilder builder)
+        public static IServiceCollection AsServiceCollection(this IContainerBuilder builder)
         {
             return new ContainerBuilderProxy(builder);
         }
