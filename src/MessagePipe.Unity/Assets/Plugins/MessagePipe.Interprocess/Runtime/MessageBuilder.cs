@@ -110,7 +110,7 @@ namespace MessagePipe.Interprocess
                 var writer = new MessagePackWriter(bufferWriter);
                 writer.WriteArrayHeader(3);
                 writer.Write((byte)MessageType.RemoteRequest);
-                MessagePackSerializer.Serialize(ref writer, (messageId, (requestType.FullName, responseType.FullName)), options);
+                MessagePackSerializer.Serialize(ref writer, Tuple.Create(messageId, Tuple.Create(requestType.FullName, responseType.FullName)), options);
                 MessagePackSerializer.Serialize(ref writer, message, options);
                 writer.Flush();
 
