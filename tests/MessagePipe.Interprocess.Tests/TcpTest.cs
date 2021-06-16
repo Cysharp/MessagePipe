@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -94,7 +95,7 @@ namespace MessagePipe.Interprocess.Tests
         public async Task ConnectTwice()
         {
             var providerServer = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1184, helper);
-            var providerClient = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1184, helper,asServer:false);
+            var providerClient = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1184, helper, asServer: false);
             var p1 = providerClient.GetRequiredService<IDistributedPublisher<int, int>>();
             var s1 = providerServer.GetRequiredService<IDistributedSubscriber<int, int>>();
 
@@ -213,7 +214,9 @@ namespace MessagePipe.Interprocess.Tests
             {
                 var remoteHandler = provider.GetRequiredService<IRemoteRequestHandler<int, string>>();
 
-                var v = await remoteHandler.InvokeAsync(9999);
+                var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+
+                var v = await remoteHandler.InvokeAsync(9999, cts.Token);
                 v.Should().Be("ECHO:9999");
 
                 var v2 = await remoteHandler.InvokeAsync(4444);

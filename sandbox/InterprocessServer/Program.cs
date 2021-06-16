@@ -14,8 +14,9 @@ namespace InterprocessServer
         static void Main(string[] args)
         {
             var id = Guid.NewGuid();
-            var isServer = args[0] == "SERVER";
-            Console.WriteLine(args[0]);
+            //var isServer = args[0] == "SERVER";
+            // var isServer = true;
+            // Console.WriteLine(args[0]);
 
             Host.CreateDefaultBuilder()
                 .ConfigureServices(x =>
@@ -23,17 +24,17 @@ namespace InterprocessServer
                     x.AddSingleton<GuidHolder>(x => new GuidHolder { guid = id });
                     x.AddMessagePipe();
 
-                    x.AddMessagePipeNamedPipeInterprocess("mypipe", x =>
-                    {
-                        // x.AsServer = isServer;
-                    });
+                    x.AddMessagePipeTcpInterprocess("127.0.0.1", 1232, xx =>
+                     {
+                         xx.HostAsServer = true;
+                     });
                 })
                 .RunConsoleAppFrameworkAsync<Program>(args);
         }
-        IRemoteRequestHandler<Guid, string> handler;
+        IRemoteRequestHandler<int, string> handler;
         Guid guid;
 
-        public Program(IRemoteRequestHandler<Guid, string> handler, GuidHolder guid)
+        public Program(IRemoteRequestHandler<int, string> handler, GuidHolder guid)
         {
             this.handler = handler;
             this.guid = guid.guid;
@@ -41,10 +42,10 @@ namespace InterprocessServer
 
         public async Task RunAsync()
         {
-            Console.WriteLine("GO:");
-            Console.ReadLine();
-            var result = await handler.InvokeAsync(guid);
-            Console.WriteLine(result);
+            Console.WriteLine("GO INVOKE");
+            var v = await handler.InvokeAsync(9999);
+            Console.WriteLine("NOGO INVOKE");
+            Console.WriteLine(v);
         }
     }
 
@@ -66,6 +67,23 @@ namespace InterprocessServer
         {
             await Task.Yield();
             return "CLIENT:" + request + ", SERVER:" + guid.guid;
+        }
+    }
+
+
+    public class MyAsyncHandler2 : IAsyncRequestHandler<int, string>
+    {
+        public async ValueTask<string> InvokeAsync(int request, CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(1);
+            if (request == -1)
+            {
+                throw new Exception("NO -1");
+            }
+            else
+            {
+                return "ECHO:" + request.ToString();
+            }
         }
     }
 }

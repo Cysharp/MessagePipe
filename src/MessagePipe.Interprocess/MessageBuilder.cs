@@ -205,9 +205,13 @@ namespace MessagePipe.Interprocess
         {
             public RequestHeader Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
             {
+                // debugging...
+                Console.WriteLine("come here?");
                 var x = reader.ReadArrayHeader();
+                Console.WriteLine(x);
                 if (x != 3) throw new MessagePack.MessagePackSerializationException("Array length is invalid. Length:" + x);
                 var id = reader.ReadInt32();
+                
                 var req = reader.ReadString();
                 var res = reader.ReadString();
                 return new RequestHeader(id, req, res);
