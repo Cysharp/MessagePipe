@@ -94,6 +94,8 @@ namespace MessagePipe
             services.AddSingleton(typeof(IAsyncRequestHandlerCore<TRequest, TResponse>), typeof(THandler));
             services.AddSingleton(typeof(IAsyncRequestHandler<TRequest, TResponse>), typeof(AsyncRequestHandler<TRequest, TResponse>));
 
+            AsyncRequestHandlerRegistory.Add(typeof(TRequest), typeof(TResponse), typeof(THandler));
+
             return this;
         }
 

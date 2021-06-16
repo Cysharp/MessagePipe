@@ -63,6 +63,10 @@ namespace MessagePipe
 
         }
 
+#if !UNITY_2018_3_OR_NEWER
+
+        // NamedPipe in Unity is slightly buggy so disable.
+
         public static ReturnType AddMessagePipeNamedPipeInterprocess(this IServiceCollection services, string pipeName)
         {
             return AddMessagePipeNamedPipeInterprocess(services, pipeName, _ => { });
@@ -86,6 +90,8 @@ namespace MessagePipe
             return options;
 #endif
         }
+
+#endif
 
         static void Add(this IServiceCollection services, Type serviceType, InstanceLifetime scope)
         {
@@ -133,14 +139,14 @@ namespace MessagePipe
             return services;
         }
 
-        public static IServiceCollection RegisterNamedPipeInterprocessMessageBroker<TKey, TMessage>(this IServiceCollection services, MessagePipeInterprocessOptions options)
-        {
-            AddAsyncMessageBroker<TKey, TMessage>(services, options);
-            services.Add(typeof(IDistributedPublisher<TKey, TMessage>), typeof(NamedPipeDistributedPublisher<TKey, TMessage>), options.InstanceLifetime);
-            services.Add(typeof(IDistributedSubscriber<TKey, TMessage>), typeof(NamedPipeDistributedSubscriber<TKey, TMessage>), options.InstanceLifetime);
+        //public static IServiceCollection RegisterNamedPipeInterprocessMessageBroker<TKey, TMessage>(this IServiceCollection services, MessagePipeInterprocessOptions options)
+        //{
+        //    AddAsyncMessageBroker<TKey, TMessage>(services, options);
+        //    services.Add(typeof(IDistributedPublisher<TKey, TMessage>), typeof(NamedPipeDistributedPublisher<TKey, TMessage>), options.InstanceLifetime);
+        //    services.Add(typeof(IDistributedSubscriber<TKey, TMessage>), typeof(NamedPipeDistributedSubscriber<TKey, TMessage>), options.InstanceLifetime);
 
-            return services;
-        }
+        //    return services;
+        //}
 
         public static IServiceCollection RegisterTcpRemoteRequestHandler<TRequest, TResponse>(this IServiceCollection services, MessagePipeInterprocessOptions options)
         {
@@ -149,12 +155,12 @@ namespace MessagePipe
             return services;
         }
 
-        public static IServiceCollection RegisterNamedPipeRemoteRequestHandler<TRequest, TResponse>(this IServiceCollection services, MessagePipeInterprocessOptions options)
-        {
-            services.Add(typeof(IRemoteRequestHandler<TRequest, TResponse>), typeof(NamedPipeRemoteRequestHandler<TRequest, TResponse>), options.InstanceLifetime);
+        //public static IServiceCollection RegisterNamedPipeRemoteRequestHandler<TRequest, TResponse>(this IServiceCollection services, MessagePipeInterprocessOptions options)
+        //{
+        //    services.Add(typeof(IRemoteRequestHandler<TRequest, TResponse>), typeof(NamedPipeRemoteRequestHandler<TRequest, TResponse>), options.InstanceLifetime);
 
-            return services;
-        }
+        //    return services;
+        //}
 
 #endif
     }

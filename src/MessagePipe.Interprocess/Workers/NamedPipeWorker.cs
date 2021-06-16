@@ -107,7 +107,14 @@ namespace MessagePipe.Interprocess.Workers
         {
             if (Interlocked.Increment(ref initializedServer) == 1) // first incr, channel not yet started
             {
-                RunReceiveLoop(server.Value, x => server.Value.WaitForConnectionAsync(x));
+                RunReceiveLoop(server.Value, x =>
+                {
+#if !UNITY_2018_3_OR_NEWER
+                    return server.Value.WaitForConnectionAsync(x);
+#else
+                    return System.Threading.Tasks.Task.Run(()=> server.Value.WaitForConnection(), x);
+#endif
+                });
             }
         }
 
@@ -120,7 +127,11 @@ namespace MessagePipe.Interprocess.Workers
 
             try
             {
+#if !UNITY_2018_3_OR_NEWER
                 await pipeStream.ConnectAsync(Timeout.Infinite, token).ConfigureAwait(false);
+#else
+                await System.Threading.Tasks.Task.Run(() => pipeStream.Connect(), token);
+#endif
             }
             catch (IOException)
             {
@@ -142,7 +153,8 @@ namespace MessagePipe.Interprocess.Workers
                     }
                     catch (Exception ex)
                     {
-                        if (ex is OperationCanceledException) continue;
+                        if (ex is OperationCanceledException) return;
+                        if (token.IsCancellationRequested) return;
 
                         // network error, terminate.
                         options.UnhandledErrorHandler("network error, publish loop will terminate." + Environment.NewLine, ex);
@@ -209,7 +221,8 @@ namespace MessagePipe.Interprocess.Workers
                 }
                 catch (Exception ex)
                 {
-                    if (ex is OperationCanceledException) continue;
+                    if (ex is OperationCanceledException) return;
+                    if (token.IsCancellationRequested) return;
 
                     // network error, terminate.
                     options.UnhandledErrorHandler("network error, receive loop will terminate." + Environment.NewLine, ex);

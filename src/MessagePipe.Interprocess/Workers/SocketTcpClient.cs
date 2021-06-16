@@ -33,7 +33,15 @@ namespace MessagePipe.Interprocess.Workers
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                var remote = await socket.AcceptAsync();
+                Socket remote = default!;
+                try
+                {
+                    remote = await socket.AcceptAsync();
+                }
+                catch // (ObjectDisposedException)
+                {
+                    return;
+                }
                 onAccept(new SocketTcpClient(remote));
             }
         }
@@ -74,7 +82,7 @@ namespace MessagePipe.Interprocess.Workers
             return i;
 #else
             var tcs = new TaskCompletionSource<int>();
-            
+
             socket.BeginReceive(buffer, offset, count, SocketFlags.None, x =>
             {
                 int i;

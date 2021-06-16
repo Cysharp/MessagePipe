@@ -115,7 +115,8 @@ namespace MessagePipe.Interprocess.Workers
                     }
                     catch (Exception ex)
                     {
-                        if (ex is OperationCanceledException) continue;
+                        if (ex is OperationCanceledException) return;
+                        if (token.IsCancellationRequested) return;
 
                         // network error, terminate.
                         options.UnhandledErrorHandler("network error, publish loop will terminate." + Environment.NewLine, ex);
@@ -139,40 +140,75 @@ namespace MessagePipe.Interprocess.Workers
         {
             var token = cancellationTokenSource.Token;
             var buffer = new byte[65536];
+            ReadOnlyMemory<byte> readBuffer = Array.Empty<byte>();
             while (!token.IsCancellationRequested)
             {
                 ReadOnlyMemory<byte> value = Array.Empty<byte>();
                 try
                 {
-                    var readLen = await client.ReceiveAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
-                    if (readLen == 0) return; // end of stream(disconnect)
-
-                    var messageLen = MessageBuilder.FetchMessageLength(buffer);
-                    if (readLen == (messageLen + 4))
+                    if (readBuffer.Length == 0)
                     {
-                        value = buffer.AsMemory(4, messageLen); // skip length header
+                        var readLen = await client.ReceiveAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
+                        if (readLen == 0) return; // end of stream(disconnect)
+                        readBuffer = buffer.AsMemory(0, readLen);
                     }
-                    else
+                    else if (readBuffer.Length < 4) // rare case
                     {
-                        // read more
-                        if (buffer.Length < (messageLen + 4))
+                        var readLen = await client.ReceiveAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
+                        if (readLen == 0) return;
+                        var newBuffer = new byte[readBuffer.Length + readLen];
+                        readBuffer.CopyTo(newBuffer);
+                        buffer.AsSpan(readLen).CopyTo(newBuffer.AsSpan(readBuffer.Length));
+                        readBuffer = newBuffer;
+                    }
+
+                    var messageLen = MessageBuilder.FetchMessageLength(readBuffer.Span);
+                    if (readBuffer.Length == (messageLen + 4)) // just size
+                    {
+                        value = readBuffer.Slice(4, messageLen); // skip length header
+                        readBuffer = Array.Empty<byte>();
+                        goto PARSE_MESSAGE;
+                    }
+                    else if (readBuffer.Length > (messageLen + 4)) // over size
+                    {
+                        value = readBuffer.Slice(4, messageLen);
+                        readBuffer = readBuffer.Slice(messageLen + 4);
+                        goto PARSE_MESSAGE;
+                    }
+                    else // needs to read more
+                    {
+                        var readLen = readBuffer.Length;
+                        if (readLen < (messageLen + 4))
                         {
-                            Array.Resize(ref buffer, messageLen + 4);
+                            if (readBuffer.Length != buffer.Length)
+                            {
+                                var newBuffer = new byte[buffer.Length];
+                                readBuffer.CopyTo(newBuffer);
+                                buffer = newBuffer;
+                            }
+
+                            if (buffer.Length < messageLen + 4)
+                            {
+                                Array.Resize(ref buffer, messageLen + 4);
+                            }
                         }
                         var remain = messageLen - (readLen - 4);
                         await ReadFullyAsync(buffer, client, readLen, remain, token).ConfigureAwait(false);
                         value = buffer.AsMemory(4, messageLen);
+                        readBuffer = Array.Empty<byte>();
+                        goto PARSE_MESSAGE;
                     }
                 }
                 catch (Exception ex)
                 {
-                    if (ex is OperationCanceledException) continue;
+                    if (ex is OperationCanceledException) return;
+                    if (token.IsCancellationRequested) return;
 
                     // network error, terminate.
                     options.UnhandledErrorHandler("network error, receive loop will terminate." + Environment.NewLine, ex);
                     return;
                 }
-
+                PARSE_MESSAGE:
                 try
                 {
                     var message = MessageBuilder.ReadPubSubMessage(value.ToArray()); // can avoid copy?
@@ -195,7 +231,13 @@ namespace MessagePipe.Interprocess.Workers
                                     var genericArgs = interfaceType.GetGenericArguments(); // [TRequest, TResponse]
                                     var request = MessagePackSerializer.Deserialize(genericArgs[0], message.ValueMemory, options.MessagePackSerializerOptions);
                                     var responseTask = coreInterfaceType.GetMethod("InvokeAsync")!.Invoke(service, new[] { request, CancellationToken.None });
+#if !UNITY_2018_3_OR_NEWER
                                     var task = typeof(ValueTask<>).MakeGenericType(genericArgs[1]).GetMethod("AsTask")!.Invoke(responseTask, null);
+#else
+                                    var asTask = typeof(UniTaskExtensions).GetMethods().First(x => x.IsGenericMethod && x.Name == "AsTask")
+                                        .MakeGenericMethod(genericArgs[1]);
+                                    var task = asTask.Invoke(null, new[] { responseTask });
+#endif
                                     await ((System.Threading.Tasks.Task)task!); // Task<T> -> Task
                                     var result = task.GetType().GetProperty("Result")!.GetValue(task);
                                     resultBytes = MessageBuilder.BuildRemoteResponseMessage(mid, genericArgs[1], result!, options.MessagePackSerializerOptions);

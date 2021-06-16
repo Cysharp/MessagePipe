@@ -125,7 +125,7 @@ namespace MessagePipe.Interprocess.Workers
                 {
                     if (ex is OperationCanceledException) return;
                     if (token.IsCancellationRequested) return;
-                    
+
                     // network error, terminate.
                     options.UnhandledErrorHandler("network error, receive loop will terminate." + Environment.NewLine, ex);
                     return;
