@@ -1,4 +1,7 @@
 ﻿using ConsoleAppFramework;
+using MessagePack;
+using MessagePack.Formatters;
+using MessagePack.Resolvers;
 using MessagePipe;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -13,6 +16,15 @@ namespace InterprocessServer
     {
         static void Main(string[] args)
         {
+            //var buffer = new byte[] { 147, 1, 172, 83, 121, 115, 116, 101, 109, 46, 73, 110, 116, 51, 50, 173, 83, 121, 115, 116, 101, 109, 46, 83, 116, 114, 105, 110, 103 };
+            //var bbbuffer = new byte[] { 147, 1, 172, 83, 121, 115, 116, 101, 109, 46, 73, 110, 116, 51, 50, 173, 83, 121, 115, 116, 101, 109, 46, 83, 116, 114, 105, 110, 103 }.AsMemory();
+            //var tako = MessagePackSerializer.Deserialize<RequestHeader>(bbbuffer, ContractlessStandardResolver.Options);
+
+
+
+
+
+
             var id = Guid.NewGuid();
             //var isServer = args[0] == "SERVER";
             // var isServer = true;
@@ -83,6 +95,47 @@ namespace InterprocessServer
             else
             {
                 return "ECHO:" + request.ToString();
+            }
+        }
+    }
+
+    //[Preserve]
+    [MessagePackFormatter(typeof(Formatter))]
+    internal class RequestHeader
+    {
+        public int MessageId { get; }
+        public string RequestType { get; }
+        public string ResponseType { get; }
+
+        public RequestHeader(int messageId, string requestType, string responseType)
+        {
+            MessageId = messageId;
+            RequestType = requestType;
+            ResponseType = responseType;
+        }
+        
+        //[Preserve]
+        public class Formatter : IMessagePackFormatter<RequestHeader>
+        {
+            public RequestHeader Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+            {
+                // debugging...
+                var x = reader.ReadArrayHeader();
+                Console.WriteLine(x);
+                if (x != 3) throw new MessagePack.MessagePackSerializationException("Array length is invalid. Length:" + x);
+                var id = reader.ReadInt32();
+
+                var req = reader.ReadString();
+                var res = reader.ReadString();
+                return new RequestHeader(id, req, res);
+            }
+
+            public void Serialize(ref MessagePackWriter writer, RequestHeader value, MessagePackSerializerOptions options)
+            {
+                writer.WriteArrayHeader(3);
+                writer.Write(value.MessageId);
+                writer.Write(value.RequestType);
+                writer.Write(value.ResponseType);
             }
         }
     }

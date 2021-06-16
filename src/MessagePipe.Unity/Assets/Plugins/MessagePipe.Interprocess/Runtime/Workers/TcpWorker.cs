@@ -9,6 +9,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace MessagePipe.Interprocess.Workers
 {
@@ -208,7 +209,7 @@ namespace MessagePipe.Interprocess.Workers
                     options.UnhandledErrorHandler("network error, receive loop will terminate." + Environment.NewLine, ex);
                     return;
                 }
-                PARSE_MESSAGE:
+            PARSE_MESSAGE:
                 try
                 {
                     var message = MessageBuilder.ReadPubSubMessage(value.ToArray()); // can avoid copy?
@@ -220,7 +221,7 @@ namespace MessagePipe.Interprocess.Workers
                         case MessageType.RemoteRequest:
                             {
                                 // NOTE: should use without reflection(Expression.Compile)
-                                var header  = MessagePackSerializer.Deserialize<RequestHeader>(message.KeyMemory, options.MessagePackSerializerOptions);
+                                var header = ReadHeader(message.KeyMemory, options.MessagePackSerializerOptions);
                                 var (mid, reqTypeName, resTypeName) = (header.MessageId, header.RequestType, header.ResponseType);
                                 byte[] resultBytes;
                                 try
@@ -280,6 +281,13 @@ namespace MessagePipe.Interprocess.Workers
                     options.UnhandledErrorHandler("", ex);
                 }
             }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static RequestHeader ReadHeader(ReadOnlyMemory<byte> buffer, MessagePackSerializerOptions options)
+        {
+            var header = MessagePackSerializer.Deserialize<RequestHeader>(buffer, options);
+            return header;
         }
 
         static async UniTask ReadFullyAsync(byte[] buffer, SocketTcpClient client, int index, int remain, CancellationToken token)

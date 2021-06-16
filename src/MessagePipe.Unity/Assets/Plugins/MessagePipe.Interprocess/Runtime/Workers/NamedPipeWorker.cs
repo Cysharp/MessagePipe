@@ -11,6 +11,7 @@ using System.IO.Pipes;
 using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace MessagePipe.Interprocess.Workers
 {
@@ -167,7 +168,7 @@ namespace MessagePipe.Interprocess.Workers
         // Receive from udp socket and push value to subscribers.
         async void RunReceiveLoop(Stream pipeStream, Func<CancellationToken, System.Threading.Tasks.Task> waitForConnection)
         {
-            RECONNECT:
+        RECONNECT:
             var token = cancellationTokenSource.Token;
             if (waitForConnection != null)
             {
@@ -240,7 +241,7 @@ namespace MessagePipe.Interprocess.Workers
                         case MessageType.RemoteRequest:
                             {
                                 // NOTE: should use without reflection(Expression.Compile)
-                                var header = MessagePackSerializer.Deserialize<RequestHeader>(message.KeyMemory, options.MessagePackSerializerOptions);
+                                var header = ReadHeader(message.KeyMemory, options.MessagePackSerializerOptions);
                                 var (mid, reqTypeName, resTypeName) = (header.MessageId, header.RequestType, header.ResponseType);
                                 byte[] resultBytes;
                                 try
@@ -298,6 +299,13 @@ namespace MessagePipe.Interprocess.Workers
                     options.UnhandledErrorHandler("", ex);
                 }
             }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static RequestHeader ReadHeader(ReadOnlyMemory<byte> buffer, MessagePackSerializerOptions options)
+        {
+            var header = MessagePackSerializer.Deserialize<RequestHeader>(buffer, options);
+            return header;
         }
 
         static async UniTask ReadFullyAsync(byte[] buffer, Stream stream, int index, int remain, CancellationToken token)
