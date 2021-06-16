@@ -23,9 +23,9 @@ namespace InterprocessServer
                     x.AddSingleton<GuidHolder>(x => new GuidHolder { guid = id });
                     x.AddMessagePipe();
 
-                    x.AddMessagePipeInterprocessNamedPipe("mypipe", x =>
+                    x.AddMessagePipeNamedPipeInterprocess("mypipe", x =>
                     {
-                        x.AsServer = isServer;
+                        // x.AsServer = isServer;
                     });
                 })
                 .RunConsoleAppFrameworkAsync<Program>(args);
