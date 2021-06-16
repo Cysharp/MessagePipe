@@ -81,7 +81,7 @@ namespace PostBuildUtility
                 {"IInterprocessKey?", "IInterprocessKey"},
                 {"Func<CancellationToken, Task>?", "Func<CancellationToken, System.Threading.Tasks.Task>" },
                 {"(genArgs[0].FullName!, genArgs[1].FullName)!", "(genArgs[0].FullName, genArgs[1].FullName)" },
-                {"(requestType.FullName!, responseType.FullName!)", "(requestType.FullName, responseType.FullName)" },
+                {"FullName!", "FullName" },
 
                 {"task!", "task" },
                 {"!.Invoke", ".Invoke" },

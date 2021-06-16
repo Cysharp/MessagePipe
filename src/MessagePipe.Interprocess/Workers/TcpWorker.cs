@@ -220,7 +220,8 @@ namespace MessagePipe.Interprocess.Workers
                         case MessageType.RemoteRequest:
                             {
                                 // NOTE: should use without reflection(Expression.Compile)
-                                var (mid, (reqTypeName, resTypeName)) = MessagePackSerializer.Deserialize<Tuple<int, Tuple<string, string>>>(message.KeyMemory, options.MessagePackSerializerOptions);
+                                var header  = MessagePackSerializer.Deserialize<RequestHeader>(message.KeyMemory, options.MessagePackSerializerOptions);
+                                var (mid, reqTypeName, resTypeName) = (header.MessageId, header.RequestType, header.ResponseType);
                                 byte[] resultBytes;
                                 try
                                 {

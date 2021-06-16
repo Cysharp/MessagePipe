@@ -30,7 +30,7 @@ namespace MessagePipe.Interprocess.Workers
 
         // request-response
         int messageId = 0;
-        ConcurrentDictionary<int, UniTaskCompletionSource<IInterprocessValue>> responseCompletions = new ConcurrentDictionary<int, UniTaskCompletionSource<IInterprocessValue>>();
+        ConcurrentDictionary<int, UniUniTaskCompletionSource<IInterprocessValue>> responseCompletions = new ConcurrentDictionary<int, UniUniTaskCompletionSource<IInterprocessValue>>();
 
         // create from DI
         [Preserve]
@@ -89,7 +89,7 @@ namespace MessagePipe.Interprocess.Workers
             }
 
             var mid = Interlocked.Increment(ref messageId);
-            var tcs = new UniTaskCompletionSource<IInterprocessValue>();
+            var tcs = new UniUniTaskCompletionSource<IInterprocessValue>();
             responseCompletions[mid] = tcs;
             var buffer = MessageBuilder.BuildRemoteRequestMessage(typeof(TRequest), typeof(TResponse), mid, request, options.MessagePackSerializerOptions);
             channel.Writer.TryWrite(buffer);
@@ -220,7 +220,8 @@ namespace MessagePipe.Interprocess.Workers
                         case MessageType.RemoteRequest:
                             {
                                 // NOTE: should use without reflection(Expression.Compile)
-                                var (mid, (reqTypeName, resTypeName)) = MessagePackSerializer.Deserialize<Tuple<int, Tuple<string, string>>>(message.KeyMemory, options.MessagePackSerializerOptions);
+                                var header  = MessagePackSerializer.Deserialize<RequestHeader>(message.KeyMemory, options.MessagePackSerializerOptions);
+                                var (mid, reqTypeName, resTypeName) = (header.MessageId, header.RequestType, header.ResponseType);
                                 byte[] resultBytes;
                                 try
                                 {

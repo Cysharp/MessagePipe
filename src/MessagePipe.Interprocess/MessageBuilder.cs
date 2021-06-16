@@ -1,4 +1,5 @@
 ﻿using MessagePack;
+using MessagePack.Formatters;
 using MessagePipe.Interprocess.Internal;
 using System;
 using System.Buffers;
@@ -75,7 +76,7 @@ namespace MessagePipe.Interprocess
         // Message Frame-----
         // Length: int32(4), without self(MsgPack Body Only)
         // Body(PubSub): MessagePack Array[3](Type(byte), key, message)
-        // Body(Reques): MessagePack Array[3](Type(byte), (messageId:int, (reqType,resType):(string,string)), request)
+        // Body(Reques): MessagePack Array[3](Type(byte), RequestHeader, request)
         // Body(Respon): MessagePack Array[3](Type(byte), messageId:int, response)
         // Body(RError): MessagePack Array[3](Type(byte), messageId:int, error:string)
 
@@ -110,7 +111,7 @@ namespace MessagePipe.Interprocess
                 var writer = new MessagePackWriter(bufferWriter);
                 writer.WriteArrayHeader(3);
                 writer.Write((byte)MessageType.RemoteRequest);
-                MessagePackSerializer.Serialize(ref writer, Tuple.Create(messageId, Tuple.Create(requestType.FullName, responseType.FullName)), options);
+                MessagePackSerializer.Serialize(ref writer, new RequestHeader(messageId, requestType.FullName!, responseType.FullName!), options);
                 MessagePackSerializer.Serialize(ref writer, message, options);
                 writer.Flush();
 
@@ -179,6 +180,46 @@ namespace MessagePipe.Interprocess
             reader.Skip();
 
             return new InterprocessMessage(msgType, buffer, keyIndex, keyOffset);
+        }
+    }
+
+    // (messageId:int, (reqType,resType):(string,string))
+
+    [Preserve]
+    [MessagePackFormatter(typeof(Formatter))]
+    internal class RequestHeader
+    {
+        public int MessageId { get; }
+        public string RequestType { get; }
+        public string ResponseType { get; }
+
+        public RequestHeader(int messageId, string requestType, string responseType)
+        {
+            MessageId = messageId;
+            RequestType = requestType;
+            ResponseType = responseType;
+        }
+
+        [Preserve]
+        public class Formatter : IMessagePackFormatter<RequestHeader>
+        {
+            public RequestHeader Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+            {
+                var x = reader.ReadArrayHeader();
+                if (x != 3) throw new MessagePack.MessagePackSerializationException("Array length is invalid. Length:" + x);
+                var id = reader.ReadInt32();
+                var req = reader.ReadString();
+                var res = reader.ReadString();
+                return new RequestHeader(id, req, res);
+            }
+
+            public void Serialize(ref MessagePackWriter writer, RequestHeader value, MessagePackSerializerOptions options)
+            {
+                writer.WriteArrayHeader(3);
+                writer.Write(value.MessageId);
+                writer.Write(value.RequestType);
+                writer.Write(value.ResponseType);
+            }
         }
     }
 }
