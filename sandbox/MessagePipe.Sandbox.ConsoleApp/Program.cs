@@ -52,7 +52,7 @@ namespace MessagePipe
 
     class Program : ConsoleAppBase
     {
-        static async Task Main(string[] args)
+        static async Task Main3(string[] args)
         {
             var c = new ServiceCollection();
             var p = c.BuildServiceProvider();

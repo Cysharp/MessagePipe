@@ -7,6 +7,7 @@
         "VContainer",
         "MessagePipe",
         "MessagePipe.VContainer",
+        "MessagePipe.Interprocess",
         "UniTask",
         "UniTask.Linq",
         "RuntimeUnitTestToolkit",

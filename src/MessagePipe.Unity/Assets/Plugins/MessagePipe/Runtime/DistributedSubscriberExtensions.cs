@@ -1,5 +1,3 @@
-#if !UNITY_2018_3_OR_NEWER
-
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -71,5 +69,3 @@ namespace MessagePipe
         }
     }
 }
-
-#endif

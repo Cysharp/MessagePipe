@@ -42,7 +42,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePipe.Analyzer", "src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePipe.AnalyzerTestApp", "sandbox\MessagePipe.AnalyzerTestApp\MessagePipe.AnalyzerTestApp.csproj", "{3F0CF7FC-D764-40C0-BA3A-0302DB2F205F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePipe.Analyzer.Tests", "tests\MessagePipe.Analyzer.Tests\MessagePipe.Analyzer.Tests.csproj", "{64A0C890-301B-49D9-95C8-8CAFB53DCFDC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePipe.Analyzer.Tests", "tests\MessagePipe.Analyzer.Tests\MessagePipe.Analyzer.Tests.csproj", "{64A0C890-301B-49D9-95C8-8CAFB53DCFDC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePipe.Interprocess", "src\MessagePipe.Interprocess\MessagePipe.Interprocess.csproj", "{10E626FF-DE92-4784-A9EB-F5A6BE26D1D3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePipe.Interprocess.Tests", "tests\MessagePipe.Interprocess.Tests\MessagePipe.Interprocess.Tests.csproj", "{3B2C3908-E9EB-43F3-9340-3CF5EFBA2F09}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InterprocessServer", "sandbox\InterprocessServer\InterprocessServer.csproj", "{0E645BF9-3464-4856-A624-FEFCF0050220}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -111,6 +117,24 @@ Global
 		{64A0C890-301B-49D9-95C8-8CAFB53DCFDC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{64A0C890-301B-49D9-95C8-8CAFB53DCFDC}.WinBenchmark|Any CPU.ActiveCfg = Debug|Any CPU
 		{64A0C890-301B-49D9-95C8-8CAFB53DCFDC}.WinBenchmark|Any CPU.Build.0 = Debug|Any CPU
+		{10E626FF-DE92-4784-A9EB-F5A6BE26D1D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10E626FF-DE92-4784-A9EB-F5A6BE26D1D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10E626FF-DE92-4784-A9EB-F5A6BE26D1D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10E626FF-DE92-4784-A9EB-F5A6BE26D1D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10E626FF-DE92-4784-A9EB-F5A6BE26D1D3}.WinBenchmark|Any CPU.ActiveCfg = Debug|Any CPU
+		{10E626FF-DE92-4784-A9EB-F5A6BE26D1D3}.WinBenchmark|Any CPU.Build.0 = Debug|Any CPU
+		{3B2C3908-E9EB-43F3-9340-3CF5EFBA2F09}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B2C3908-E9EB-43F3-9340-3CF5EFBA2F09}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B2C3908-E9EB-43F3-9340-3CF5EFBA2F09}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B2C3908-E9EB-43F3-9340-3CF5EFBA2F09}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B2C3908-E9EB-43F3-9340-3CF5EFBA2F09}.WinBenchmark|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B2C3908-E9EB-43F3-9340-3CF5EFBA2F09}.WinBenchmark|Any CPU.Build.0 = Debug|Any CPU
+		{0E645BF9-3464-4856-A624-FEFCF0050220}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E645BF9-3464-4856-A624-FEFCF0050220}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E645BF9-3464-4856-A624-FEFCF0050220}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E645BF9-3464-4856-A624-FEFCF0050220}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E645BF9-3464-4856-A624-FEFCF0050220}.WinBenchmark|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E645BF9-3464-4856-A624-FEFCF0050220}.WinBenchmark|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -127,6 +151,9 @@ Global
 		{CB2E0099-5D84-4E14-9699-3AF5B9237DF4} = {381F6F79-110B-4CE4-9A49-583046D8C164}
 		{3F0CF7FC-D764-40C0-BA3A-0302DB2F205F} = {9813BFC3-7860-4697-A3AF-118BDF710BD0}
 		{64A0C890-301B-49D9-95C8-8CAFB53DCFDC} = {36546FD6-866F-4809-AFCE-87F7F4201361}
+		{10E626FF-DE92-4784-A9EB-F5A6BE26D1D3} = {381F6F79-110B-4CE4-9A49-583046D8C164}
+		{3B2C3908-E9EB-43F3-9340-3CF5EFBA2F09} = {36546FD6-866F-4809-AFCE-87F7F4201361}
+		{0E645BF9-3464-4856-A624-FEFCF0050220} = {9813BFC3-7860-4697-A3AF-118BDF710BD0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {138B7AA8-E4C0-46A3-A48B-0D373CAC365D}

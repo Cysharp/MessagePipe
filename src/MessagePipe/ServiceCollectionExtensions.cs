@@ -167,6 +167,7 @@ namespace MessagePipe
             {
                 throw new ArgumentException($"Not yet added MessagePipeOptions, please call servcies.AddMessagePipe() before.");
             }
+            var isAsync = (coreType == typeof(IAsyncRequestHandlerCore<,>));
 
             var registered = false;
             foreach (var interfaceType in type.GetInterfaces())
@@ -192,6 +193,10 @@ namespace MessagePipe
             if (!registered)
             {
                 throw new ArgumentException($"{type.FullName} does not implement {coreType.Name.Replace("Core", "")}.");
+            }
+            else if(isAsync)
+            {
+                AsyncRequestHandlerRegistory.Add(coreType);
             }
 
             return services;
@@ -260,6 +265,8 @@ namespace MessagePipe
                         {
                             services.Add(typeof(IAsyncRequestHandlerCore<,>), objectType, requestHandlerLifetime);
                         }
+
+                        AsyncRequestHandlerRegistory.Add(objectType);
                         continue;
                     }
                 }

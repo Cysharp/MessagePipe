@@ -1,7 +1,7 @@
 # MessagePipe
 [![GitHub Actions](https://github.com/Cysharp/MessagePipe/workflows/Build-Debug/badge.svg)](https://github.com/Cysharp/MessagePipe/actions) [![Releases](https://img.shields.io/github/release/Cysharp/MessagePipe.svg)](https://github.com/Cysharp/MessagePipe/releases)
 
-MessagePipe is a high-performance in-memory/distributed messaging pipeline for .NET and Unity. It supports all cases of Pub/Sub usage, mediator pattern for CQRS, EventAggregator of Prism(V-VM decoupling), etc.
+MessagePipe is a high-performance in-memory/distributed messaging pipeline for .NET and Unity. It supports all cases of Pub/Sub usage, mediator pattern for CQRS, EventAggregator of Prism(V-VM decoupling), IPC(Interprocess Communication)-RPC, etc.
 
 * Dependency-injection first
 * Filter pipeline
@@ -10,7 +10,7 @@ MessagePipe is a high-performance in-memory/distributed messaging pipeline for .
 * keyed/keyless
 * buffered/bufferless
 * broadcast/response(+many)
-* in-memory/distributed
+* in-memory/interprocess/distributed
 
 MessagePipe is faster than standard C# event and 78 times faster than Prism's EventAggregator.
 
@@ -861,6 +861,123 @@ Host.CreateDefaultBuilder()
             services.AddMessagePipeRedis();
         }
     });
+```
+
+InterprocessPubSub, IRemoteAsyncRequest / MessagePipe.Interprocess
+---
+For the interprocess(NamedPipe/UDP/TCP) Pub/Sub(IPC), you can use `IDistributedPublisher<TKey, TMessage>`, `IDistributedSubscriber<TKey, TMessage>` similar as `MessagePipe.Redis`.
+
+> PM> Install-Package MessagePipe.Interprocess
+
+MessagePipe.Interprocess is also exsits on Unity(except NamedPipe).
+
+use `AddMessagePipeUdpInterprocess`, `AddMessagePipeTcpInterprocess`, `AddMessagePipeNamedPipeInterprocess` to enable interprocess provider.
+
+```csharp
+Host.CreateDefaultBuilder()
+    .ConfigureServices((ctx, services) =>
+    {
+        services.AddMessagePipe();
+        services.AddMessagePipeUdpInterprocess("127.0.0.1", 3215, configure); // setup host and port.
+        // services.AddMessagePipeTcpInterprocess("127.0.0.1", 3215, configure);
+        // services.AddMessagePipeNamedPipeInterprocess("messagepipe-namedpipe", configure);
+    })
+```
+
+```csharp
+public P(IDistributedPublisher<string, int> publisher)
+{
+    // publish value to remote process.
+    publisher.Publish("foobar", 100);
+}
+
+public S(IDistributedSubscriber<string, int> subscriber)
+{
+    // subscribe remote-message with "foobar" key.
+    await subscriber.SubscribeAsync("foobar", x =>
+    {
+        Console.WriteLine(x);
+    });
+}
+```
+
+when injected `IDistributedPublisher`, process will be `server`, start to listen client. when injected `IDistributedSubscriber`, process will be `client`, start to connect to server. when DI scope is closed, server/client connection is closed.
+
+Udp is connectionless protocol so does not require server is started before client connect. However protocol limitation, does not send over 64K message. We're recommend to use this if message is not large.
+
+Namedpipe is 1:1 connection, can not connect multiple subscribers.
+
+Tcp has no such restrictions and is the most flexible of all the options.
+
+In default uses [MessagePack for C#](https://github.com/neuecc/MessagePack-CSharp)'s `ContractlessStandardResolver` for message serialization. You can change to use other `MessagePackSerializerOptions` by MessagePipeInterprocessOptions.MessagePackSerializerOptions.
+
+```csharp
+services.AddMessagePipeUdpInterprocess("127.0.0.1", 3215, options =>
+{
+    // You can configure other options, `InstanceLifetime` and `UnhandledErrorHandler`.
+    options.MessagePackSerializerOptions = StandardResolver.Options;
+});
+```
+
+For IPC-RPC, you can use `IRemoteRequestHandler<in TRequest, TResponse>` that invoke remote `IAsyncRequestHandler<TRequest, TResponse>`. using `TcpInterprocess` or `NamedPipeInterprocess` enabled it.
+
+```csharp
+Host.CreateDefaultBuilder()
+    .ConfigureServices((ctx, services) =>
+    {
+        services.AddMessagePipe();
+        services.AddMessagePipeTcpInterprocess("127.0.0.1", 3215, x =>
+        {
+            x.HostAsServer = true; // if remote process as server, set true(otherwise false(default)).
+        });
+    });
+```
+
+```csharp
+// example: server handler
+public class MyAsyncHandler : IAsyncRequestHandler<int, string>
+{
+    public async ValueTask<string> InvokeAsync(int request, CancellationToken cancellationToken = default)
+    {
+        await Task.Delay(1);
+        if (request == -1)
+        {
+            throw new Exception("NO -1");
+        }
+        else
+        {
+            return "ECHO:" + request.ToString();
+        }
+    }
+}
+```
+
+```csharp
+// client
+async void A(IRemoteRequestHandler<int, string> remoteHandler)
+{
+    var v = await remoteHandler.InvokeAsync(9999);
+    Console.WriteLine(v); // ECHO:9999
+}
+``
+
+For Unity, requires to import MessagePack-CSharp package and needs slightly different configuration.
+
+```
+// example of VContainer
+var builder = new ContainerBuilder();
+var options = builder.RegisterMessagePipe(configure);
+
+var sc = builder.AsServiceCollection(); // require to convert ServiceCollection to enable Intereprocess
+
+var interprocessOptions = sc.AddMessagePipeTcpInterprocess();
+
+// register manually.
+// IDistributedPublisher/Subscriber
+sc.RegisterTcpInterprocessMessageBroker<int, int>(interprocessOptions);
+// RemoteHandler
+builder.RegisterAsyncRequestHandler<int, string, MyAsyncHandler>(options); // for server
+sc.RegisterTcpRemoteRequestHandler<int, string>(interprocessOptions); // for client
 ```
 
 MessagePipeOptions

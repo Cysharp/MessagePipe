@@ -94,6 +94,8 @@ namespace MessagePipe
             services.AddSingleton(typeof(IAsyncRequestHandlerCore<TRequest, TResponse>), typeof(THandler));
             services.AddSingleton(typeof(IAsyncRequestHandler<TRequest, TResponse>), typeof(AsyncRequestHandler<TRequest, TResponse>));
 
+            AsyncRequestHandlerRegistory.Add(typeof(TRequest), typeof(TResponse), typeof(THandler));
+
             return this;
         }
 
@@ -164,6 +166,20 @@ namespace MessagePipe
         public void AddSingleton(Type serviceType, Type implementationType)
         {
             singleton.Add((serviceType, implementationType));
+        }
+
+
+
+        public void Add(Type serviceType, Type implementationType, InstanceLifetime lifetime)
+        {
+            if (lifetime == InstanceLifetime.Scoped || lifetime == InstanceLifetime.Singleton)
+            {
+                singleton.Add((serviceType, implementationType));
+            }
+            else // Transient
+            {
+                transient.Add((serviceType, implementationType));
+            }
         }
     }
 

@@ -107,6 +107,7 @@ namespace MessagePipe
                 services.Add(typeof(IAsyncRequestAllHandler<TRequest, TResponse>), typeof(AsyncRequestAllHandler<TRequest, TResponse>), lifetime);
             }
 
+            AsyncRequestHandlerRegistory.Add(typeof(TRequest), typeof(TResponse), typeof(THandler));
             return builder;
         }
 
@@ -147,7 +148,13 @@ namespace MessagePipe
             {
                 builder.Register<T>(Lifetime.Transient);
             }
+
             return builder;
+        }
+
+        public static IServiceCollection AsServiceCollection(this IContainerBuilder builder)
+        {
+            return new ContainerBuilderProxy(builder);
         }
 
         static Lifetime GetLifetime(InstanceLifetime lifetime)

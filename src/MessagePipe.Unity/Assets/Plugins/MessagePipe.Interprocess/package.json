@@ -1,0 +1,12 @@
+{
+    "name": "com.cysharp.messagepipe.interprocess",
+    "displayName": "MessagePipe.Interprocess",
+    "author": { "name": "Cysharp, Inc.", "url": "https://cysharp.co.jp/en/" },
+    "version": "1.5.0",
+    "unity": "2018.4",
+    "description": "MessagePipe Interprocess Extension.",
+    "keywords": [ "pubsub", "event", "Scripting", "DI" ],
+    "license": "MIT",
+    "category": "Scripting",
+    "dependencies": {}
+}
