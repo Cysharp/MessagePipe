@@ -146,6 +146,12 @@ public class InterprocessTest
 
     public class MyAsyncHandler : IAsyncRequestHandler<int, string>
     {
+        [Inject]
+        public MyAsyncHandler()
+        {
+
+        }
+
         public async UniTask<string> InvokeAsync(int request, CancellationToken cancellationToken = default)
         {
             await UniTask.Delay(1);
