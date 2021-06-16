@@ -103,45 +103,45 @@ public class InterprocessTest
     });
 
 
-    [UnityTest]
-    public IEnumerator Request() => UniTask.ToCoroutine(async () =>
-    {
-        var rootProvider = TestHelper.BuildVContainer(x =>
-        {
-        }, (options, builder) =>
-        {
-            var sc = builder.AsServiceCollection();
-            var newOptions = sc.AddMessagePipeTcpInterprocess("127.0.0.1", 1211, x =>
-            {
-                x.InstanceLifetime = InstanceLifetime.Scoped;
-                x.HostAsServer = true;
-            });
+    //[UnityTest]
+    //public IEnumerator Request() => UniTask.ToCoroutine(async () =>
+    //{
+    //    var rootProvider = TestHelper.BuildVContainer(x =>
+    //    {
+    //    }, (options, builder) =>
+    //    {
+    //        var sc = builder.AsServiceCollection();
+    //        var newOptions = sc.AddMessagePipeTcpInterprocess("127.0.0.1", 1211, x =>
+    //        {
+    //            x.InstanceLifetime = InstanceLifetime.Scoped;
+    //            x.HostAsServer = true;
+    //        });
 
-            builder.RegisterAsyncRequestHandler<int, string, MyAsyncHandler>(options);
-            sc.RegisterTcpRemoteRequestHandler<int, string>(newOptions);
-        });
+    //        builder.RegisterAsyncRequestHandler<int, string, MyAsyncHandler>(options);
+    //        sc.RegisterTcpRemoteRequestHandler<int, string>(newOptions);
+    //    });
 
-        using (var provider = rootProvider)
-        {
-            var remoteHandler = provider.Resolve<IRemoteRequestHandler<int, string>>();
+    //    using (var provider = rootProvider)
+    //    {
+    //        var remoteHandler = provider.Resolve<IRemoteRequestHandler<int, string>>();
 
-            var v = await remoteHandler.InvokeAsync(9999);
-            Assert.AreEqual("ECHO:9999", v);
+    //        var v = await remoteHandler.InvokeAsync(9999);
+    //        Assert.AreEqual("ECHO:9999", v);
 
-            var v2 = await remoteHandler.InvokeAsync(4444);
-            Assert.AreEqual("ECHO:4444", v2);
+    //        var v2 = await remoteHandler.InvokeAsync(4444);
+    //        Assert.AreEqual("ECHO:4444", v2);
 
-            try
-            {
-                var v3 = await remoteHandler.InvokeAsync(-1);
-                Assert.Fail();
-            }
-            catch (RemoteRequestException ex)
-            {
-                Assert.AreEqual(true, ex.Message.Contains("NO -1"));
-            }
-        }
-    });
+    //        try
+    //        {
+    //            var v3 = await remoteHandler.InvokeAsync(-1);
+    //            Assert.Fail();
+    //        }
+    //        catch (RemoteRequestException ex)
+    //        {
+    //            Assert.AreEqual(true, ex.Message.Contains("NO -1"));
+    //        }
+    //    }
+    //});
 
 
     public class MyAsyncHandler : IAsyncRequestHandler<int, string>
