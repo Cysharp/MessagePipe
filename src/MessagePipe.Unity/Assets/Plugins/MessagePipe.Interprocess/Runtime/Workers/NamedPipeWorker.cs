@@ -12,6 +12,7 @@ using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace MessagePipe.Interprocess.Workers
 {
@@ -241,7 +242,7 @@ namespace MessagePipe.Interprocess.Workers
                         case MessageType.RemoteRequest:
                             {
                                 // NOTE: should use without reflection(Expression.Compile)
-                                var header = ReadHeader(message.KeyMemory, options.MessagePackSerializerOptions);
+                                var header = Deserialize<RequestHeader>(message.KeyMemory, options.MessagePackSerializerOptions);
                                 var (mid, reqTypeName, resTypeName) = (header.MessageId, header.RequestType, header.ResponseType);
                                 byte[] resultBytes;
                                 try
@@ -270,7 +271,7 @@ namespace MessagePipe.Interprocess.Workers
                         case MessageType.RemoteResponse:
                         case MessageType.RemoteError:
                             {
-                                var mid = MessagePackSerializer.Deserialize<int>(message.KeyMemory, options.MessagePackSerializerOptions);
+                                var mid = Deserialize<int>(message.KeyMemory, options.MessagePackSerializerOptions);
                                 if (responseCompletions.TryRemove(mid, out var tcs))
                                 {
                                     if (message.MessageType == MessageType.RemoteResponse)
@@ -301,11 +302,15 @@ namespace MessagePipe.Interprocess.Workers
             }
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        static RequestHeader ReadHeader(ReadOnlyMemory<byte> buffer, MessagePackSerializerOptions options)
+        // omajinai.
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static T Deserialize<T>(ReadOnlyMemory<byte> buffer, MessagePackSerializerOptions options)
         {
-            var header = MessagePackSerializer.Deserialize<RequestHeader>(buffer, options);
-            return header;
+            if (buffer.IsEmpty && MemoryMarshal.TryGetArray(buffer, out var segment))
+            {
+                buffer = segment;
+            }
+            return MessagePackSerializer.Deserialize<T>(buffer, options);
         }
 
         static async UniTask ReadFullyAsync(byte[] buffer, Stream stream, int index, int remain, CancellationToken token)

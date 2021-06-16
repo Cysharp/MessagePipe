@@ -20,7 +20,7 @@ namespace MessagePipe.Interprocess
     internal sealed class InterprocessMessage : IInterprocessKey, IInterprocessValue
     {
         readonly byte[] buffer;
-        int keyIndex;
+        readonly int keyIndex;
         readonly int keyOffset;
         readonly int hashCode;
 
