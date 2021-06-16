@@ -25,7 +25,6 @@ namespace InterprocessServer
 
 
 
-            var id = Guid.NewGuid();
             //var isServer = args[0] == "SERVER";
             // var isServer = true;
             // Console.WriteLine(args[0]);
@@ -33,69 +32,43 @@ namespace InterprocessServer
             Host.CreateDefaultBuilder()
                 .ConfigureServices(x =>
                 {
-                    x.AddSingleton<GuidHolder>(x => new GuidHolder { guid = id });
                     x.AddMessagePipe();
-
-                    x.AddMessagePipeTcpInterprocess("127.0.0.1", 1232, xx =>
-                     {
-                         xx.HostAsServer = true;
-                     });
+                    x.AddMessagePipeNamedPipeInterprocess("messagepipe-pipe");
                 })
                 .RunConsoleAppFrameworkAsync<Program>(args);
         }
-        IRemoteRequestHandler<int, string> handler;
-        Guid guid;
 
-        public Program(IRemoteRequestHandler<int, string> handler, GuidHolder guid)
+        public async Task RunA(IDistributedPublisher<string, int> publisher)
         {
-            this.handler = handler;
-            this.guid = guid.guid;
+            await publisher.PublishAsync("foo", 100);
         }
 
-        public async Task RunAsync()
+        public async Task RunB(IDistributedSubscriber<string, int> subscriber)
         {
-            Console.WriteLine("GO INVOKE");
-            var v = await handler.InvokeAsync(9999);
-            Console.WriteLine("NOGO INVOKE");
-            Console.WriteLine(v);
-        }
-    }
-
-    public class GuidHolder
-    {
-        public Guid guid;
-    }
-
-    public class MyRequestHandler : IAsyncRequestHandler<Guid, string>
-    {
-
-        GuidHolder guid;
-        public MyRequestHandler(GuidHolder guid)
-        {
-            this.guid = guid;
+            await subscriber.SubscribeAsync("foo", x =>
+            {
+                Console.WriteLine(x);
+            });
         }
 
-        public async ValueTask<string> InvokeAsync(Guid request, CancellationToken cancellationToken = default)
+
+
+        public async Task RunClient(IRemoteRequestHandler<int, string> handler)
         {
-            await Task.Yield();
-            return "CLIENT:" + request + ", SERVER:" + guid.guid;
+            var v = await handler.InvokeAsync(100);
+            Console.WriteLine(v); // "ECHO:100"
         }
+
+
     }
 
 
-    public class MyAsyncHandler2 : IAsyncRequestHandler<int, string>
+    public class MyAsyncHandler : IAsyncRequestHandler<int, string>
     {
         public async ValueTask<string> InvokeAsync(int request, CancellationToken cancellationToken = default)
         {
             await Task.Delay(1);
-            if (request == -1)
-            {
-                throw new Exception("NO -1");
-            }
-            else
-            {
-                return "ECHO:" + request.ToString();
-            }
+            return "ECHO:" + request.ToString();
         }
     }
 
@@ -113,7 +86,7 @@ namespace InterprocessServer
             RequestType = requestType;
             ResponseType = responseType;
         }
-        
+
         //[Preserve]
         public class Formatter : IMessagePackFormatter<RequestHeader>
         {

@@ -178,7 +178,7 @@ In addition to standard Pub/Sub, MessagePipe supports async handlers, mediator p
 
 This image is a visualization of the connection between all those interfaces.
 
-![image](https://user-images.githubusercontent.com/46207/117265996-c2ff4e00-ae8f-11eb-9549-7bb0baf6f794.png)
+![image](https://user-images.githubusercontent.com/46207/122254092-bf87c980-cf07-11eb-8bdd-039c87309db6.png)
 
 You may be confused by the number of interfaces, but many functions can be written with a similar, unified API.
 
@@ -885,13 +885,13 @@ Host.CreateDefaultBuilder()
 ```
 
 ```csharp
-public P(IDistributedPublisher<string, int> publisher)
+public async P(IDistributedPublisher<string, int> publisher)
 {
     // publish value to remote process.
-    publisher.Publish("foobar", 100);
+    await publisher.PublishAsync("foobar", 100);
 }
 
-public S(IDistributedSubscriber<string, int> subscriber)
+public async S(IDistributedSubscriber<string, int> subscriber)
 {
     // subscribe remote-message with "foobar" key.
     await subscriber.SubscribeAsync("foobar", x =>
