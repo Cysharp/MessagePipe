@@ -11,7 +11,7 @@ public static class PackageExporter
     [MenuItem("Tools/Export Unitypackage")]
     public static void Export()
     {
-        var roots = new[] { "Plugins/MessagePipe", "Plugins/MessagePipe.VContainer", "Plugins/MessagePipe.Zenject" };
+        var roots = new[] { "Plugins/MessagePipe", "Plugins/MessagePipe.VContainer", "Plugins/MessagePipe.Zenject", "Plugins/MessagePipe.Interprocess" };
 
         foreach (var root in roots)
         {
