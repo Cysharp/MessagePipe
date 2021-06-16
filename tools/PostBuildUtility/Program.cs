@@ -88,7 +88,8 @@ namespace PostBuildUtility
                 {"!.GetValue", ".GetValue" },
 
                 // final transform
-                {"Cysharp.Threading.Tasks.Task", "System.Threading.Tasks.Task" }
+                {"Cysharp.Threading.Tasks.Task", "System.Threading.Tasks.Task" },
+                {"UniUniTaskCompletionSource", "UniTaskCompletionSource" }
             };
 
             System.Console.WriteLine("Start to replace code, remove nullability and use UniTask.");

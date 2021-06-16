@@ -4,6 +4,7 @@
     "references": [
         "MessagePipe",
         "MessagePack",
+        "MessagePack.Annotations",
         "UniTask"
     ],
     "includePlatforms": [],

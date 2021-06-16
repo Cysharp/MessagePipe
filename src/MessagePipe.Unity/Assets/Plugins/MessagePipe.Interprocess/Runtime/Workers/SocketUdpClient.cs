@@ -33,7 +33,7 @@ namespace MessagePipe.Interprocess.Workers
             var i = await socket.ReceiveAsync(buffer, SocketFlags.None, cancellationToken).ConfigureAwait(false);
             return buffer.AsMemory(0, i);
 #else
-            var tcs = new UniUniTaskCompletionSource<ReadOnlyMemory<byte>>();
+            var tcs = new UniTaskCompletionSource<ReadOnlyMemory<byte>>();
 
             socket.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, x =>
             {
@@ -87,7 +87,7 @@ namespace MessagePipe.Interprocess.Workers
 #if NET5_0_OR_GREATER
             return socket.SendAsync(buffer, SocketFlags.None, cancellationToken);
 #else
-            var tcs = new UniUniTaskCompletionSource<int>();
+            var tcs = new UniTaskCompletionSource<int>();
             socket.BeginSend(buffer, 0, buffer.Length, SocketFlags.None, x =>
              {
                  int i;

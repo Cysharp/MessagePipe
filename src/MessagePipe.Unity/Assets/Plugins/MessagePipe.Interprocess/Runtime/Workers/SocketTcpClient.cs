@@ -81,7 +81,7 @@ namespace MessagePipe.Interprocess.Workers
             var i = await socket.ReceiveAsync(xs, SocketFlags.None, cancellationToken).ConfigureAwait(false);
             return i;
 #else
-            var tcs = new UniUniTaskCompletionSource<int>();
+            var tcs = new UniTaskCompletionSource<int>();
 
             socket.BeginReceive(buffer, offset, count, SocketFlags.None, x =>
             {
@@ -107,7 +107,7 @@ namespace MessagePipe.Interprocess.Workers
 #if NET5_0_OR_GREATER
             return socket.SendAsync(buffer, SocketFlags.None, cancellationToken);
 #else
-            var tcs = new UniUniTaskCompletionSource<int>();
+            var tcs = new UniTaskCompletionSource<int>();
             socket.BeginSend(buffer, 0, buffer.Length, SocketFlags.None, x =>
              {
                  int i;

@@ -33,7 +33,7 @@ namespace MessagePipe.Interprocess.Workers
 
         // request-response
         int messageId = 0;
-        ConcurrentDictionary<int, UniUniTaskCompletionSource<IInterprocessValue>> responseCompletions = new ConcurrentDictionary<int, UniUniTaskCompletionSource<IInterprocessValue>>();
+        ConcurrentDictionary<int, UniTaskCompletionSource<IInterprocessValue>> responseCompletions = new ConcurrentDictionary<int, UniTaskCompletionSource<IInterprocessValue>>();
 
         // create from DI
         [Preserve]
@@ -95,7 +95,7 @@ namespace MessagePipe.Interprocess.Workers
             }
 
             var mid = Interlocked.Increment(ref messageId);
-            var tcs = new UniUniTaskCompletionSource<IInterprocessValue>();
+            var tcs = new UniTaskCompletionSource<IInterprocessValue>();
             responseCompletions[mid] = tcs;
             var buffer = MessageBuilder.BuildRemoteRequestMessage(typeof(TRequest), typeof(TResponse), mid, request, options.MessagePackSerializerOptions);
             channel.Writer.TryWrite(buffer);

@@ -567,6 +567,10 @@
       <Project>{6D9CB4F6-5A60-BB14-D5C6-F1E6AE247F3F}</Project>
       <Name>MessagePack</Name>
     </ProjectReference>
+    <ProjectReference Include="MessagePack.Annotations.csproj">
+      <Project>{F478333D-41C3-DDEA-7918-22E8779DB3A2}</Project>
+      <Name>MessagePack.Annotations</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />
