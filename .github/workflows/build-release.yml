@@ -230,14 +230,14 @@ jobs:
           asset_path: ./MessagePipe.Unity.${{ env.GIT_TAG }}.unitypackage/MessagePipe.Zenject.${{ env.GIT_TAG }}.unitypackage
           asset_name: MessagePipe.Zenject.${{ env.GIT_TAG }}.unitypackage
           asset_content_type: application/octet-stream
-          - uses: actions/upload-release-asset@v1
-            env:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            with:
-              upload_url: ${{ steps.create_release.outputs.upload_url }}
-              asset_path: ./MessagePipe.Unity.${{ env.GIT_TAG }}.unitypackage/MessagePipe.Interprocess.${{ env.GIT_TAG }}.unitypackage
-              asset_name: MessagePipe.Interprocess.${{ env.GIT_TAG }}.unitypackage
-              asset_content_type: application/octet-stream
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./MessagePipe.Unity.${{ env.GIT_TAG }}.unitypackage/MessagePipe.Interprocess.${{ env.GIT_TAG }}.unitypackage
+          asset_name: MessagePipe.Interprocess.${{ env.GIT_TAG }}.unitypackage
+          asset_content_type: application/octet-stream
 
   cleanup:
     if: github.event.inputs.dry_run == 'true'
