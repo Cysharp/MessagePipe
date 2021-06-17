@@ -229,5 +229,11 @@ namespace MessagePipe.Interprocess.Tests
                 ex.Message.Should().Contain("NO -1");
             }
         }
+
+        [Fact]
+        public async Task RemoteUnixDomainSocketTest()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
