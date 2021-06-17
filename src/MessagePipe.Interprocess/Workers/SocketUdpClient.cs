@@ -20,23 +20,23 @@ namespace MessagePipe.Interprocess.Workers
         //     buffer = new byte[Math.Max(bufferSize, MinBuffer)];
         // }
 
-        SocketUdpServer(int bufferSize, AddressFamily addressFamily)
+        SocketUdpServer(int bufferSize, AddressFamily addressFamily, ProtocolType protocolType)
         {
-            socket = new Socket(addressFamily, SocketType.Dgram, ProtocolType.Udp);
+            socket = new Socket(addressFamily, SocketType.Dgram, protocolType);
             socket.ReceiveBufferSize = bufferSize;
             buffer = new byte[Math.Max(bufferSize, MinBuffer)];
         }
 
         public static SocketUdpServer Bind(int port, int bufferSize)
         {
-            var server = new SocketUdpServer(bufferSize, AddressFamily.InterNetwork);
+            var server = new SocketUdpServer(bufferSize, AddressFamily.InterNetwork, ProtocolType.Udp);
             server.socket.Bind(new IPEndPoint(IPAddress.Any, port));
             return server;
         }
 #if NET5_0_OR_GREATER
         public static SocketUdpServer BindUnixDomainSocket(string domainSocketPath, int bufferSize)
         {
-            var server = new SocketUdpServer(bufferSize, AddressFamily.Unix);
+            var server = new SocketUdpServer(bufferSize, AddressFamily.Unix, ProtocolType.IP);
             server.socket.Bind(new UnixDomainSocketEndPoint(domainSocketPath));
             return server;
         }
@@ -83,23 +83,23 @@ namespace MessagePipe.Interprocess.Workers
         readonly Socket socket;
         readonly byte[] buffer;
 
-        SocketUdpClient(int bufferSize)
+        SocketUdpClient(int bufferSize, ProtocolType protocolType)
         {
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, protocolType);
             socket.SendBufferSize = bufferSize;
             buffer = new byte[Math.Max(bufferSize, MinBuffer)];
         }
 
         public static SocketUdpClient Connect(string host, int port, int bufferSize)
         {
-            var client = new SocketUdpClient(bufferSize);
+            var client = new SocketUdpClient(bufferSize, ProtocolType.Udp);
             client.socket.Connect(new IPEndPoint(IPAddress.Parse(host), port));
             return client;
         }
 #if NET5_0_OR_GREATER
         public static SocketUdpClient ConnectUnixDomainSocket(string domainSocketPath, int bufferSize)
         {
-            var client = new SocketUdpClient(bufferSize);
+            var client = new SocketUdpClient(bufferSize, ProtocolType.IP);
             client.socket.Connect(new UnixDomainSocketEndPoint(domainSocketPath));
             return client;
         }

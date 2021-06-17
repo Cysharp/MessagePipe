@@ -14,15 +14,15 @@ namespace MessagePipe.Interprocess.Workers
 
         readonly Socket socket;
 
-        SocketTcpServer(AddressFamily addressFamily)
+        SocketTcpServer(AddressFamily addressFamily, ProtocolType protocolType)
         {
-            socket = new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp);
+            socket = new Socket(addressFamily, SocketType.Stream, protocolType);
         }
 
         public static SocketTcpServer Listen(string host, int port)
         {
             var ip = new IPEndPoint(IPAddress.Parse(host), port);
-            var server = new SocketTcpServer(ip.AddressFamily);
+            var server = new SocketTcpServer(ip.AddressFamily, ProtocolType.Tcp);
 
             server.socket.Bind(ip);
             server.socket.Listen(MaxConnections);
@@ -32,7 +32,7 @@ namespace MessagePipe.Interprocess.Workers
 #if NET5_0_OR_GREATER
         public static SocketTcpServer ListenUnixDomainSocket(string domainSocketPath)
         {
-            var server = new SocketTcpServer(AddressFamily.Unix);
+            var server = new SocketTcpServer(AddressFamily.Unix, ProtocolType.IP);
             server.socket.Bind(new UnixDomainSocketEndPoint(domainSocketPath));
             server.socket.Listen(MaxConnections);
             return server;
@@ -66,9 +66,9 @@ namespace MessagePipe.Interprocess.Workers
     {
         readonly Socket socket;
 
-        SocketTcpClient(AddressFamily addressFamily)
+        SocketTcpClient(AddressFamily addressFamily, ProtocolType protocolType)
         {
-            socket = new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp);
+            socket = new Socket(addressFamily, SocketType.Stream, protocolType);
         }
 
         internal SocketTcpClient(Socket socket)
@@ -79,14 +79,14 @@ namespace MessagePipe.Interprocess.Workers
         public static SocketTcpClient Connect(string host, int port)
         {
             var ip = new IPEndPoint(IPAddress.Parse(host), port);
-            var client = new SocketTcpClient(ip.AddressFamily);
+            var client = new SocketTcpClient(ip.AddressFamily, ProtocolType.Tcp);
             client.socket.Connect(ip);
             return client;
         }
 #if NET5_0_OR_GREATER
         public static SocketTcpClient ConnectUnixDomainSocket(string domainSocketPath)
         {
-            var client = new SocketTcpClient(AddressFamily.Unix);
+            var client = new SocketTcpClient(AddressFamily.Unix, ProtocolType.IP);
             client.socket.Connect(new UnixDomainSocketEndPoint(domainSocketPath));
             return client;
         }
