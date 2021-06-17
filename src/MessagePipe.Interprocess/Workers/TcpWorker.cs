@@ -45,11 +45,23 @@ namespace MessagePipe.Interprocess.Workers
 
             this.server = new Lazy<SocketTcpServer>(() =>
             {
+#if NET5_0_OR_GREATER
+                if(options.IsUnixDomainSocket)
+                {
+                    return SocketTcpServer.ListenUnixDomainSocket(options.Host);
+                }
+#endif
                 return SocketTcpServer.Listen(options.Host, options.Port);
             });
 
             this.client = new Lazy<SocketTcpClient>(() =>
             {
+#if NET5_0_OR_GREATER
+                if(options.IsUnixDomainSocket)
+                {
+                    return SocketTcpClient.ConnectUnixDomainSocket(options.Host);
+                }
+#endif
                 return SocketTcpClient.Connect(options.Host, options.Port);
             });
 

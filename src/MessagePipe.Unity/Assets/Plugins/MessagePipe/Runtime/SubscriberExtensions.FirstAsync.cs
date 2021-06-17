@@ -168,6 +168,8 @@ namespace MessagePipe
 
         void IUniTaskSource.GetResult(short token) => GetResult(token);
         public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
+        void IUniTaskSource.GetResult(short token) => GetResult(token);
+        public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
         public UniTaskStatus GetStatus(short token)
         {
             return core.GetStatus(token);
@@ -247,6 +249,8 @@ namespace MessagePipe
             }
         }
 
+        void IUniTaskSource.GetResult(short token) => GetResult(token);
+        public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
         void IUniTaskSource.GetResult(short token) => GetResult(token);
         public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
         public UniTaskStatus GetStatus(short token)
@@ -329,6 +333,8 @@ namespace MessagePipe
             }
         }
 
+        void IUniTaskSource.GetResult(short token) => GetResult(token);
+        public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
         void IUniTaskSource.GetResult(short token) => GetResult(token);
         public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
         public UniTaskStatus GetStatus(short token)
@@ -422,6 +428,8 @@ namespace MessagePipe
 
         void IUniTaskSource.GetResult(short token) => GetResult(token);
         public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
+        void IUniTaskSource.GetResult(short token) => GetResult(token);
+        public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
         public UniTaskStatus GetStatus(short token)
         {
             return core.GetStatus(token);
@@ -510,6 +518,8 @@ namespace MessagePipe
             return default;
         }
 
+        void IUniTaskSource.GetResult(short token) => GetResult(token);
+        public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
         void IUniTaskSource.GetResult(short token) => GetResult(token);
         public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
         public UniTaskStatus GetStatus(short token)
@@ -602,6 +612,8 @@ namespace MessagePipe
             return default;
         }
 
+        void IUniTaskSource.GetResult(short token) => GetResult(token);
+        public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
         void IUniTaskSource.GetResult(short token) => GetResult(token);
         public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
         public UniTaskStatus GetStatus(short token)

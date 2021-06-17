@@ -29,6 +29,16 @@ namespace MessagePipe.Interprocess.Workers
             return server;
         }
 
+#if NET5_0_OR_GREATER
+        public static SocketTcpServer ListenUnixDomainSocket(string domainSocketPath)
+        {
+            var server = new SocketTcpServer(AddressFamily.Unix);
+            server.socket.Bind(new UnixDomainSocketEndPoint(domainSocketPath));
+            server.socket.Listen(MaxConnections);
+            return server;
+        }
+#endif
+
         public async void StartAcceptLoopAsync(Action<SocketTcpClient> onAccept, CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
@@ -73,6 +83,14 @@ namespace MessagePipe.Interprocess.Workers
             client.socket.Connect(ip);
             return client;
         }
+#if NET5_0_OR_GREATER
+        public static SocketTcpClient ConnectUnixDomainSocket(string domainSocketPath)
+        {
+            var client = new SocketTcpClient(AddressFamily.Unix);
+            client.socket.Connect(new UnixDomainSocketEndPoint(domainSocketPath));
+            return client;
+        }
+#endif
 
         public async ValueTask<int> ReceiveAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {

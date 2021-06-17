@@ -13,19 +13,34 @@ namespace MessagePipe.Interprocess.Workers
         readonly Socket socket;
         readonly byte[] buffer;
 
-        SocketUdpServer(int bufferSize)
+        // SocketUdpServer(int bufferSize)
+        // {
+        //     socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        //     socket.ReceiveBufferSize = bufferSize;
+        //     buffer = new byte[Math.Max(bufferSize, MinBuffer)];
+        // }
+
+        SocketUdpServer(int bufferSize, AddressFamily addressFamily)
         {
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            socket = new Socket(addressFamily, SocketType.Dgram, ProtocolType.Udp);
             socket.ReceiveBufferSize = bufferSize;
             buffer = new byte[Math.Max(bufferSize, MinBuffer)];
         }
 
         public static SocketUdpServer Bind(int port, int bufferSize)
         {
-            var server = new SocketUdpServer(bufferSize);
+            var server = new SocketUdpServer(bufferSize, AddressFamily.InterNetwork);
             server.socket.Bind(new IPEndPoint(IPAddress.Any, port));
             return server;
         }
+#if NET5_0_OR_GREATER
+        public static SocketUdpServer BindUnixDomainSocket(string domainSocketPath, int bufferSize)
+        {
+            var server = new SocketUdpServer(bufferSize, AddressFamily.Unix);
+            server.socket.Bind(new UnixDomainSocketEndPoint(domainSocketPath));
+            return server;
+        }
+#endif
 
         public async ValueTask<ReadOnlyMemory<byte>> ReceiveAsync(CancellationToken cancellationToken)
         {
@@ -81,6 +96,14 @@ namespace MessagePipe.Interprocess.Workers
             client.socket.Connect(new IPEndPoint(IPAddress.Parse(host), port));
             return client;
         }
+#if NET5_0_OR_GREATER
+        public static SocketUdpClient ConnectUnixDomainSocket(string domainSocketPath, int bufferSize)
+        {
+            var client = new SocketUdpClient(bufferSize);
+            client.socket.Connect(new UnixDomainSocketEndPoint(domainSocketPath));
+            return client;
+        }
+#endif
 
         public ValueTask<int> SendAsync(byte[] buffer, CancellationToken cancellationToken = default)
         {

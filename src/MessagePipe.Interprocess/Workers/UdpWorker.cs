@@ -34,11 +34,23 @@ namespace MessagePipe.Interprocess.Workers
 
             this.server = new Lazy<SocketUdpServer>(() =>
             {
+#if NET5_0_OR_GREATER
+                if(options.IsUnixDomainSocket)
+                {
+                    return SocketUdpServer.BindUnixDomainSocket(options.Host, 0x10000);
+                }
+#endif
                 return SocketUdpServer.Bind(options.Port, 0x10000);
             });
 
             this.client = new Lazy<SocketUdpClient>(() =>
             {
+#if NET5_0_OR_GREATER
+                if(options.IsUnixDomainSocket)
+                {
+                    return SocketUdpClient.ConnectUnixDomainSocket(options.Host, 0x10000);
+                }
+#endif
                 return SocketUdpClient.Connect(options.Host, options.Port, 0x10000);
             });
 

@@ -26,12 +26,21 @@ namespace MessagePipe.Interprocess
     {
         public string Host { get; }
         public int Port { get; }
+        public bool IsUnixDomainSocket { get; }
 
         public MessagePipeInterprocessUdpOptions(string host, int port)
             : base()
         {
             this.Host = host;
             this.Port = port;
+            this.IsUnixDomainSocket = false;
+        }
+        public MessagePipeInterprocessUdpOptions(string host, int port, bool isUnixDomainSocket)
+            : base()
+        {
+            this.Host = host;
+            this.Port = port;
+            this.IsUnixDomainSocket = isUnixDomainSocket;
         }
     }
 
@@ -55,6 +64,7 @@ namespace MessagePipe.Interprocess
         public string Host { get; }
         public int Port { get; }
         public bool? HostAsServer { get; set; }
+        public bool IsUnixDomainSocket { get; set; }
 
         public MessagePipeInterprocessTcpOptions(string host, int port)
             : base()
@@ -62,6 +72,7 @@ namespace MessagePipe.Interprocess
             this.Host = host;
             this.Port = port;
             this.HostAsServer = null;
+            this.IsUnixDomainSocket = false;
         }
     }
 }
