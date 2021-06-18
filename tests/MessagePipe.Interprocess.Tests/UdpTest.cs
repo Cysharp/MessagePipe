@@ -91,7 +91,7 @@ namespace MessagePipe.Interprocess.Tests
             }
             try
             {
-                var provider = TestHelper.BuildServiceProviderUdpWithUds("test.sock", helper);
+                var provider = TestHelper.BuildServiceProviderUdpWithUds(filePath, helper);
                 using (provider as IDisposable)
                 {
                     var p1 = provider.GetRequiredService<IDistributedPublisher<string, string>>();

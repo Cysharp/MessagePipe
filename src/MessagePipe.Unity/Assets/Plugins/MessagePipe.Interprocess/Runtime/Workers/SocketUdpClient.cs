@@ -83,23 +83,24 @@ namespace MessagePipe.Interprocess.Workers
         readonly Socket socket;
         readonly byte[] buffer;
 
-        SocketUdpClient(int bufferSize, ProtocolType protocolType)
+        SocketUdpClient(int bufferSize, AddressFamily addressFamily, ProtocolType protocolType)
         {
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, protocolType);
+            socket = new Socket(addressFamily, SocketType.Dgram, protocolType);
             socket.SendBufferSize = bufferSize;
             buffer = new byte[Math.Max(bufferSize, MinBuffer)];
         }
 
         public static SocketUdpClient Connect(string host, int port, int bufferSize)
         {
-            var client = new SocketUdpClient(bufferSize, ProtocolType.Udp);
-            client.socket.Connect(new IPEndPoint(IPAddress.Parse(host), port));
+            var ipaddr = IPAddress.Parse(host);
+            var client = new SocketUdpClient(bufferSize, ipaddr.AddressFamily, ProtocolType.Udp);
+            client.socket.Connect(new IPEndPoint(ipaddr, port));
             return client;
         }
 #if NET5_0_OR_GREATER
         public static SocketUdpClient ConnectUnixDomainSocket(string domainSocketPath, int bufferSize)
         {
-            var client = new SocketUdpClient(bufferSize, ProtocolType.IP);
+            var client = new SocketUdpClient(bufferSize, AddressFamily.Unix, ProtocolType.IP);
             client.socket.Connect(new UnixDomainSocketEndPoint(domainSocketPath));
             return client;
         }
