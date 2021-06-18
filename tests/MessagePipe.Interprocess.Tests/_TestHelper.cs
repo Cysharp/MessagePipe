@@ -37,6 +37,17 @@ namespace MessagePipe.Interprocess.Tests
             });
             return sc.BuildServiceProvider();
         }
+        public static IServiceProvider BuildServiceProviderTcpWithUds(string domainSocketPath, ITestOutputHelper helper, bool asServer = true)
+        {
+            var sc = new ServiceCollection();
+            sc.AddMessagePipe();
+            sc.AddMessagePipeTcpInterprocessUds(domainSocketPath, x =>
+            {
+                x.HostAsServer = asServer;
+                x.UnhandledErrorHandler = (msg, e) => helper.WriteLine(msg + e);
+            });
+            return sc.BuildServiceProvider();
+        }
 
         public static IServiceProvider BuildServiceProviderNamedPipe(string pipeName, ITestOutputHelper helper, bool asServer = true)
         {

@@ -231,9 +231,42 @@ namespace MessagePipe.Interprocess.Tests
         }
 
         [Fact]
-        public async Task RemoteUnixDomainSocketTest()
+        public async Task RemoteRequestWithUdsTest()
         {
-            throw new NotImplementedException();
+            var filePath = System.IO.Path.GetTempFileName();
+            if(System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+            try
+            {
+                var provider = TestHelper.BuildServiceProviderTcpWithUds(filePath, helper);
+                using (provider as IDisposable)
+                {
+                    var remoteHandler = provider.GetRequiredService<IRemoteRequestHandler<int, string>>();
+
+                    var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+
+                    var v = await remoteHandler.InvokeAsync(9999, cts.Token);
+                    v.Should().Be("ECHO:9999");
+
+                    var v2 = await remoteHandler.InvokeAsync(4444);
+                    v2.Should().Be("ECHO:4444");
+
+                    var ex = await Assert.ThrowsAsync<RemoteRequestException>(async () =>
+                    {
+                        var v3 = await remoteHandler.InvokeAsync(-1);
+                    });
+                    ex.Message.Should().Contain("NO -1");
+                }
+            }
+            finally
+            {
+                if(System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+            }
         }
     }
 }
