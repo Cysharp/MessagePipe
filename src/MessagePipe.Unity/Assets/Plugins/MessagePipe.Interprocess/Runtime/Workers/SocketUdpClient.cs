@@ -13,13 +13,6 @@ namespace MessagePipe.Interprocess.Workers
         readonly Socket socket;
         readonly byte[] buffer;
 
-        // SocketUdpServer(int bufferSize)
-        // {
-        //     socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-        //     socket.ReceiveBufferSize = bufferSize;
-        //     buffer = new byte[Math.Max(bufferSize, MinBuffer)];
-        // }
-
         SocketUdpServer(int bufferSize, AddressFamily addressFamily, ProtocolType protocolType)
         {
             socket = new Socket(addressFamily, SocketType.Dgram, protocolType);
@@ -34,7 +27,14 @@ namespace MessagePipe.Interprocess.Workers
             return server;
         }
 #if NET5_0_OR_GREATER
-        public static SocketUdpServer BindUnixDomainSocket(string domainSocketPath, int bufferSize)
+        /// <summary>
+        /// create UDP socket and bind for listen.
+        /// </summary>
+        /// <param name="domainSocketPath">path to socket</param>
+        /// <param name="bufferSize">socket buffer size</param>
+        /// <exception cref="SocketException">unix domain socket not supported or socket already exists</exception>
+        /// <returns>UDP server with bound socket</returns>
+        public static SocketUdpServer BindUDS(string domainSocketPath, int bufferSize)
         {
             var server = new SocketUdpServer(bufferSize, AddressFamily.Unix, ProtocolType.IP);
             server.socket.Bind(new UnixDomainSocketEndPoint(domainSocketPath));
@@ -98,7 +98,14 @@ namespace MessagePipe.Interprocess.Workers
             return client;
         }
 #if NET5_0_OR_GREATER
-        public static SocketUdpClient ConnectUnixDomainSocket(string domainSocketPath, int bufferSize)
+        /// <summary>
+        /// create UDP unix domain socket client and connect to server
+        /// </summary>
+        /// <param name="domainSocketPath">path to unix domain socket</param>
+        /// <param name="bufferSize"></param>
+        /// <exception cref="SocketException">unix domain socket not supported or server does not exist</exception>
+        /// <returns>UDP unix domain socket client</returns>
+        public static SocketUdpClient ConnectUDS(string domainSocketPath, int bufferSize)
         {
             var client = new SocketUdpClient(bufferSize, AddressFamily.Unix, ProtocolType.IP);
             client.socket.Connect(new UnixDomainSocketEndPoint(domainSocketPath));

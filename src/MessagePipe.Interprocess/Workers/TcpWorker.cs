@@ -48,7 +48,7 @@ namespace MessagePipe.Interprocess.Workers
 #if NET5_0_OR_GREATER
                 if(options.IsUnixDomainSocket)
                 {
-                    return SocketTcpServer.ListenUnixDomainSocket(options.Host);
+                    return SocketTcpServer.ListenUDS(options.Host);
                 }
 #endif
                 return SocketTcpServer.Listen(options.Host, options.Port);
@@ -59,7 +59,7 @@ namespace MessagePipe.Interprocess.Workers
 #if NET5_0_OR_GREATER
                 if(options.IsUnixDomainSocket)
                 {
-                    return SocketTcpClient.ConnectUnixDomainSocket(options.Host);
+                    return SocketTcpClient.ConnectUDS(options.Host);
                 }
 #endif
                 return SocketTcpClient.Connect(options.Host, options.Port);

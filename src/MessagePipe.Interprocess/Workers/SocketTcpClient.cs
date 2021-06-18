@@ -30,7 +30,13 @@ namespace MessagePipe.Interprocess.Workers
         }
 
 #if NET5_0_OR_GREATER
-        public static SocketTcpServer ListenUnixDomainSocket(string domainSocketPath)
+        /// <summary>
+        /// create TCP unix domain socket server and listen
+        /// </summary>
+        /// <param name="domainSocketPath">path to unix domain socket</param>
+        /// <exception cref="SocketException">unix domain socket not supported or socket already exists</exception>
+        /// <returns>TCP unix domain socket server</returns>
+        public static SocketTcpServer ListenUDS(string domainSocketPath)
         {
             var server = new SocketTcpServer(AddressFamily.Unix, ProtocolType.IP);
             server.socket.Bind(new UnixDomainSocketEndPoint(domainSocketPath));
@@ -84,7 +90,13 @@ namespace MessagePipe.Interprocess.Workers
             return client;
         }
 #if NET5_0_OR_GREATER
-        public static SocketTcpClient ConnectUnixDomainSocket(string domainSocketPath)
+        /// <summary>
+        /// create TCP unix domain socket client and connect to server
+        /// </summary>
+        /// <param name="domainSocketPath">path to unix domain socket</param>
+        /// <exception cref="SocketException">unix domain socket not supported or server does not listen</exception>
+        /// <returns>TCP socket client.</returns>
+        public static SocketTcpClient ConnectUDS(string domainSocketPath)
         {
             var client = new SocketTcpClient(AddressFamily.Unix, ProtocolType.IP);
             client.socket.Connect(new UnixDomainSocketEndPoint(domainSocketPath));
