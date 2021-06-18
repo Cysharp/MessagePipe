@@ -39,25 +39,25 @@ namespace MessagePipe.Zenject
 
         public void Add(Type type, InstanceLifetime lifetime)
         {
-            if (lifetime == InstanceLifetime.Scoped)
-            {
-                builder.Bind(type).AsCached();
-            }
-            else
-            {
-                builder.Bind(type).AsSingle();
-            }
+            var binder = builder.Bind(type);
+            SetScope(binder, lifetime);
         }
 
         public void Add(Type serviceType, Type implementationType, InstanceLifetime lifetime)
         {
-            if (lifetime == InstanceLifetime.Scoped)
+            var binder = builder.Bind(serviceType).To(implementationType);
+            SetScope(binder, lifetime);
+        }
+
+        private void SetScope(ScopeConcreteIdArgConditionCopyNonLazyBinder binder, InstanceLifetime lifetime)
+        {
+            if (lifetime == InstanceLifetime.Transient)
             {
-                builder.Bind(serviceType).To(implementationType).AsCached();
+                binder.AsTransient();
             }
             else
             {
-                builder.Bind(serviceType).To(implementationType).AsSingle();
+                binder.AsCached();
             }
         }
     }

@@ -237,6 +237,42 @@ public class ZenjectTest
         Assert.AreEqual(InstanceLifetime.Transient, option.RequestHandlerLifetime);
     }
 
+    [Test]
+    public void BindMessageBrokerWithLifetimeScoped()
+    {
+        var resolver = TestHelper.BuildZenject((options, builder) =>
+        {
+            options.InstanceLifetime = InstanceLifetime.Scoped;
+            builder.BindMessageBroker<int>(options);
+        });
+
+        var pub1 = resolver.Resolve<IPublisher<int>>();
+        var pub2 = resolver.Resolve<IPublisher<int>>();
+        var sub1 = resolver.Resolve<ISubscriber<int>>();
+        var sub2 = resolver.Resolve<ISubscriber<int>>();
+
+        Assert.AreEqual(pub1, pub2);
+        Assert.AreEqual(sub1, sub2);
+    }
+
+    [Test]
+    public void BindMessageBrokerWithLifetimeTransient()
+    {
+        var resolver = TestHelper.BuildZenject((options, builder) =>
+        {
+            options.InstanceLifetime = InstanceLifetime.Transient;
+            builder.BindMessageBroker<int>(options);
+        });
+
+        var pub1 = resolver.Resolve<IPublisher<int>>();
+        var pub2 = resolver.Resolve<IPublisher<int>>();
+        var sub1 = resolver.Resolve<ISubscriber<int>>();
+        var sub2 = resolver.Resolve<ISubscriber<int>>();
+
+        Assert.AreNotEqual(pub1, pub2);
+        Assert.AreNotEqual(sub1, sub2);
+    }
+
     public class IntClass
     {
         public int Value { get; set; }
