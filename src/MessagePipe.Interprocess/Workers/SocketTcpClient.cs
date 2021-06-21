@@ -36,7 +36,7 @@ namespace MessagePipe.Interprocess.Workers
         /// <param name="domainSocketPath">path to unix domain socket</param>
         /// <exception cref="SocketException">unix domain socket not supported or socket already exists</exception>
         /// <returns>TCP unix domain socket server</returns>
-        public static SocketTcpServer ListenUDS(string domainSocketPath)
+        public static SocketTcpServer ListenUds(string domainSocketPath)
         {
             var server = new SocketTcpServer(AddressFamily.Unix, ProtocolType.IP);
             server.socket.Bind(new UnixDomainSocketEndPoint(domainSocketPath));
@@ -96,7 +96,7 @@ namespace MessagePipe.Interprocess.Workers
         /// <param name="domainSocketPath">path to unix domain socket</param>
         /// <exception cref="SocketException">unix domain socket not supported or server does not listen</exception>
         /// <returns>TCP socket client.</returns>
-        public static SocketTcpClient ConnectUDS(string domainSocketPath)
+        public static SocketTcpClient ConnectUds(string domainSocketPath)
         {
             var client = new SocketTcpClient(AddressFamily.Unix, ProtocolType.IP);
             client.socket.Connect(new UnixDomainSocketEndPoint(domainSocketPath));

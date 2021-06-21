@@ -20,7 +20,7 @@ namespace MessagePipe.Interprocess.Workers
         readonly IServiceProvider provider;
         readonly CancellationTokenSource cancellationTokenSource;
         readonly IAsyncPublisher<IInterprocessKey, IInterprocessValue> publisher;
-        readonly MessagePipeInterprocessTcpOptions options;
+        readonly MessagePipeInterprocessOptions options;
 
         // Channel is used from publisher for thread safety of write packet
         int initializedServer = 0;
@@ -45,23 +45,11 @@ namespace MessagePipe.Interprocess.Workers
 
             this.server = new Lazy<SocketTcpServer>(() =>
             {
-#if NET5_0_OR_GREATER
-                if(options.IsUnixDomainSocket)
-                {
-                    return SocketTcpServer.ListenUDS(options.Host);
-                }
-#endif
                 return SocketTcpServer.Listen(options.Host, options.Port);
             });
 
             this.client = new Lazy<SocketTcpClient>(() =>
             {
-#if NET5_0_OR_GREATER
-                if(options.IsUnixDomainSocket)
-                {
-                    return SocketTcpClient.ConnectUDS(options.Host);
-                }
-#endif
                 return SocketTcpClient.Connect(options.Host, options.Port);
             });
 
@@ -81,7 +69,42 @@ namespace MessagePipe.Interprocess.Workers
                 StartReceiver();
             }
         }
+#if NET5_0_OR_GREATER
+        [Preserve]
+        public TcpWorker(IServiceProvider provider, MessagePipeInterprocessTcpUdsOptions options, IAsyncPublisher<IInterprocessKey, IInterprocessValue> publisher)
+        {
+            this.provider = provider;
+            this.cancellationTokenSource = new CancellationTokenSource();
+            this.options = options;
+            this.publisher = publisher;
 
+            this.server = new Lazy<SocketTcpServer>(() =>
+            {
+                return SocketTcpServer.ListenUds(options.SocketPath);
+            });
+
+            this.client = new Lazy<SocketTcpClient>(() =>
+            {
+                return SocketTcpClient.ConnectUds(options.SocketPath);
+            });
+
+#if !UNITY_2018_3_OR_NEWER
+            this.channel = Channel.CreateUnbounded<byte[]>(new UnboundedChannelOptions()
+            {
+                SingleReader = true,
+                SingleWriter = false,
+                AllowSynchronousContinuations = true
+            });
+#else
+            this.channel = Channel.CreateSingleConsumerUnbounded<byte[]>();
+#endif
+
+            if (options.HostAsServer != null && options.HostAsServer.Value)
+            {
+                StartReceiver();
+            }
+        }
+#endif
         public void Publish<TKey, TMessage>(TKey key, TMessage message)
         {
             if (Interlocked.Increment(ref initializedClient) == 1) // first incr, channel not yet started

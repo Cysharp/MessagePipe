@@ -34,7 +34,7 @@ namespace MessagePipe.Interprocess.Workers
         /// <param name="bufferSize">socket buffer size</param>
         /// <exception cref="SocketException">unix domain socket not supported or socket already exists</exception>
         /// <returns>UDP server with bound socket</returns>
-        public static SocketUdpServer BindUDS(string domainSocketPath, int bufferSize)
+        public static SocketUdpServer BindUds(string domainSocketPath, int bufferSize)
         {
             var server = new SocketUdpServer(bufferSize, AddressFamily.Unix, ProtocolType.IP);
             server.socket.Bind(new UnixDomainSocketEndPoint(domainSocketPath));
@@ -105,7 +105,7 @@ namespace MessagePipe.Interprocess.Workers
         /// <param name="bufferSize"></param>
         /// <exception cref="SocketException">unix domain socket not supported or server does not exist</exception>
         /// <returns>UDP unix domain socket client</returns>
-        public static SocketUdpClient ConnectUDS(string domainSocketPath, int bufferSize)
+        public static SocketUdpClient ConnectUds(string domainSocketPath, int bufferSize)
         {
             var client = new SocketUdpClient(bufferSize, AddressFamily.Unix, ProtocolType.IP);
             client.socket.Connect(new UnixDomainSocketEndPoint(domainSocketPath));

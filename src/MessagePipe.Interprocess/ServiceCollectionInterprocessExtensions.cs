@@ -62,12 +62,33 @@ namespace MessagePipe
 #endif
 
         }
+#if NET5_0_OR_GREATER
+        public static ReturnType AddMessagePipeTcpUdsInterprocess(this IServiceCollection services, string socketPath, Action<MessagePipeInterprocessTcpUdsOptions> configure)
+        {
+            var options = new MessagePipeInterprocessTcpUdsOptions(socketPath);
+            configure(options);
+
+            services.AddSingleton(options);
+            services.Add(typeof(TcpWorker), options.InstanceLifetime);
+
+#if !UNITY_2018_3_OR_NEWER
+            services.Add(typeof(IDistributedPublisher<,>), typeof(TcpDistributedPublisher<,>), options.InstanceLifetime);
+            services.Add(typeof(IDistributedSubscriber<,>), typeof(TcpDistributedSubscriber<,>), options.InstanceLifetime);
+            services.Add(typeof(IRemoteRequestHandler<,>), typeof(TcpRemoteRequestHandler<,>), options.InstanceLifetime);
+            return services;
+#else
+            AddAsyncMessageBroker<IInterprocessKey, IInterprocessValue>(services, options);
+            return options;
+        
+#endif
+        }
+#endif
 
 #if !UNITY_2018_3_OR_NEWER
 
-        // NamedPipe in Unity is slightly buggy so disable.
+            // NamedPipe in Unity is slightly buggy so disable.
 
-        public static ReturnType AddMessagePipeNamedPipeInterprocess(this IServiceCollection services, string pipeName)
+            public static ReturnType AddMessagePipeNamedPipeInterprocess(this IServiceCollection services, string pipeName)
         {
             return AddMessagePipeNamedPipeInterprocess(services, pipeName, _ => { });
         }
@@ -163,14 +184,14 @@ namespace MessagePipe
         //}
 
 #endif
-// #if NET5_0_OR_GREATER
+#if NET5_0_OR_GREATER
         public static ReturnType AddMessagePipeUdpInterprocessUds(this IServiceCollection services, string domainSocketPath)
         {
             return AddMessagePipeUdpInterprocessUds(services, domainSocketPath, _ => { });
         }
-        public static ReturnType AddMessagePipeUdpInterprocessUds(this IServiceCollection services, string domainSocketPath, Action<MessagePipeInterprocessUdpOptions> configure)
+        public static ReturnType AddMessagePipeUdpInterprocessUds(this IServiceCollection services, string domainSocketPath, Action<MessagePipeInterprocessUdpUdsOptions> configure)
         {
-            var options = new MessagePipeInterprocessUdpOptions(domainSocketPath, 0, true);
+            var options = new MessagePipeInterprocessUdpUdsOptions(domainSocketPath);
             configure(options);
 
             services.AddSingleton(options);
@@ -190,10 +211,9 @@ namespace MessagePipe
             return AddMessagePipeTcpInterprocessUds(services, domainSocketPath, _ => { });
         }
 
-        public static ReturnType AddMessagePipeTcpInterprocessUds(this IServiceCollection services, string domainSocketPath, Action<MessagePipeInterprocessTcpOptions> configure)
+        public static ReturnType AddMessagePipeTcpInterprocessUds(this IServiceCollection services, string domainSocketPath, Action<MessagePipeInterprocessTcpUdsOptions> configure)
         {
-            var options = new MessagePipeInterprocessTcpOptions(domainSocketPath, 0);
-            options.IsUnixDomainSocket = true;
+            var options = new MessagePipeInterprocessTcpUdsOptions(domainSocketPath);
             configure(options);
 
             services.AddSingleton(options);
@@ -210,6 +230,6 @@ namespace MessagePipe
 #endif
 
         }
-// #endif // NET5_0_OR_GREATER
-   }
+#endif // NET5_0_OR_GREATER
+    }
 }
