@@ -48,7 +48,7 @@ namespace PostBuildUtility
                 {"core.SetResult", "core.TrySetResult" },
                 {"public UniTaskStatus GetStatus(short token)", @"void IUniTaskSource.GetResult(short token) => GetResult(token);
         public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
-        public UniTaskStatus GetStatus(short token)" },
+        public /*replaced*/ UniTaskStatus GetStatus(short token)" },
 
                 // Remove nullable
                 {"T?", "T" },
