@@ -62,27 +62,6 @@ namespace MessagePipe
 #endif
 
         }
-#if NET5_0_OR_GREATER
-        public static ReturnType AddMessagePipeTcpUdsInterprocess(this IServiceCollection services, string socketPath, Action<MessagePipeInterprocessTcpUdsOptions> configure)
-        {
-            var options = new MessagePipeInterprocessTcpUdsOptions(socketPath);
-            configure(options);
-
-            services.AddSingleton(options);
-            services.Add(typeof(TcpWorker), options.InstanceLifetime);
-
-#if !UNITY_2018_3_OR_NEWER
-            services.Add(typeof(IDistributedPublisher<,>), typeof(TcpDistributedPublisher<,>), options.InstanceLifetime);
-            services.Add(typeof(IDistributedSubscriber<,>), typeof(TcpDistributedSubscriber<,>), options.InstanceLifetime);
-            services.Add(typeof(IRemoteRequestHandler<,>), typeof(TcpRemoteRequestHandler<,>), options.InstanceLifetime);
-            return services;
-#else
-            AddAsyncMessageBroker<IInterprocessKey, IInterprocessValue>(services, options);
-            return options;
-        
-#endif
-        }
-#endif
 
 #if !UNITY_2018_3_OR_NEWER
 
