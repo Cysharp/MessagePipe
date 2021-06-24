@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30804.86
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31410.414
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePipe", "src\MessagePipe\MessagePipe.csproj", "{D94EF9D4-3CC2-4420-8D0B-25957E7C5309}"
 EndProject
@@ -49,6 +49,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagePipe.Interprocess.Tests", "tests\MessagePipe.Interprocess.Tests\MessagePipe.Interprocess.Tests.csproj", "{3B2C3908-E9EB-43F3-9340-3CF5EFBA2F09}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InterprocessServer", "sandbox\InterprocessServer\InterprocessServer.csproj", "{0E645BF9-3464-4856-A624-FEFCF0050220}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagePipe.Interprocess.Benchmark", "tests\MessagePipe.Interprocess.Benchmark\MessagePipe.Interprocess.Benchmark.csproj", "{AF421C72-0DDA-4568-BD7E-B3CE90B3B31C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -135,6 +137,12 @@ Global
 		{0E645BF9-3464-4856-A624-FEFCF0050220}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0E645BF9-3464-4856-A624-FEFCF0050220}.WinBenchmark|Any CPU.ActiveCfg = Debug|Any CPU
 		{0E645BF9-3464-4856-A624-FEFCF0050220}.WinBenchmark|Any CPU.Build.0 = Debug|Any CPU
+		{AF421C72-0DDA-4568-BD7E-B3CE90B3B31C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF421C72-0DDA-4568-BD7E-B3CE90B3B31C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF421C72-0DDA-4568-BD7E-B3CE90B3B31C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF421C72-0DDA-4568-BD7E-B3CE90B3B31C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF421C72-0DDA-4568-BD7E-B3CE90B3B31C}.WinBenchmark|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF421C72-0DDA-4568-BD7E-B3CE90B3B31C}.WinBenchmark|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -154,6 +162,7 @@ Global
 		{10E626FF-DE92-4784-A9EB-F5A6BE26D1D3} = {381F6F79-110B-4CE4-9A49-583046D8C164}
 		{3B2C3908-E9EB-43F3-9340-3CF5EFBA2F09} = {36546FD6-866F-4809-AFCE-87F7F4201361}
 		{0E645BF9-3464-4856-A624-FEFCF0050220} = {9813BFC3-7860-4697-A3AF-118BDF710BD0}
+		{AF421C72-0DDA-4568-BD7E-B3CE90B3B31C} = {36546FD6-866F-4809-AFCE-87F7F4201361}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {138B7AA8-E4C0-46A3-A48B-0D373CAC365D}

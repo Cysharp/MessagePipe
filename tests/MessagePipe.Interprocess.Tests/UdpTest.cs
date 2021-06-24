@@ -79,7 +79,7 @@ namespace MessagePipe.Interprocess.Tests
         [Fact]
         public async Task SimpleStringStringUds()
         {
-            if(Environment.OSVersion.Platform == PlatformID.Win32NT)
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
                 // Currently, windows's unix domain socket does not support UDP
                 return;
