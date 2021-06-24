@@ -14,15 +14,23 @@ namespace MessagePipe.Interprocess.Workers
 
         readonly Socket socket;
 
-        SocketTcpServer(AddressFamily addressFamily, ProtocolType protocolType)
+        SocketTcpServer(AddressFamily addressFamily, ProtocolType protocolType, int? sendBufferSize, int? recvBufferSize)
         {
             socket = new Socket(addressFamily, SocketType.Stream, protocolType);
+            if(sendBufferSize.HasValue)
+            {
+                socket.SendBufferSize = sendBufferSize.Value;
+            }
+            if(recvBufferSize.HasValue)
+            {
+                socket.ReceiveBufferSize = recvBufferSize.Value;
+            }
         }
 
         public static SocketTcpServer Listen(string host, int port)
         {
             var ip = new IPEndPoint(IPAddress.Parse(host), port);
-            var server = new SocketTcpServer(ip.AddressFamily, ProtocolType.Tcp);
+            var server = new SocketTcpServer(ip.AddressFamily, ProtocolType.Tcp, null, null);
 
             server.socket.Bind(ip);
             server.socket.Listen(MaxConnections);
@@ -36,9 +44,9 @@ namespace MessagePipe.Interprocess.Workers
         /// <param name="domainSocketPath">path to unix domain socket</param>
         /// <exception cref="SocketException">unix domain socket not supported or socket already exists</exception>
         /// <returns>TCP unix domain socket server</returns>
-        public static SocketTcpServer ListenUds(string domainSocketPath)
+        public static SocketTcpServer ListenUds(string domainSocketPath, int? sendBufferSize = null, int? recvBufferSize = null)
         {
-            var server = new SocketTcpServer(AddressFamily.Unix, ProtocolType.IP);
+            var server = new SocketTcpServer(AddressFamily.Unix, ProtocolType.IP, sendBufferSize, recvBufferSize);
             server.socket.Bind(new UnixDomainSocketEndPoint(domainSocketPath));
             server.socket.Listen(MaxConnections);
             return server;

@@ -26,6 +26,8 @@ namespace MessagePipe.Interprocess.Benchmark
             });
             return services.BuildServiceProvider();
         }
+        [Params(1, 1000000)]
+        public int DataSize { get; set; }
         IServiceProvider CreateTcpUdsServiceProvider()
         {
             _TcpUdsSocketPath = System.IO.Path.GetTempFileName();
@@ -38,6 +40,8 @@ namespace MessagePipe.Interprocess.Benchmark
             services.AddMessagePipeTcpInterprocessUds(_TcpUdsSocketPath, opt =>
             {
                 opt.HostAsServer = true;
+                opt.SendBufferSize = Math.Min(DataSize, 0x1000);
+                opt.ReceiveBufferSize = Math.Min(DataSize, 0x1000);
             });
             return services.BuildServiceProvider();
         }
@@ -64,7 +68,7 @@ namespace MessagePipe.Interprocess.Benchmark
             {
                 throw new ArgumentNullException("handler");
             }
-            await handler.InvokeAsync(1);
+            await handler.InvokeAsync(DataSize);
         }
         [Benchmark]
         public async ValueTask TcpIpRemoteRequest()

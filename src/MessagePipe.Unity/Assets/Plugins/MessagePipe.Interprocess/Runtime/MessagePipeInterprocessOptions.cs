@@ -78,11 +78,15 @@ namespace MessagePipe.Interprocess
     public sealed class MessagePipeInterprocessTcpUdsOptions : MessagePipeInterprocessOptions
     {
         public string SocketPath { get; set; }
+        public int? SendBufferSize { get; set; }
+        public int? ReceiveBufferSize { get; set; }
         public bool? HostAsServer { get; set; }
-        public MessagePipeInterprocessTcpUdsOptions(string socketPath)
+        public MessagePipeInterprocessTcpUdsOptions(string socketPath, int? sendBufferSize = null, int? recvBufferSize = null)
         {
             this.SocketPath = socketPath;
             HostAsServer = null;
+            this.SendBufferSize = sendBufferSize;
+            this.ReceiveBufferSize = recvBufferSize;
         }
     }
 #endif
