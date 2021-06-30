@@ -42,6 +42,8 @@ namespace MessagePipe.Interprocess.Workers
         /// create TCP unix domain socket server and listen
         /// </summary>
         /// <param name="domainSocketPath">path to unix domain socket</param>
+        /// <param name="recvBufferSize">socket's receive buffer size</param>
+        /// <param name="sendBufferSize">socket's send buffer size</param>
         /// <exception cref="SocketException">unix domain socket not supported or socket already exists</exception>
         /// <returns>TCP unix domain socket server</returns>
         public static SocketTcpServer ListenUds(string domainSocketPath, int? sendBufferSize = null, int? recvBufferSize = null)

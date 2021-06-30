@@ -19,7 +19,6 @@ namespace MessagePipe.Interprocess.Workers
             socket.ReceiveBufferSize = bufferSize;
             buffer = new byte[Math.Max(bufferSize, MinBuffer)];
         }
-
         public static SocketUdpServer Bind(int port, int bufferSize)
         {
             var server = new SocketUdpServer(bufferSize, AddressFamily.InterNetwork, ProtocolType.Udp);
@@ -32,7 +31,7 @@ namespace MessagePipe.Interprocess.Workers
         /// </summary>
         /// <param name="domainSocketPath">path to socket</param>
         /// <param name="bufferSize">socket buffer size</param>
-        /// <exception cref="SocketException">unix domain socket not supported or socket already exists</exception>
+        /// <exception cref="SocketException">unix domain socket not supported or socket already exists even if it is not bound</exception>
         /// <returns>UDP server with bound socket</returns>
         public static SocketUdpServer BindUds(string domainSocketPath, int bufferSize)
         {

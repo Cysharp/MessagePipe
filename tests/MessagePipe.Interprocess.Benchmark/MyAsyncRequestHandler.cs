@@ -7,6 +7,13 @@ using System.Threading;
 
 namespace MessagePipe.Interprocess.Benchmark
 {
+    public class MyAsyncMessageHandler : IAsyncMessageHandler<byte[]>
+    {
+        public ValueTask HandleAsync(byte[] message, CancellationToken cancellationToken)
+        {
+            return default(ValueTask);
+        }
+    }
     public class MyAsyncHandler : IAsyncRequestHandler<int, byte[]>
     {
         public async ValueTask<byte[]> InvokeAsync(int request, CancellationToken cancellationToken = default)

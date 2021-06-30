@@ -16,6 +16,8 @@ namespace MessagePipe.Interprocess.Benchmark
         IServiceProvider? _TcpIpProvider = null;
         IServiceProvider? _TcpUdsProvider = null;
         string? _TcpUdsSocketPath = null;
+        [Params(1, 1000000)]
+        public int DataSize { get; set; }
         IServiceProvider CreateTcpIpServiceProvider()
         {
             var services = new ServiceCollection();
@@ -26,8 +28,6 @@ namespace MessagePipe.Interprocess.Benchmark
             });
             return services.BuildServiceProvider();
         }
-        [Params(1, 1000000)]
-        public int DataSize { get; set; }
         IServiceProvider CreateTcpUdsServiceProvider()
         {
             _TcpUdsSocketPath = System.IO.Path.GetTempFileName();
@@ -70,6 +70,15 @@ namespace MessagePipe.Interprocess.Benchmark
             }
             await handler.InvokeAsync(DataSize);
         }
+        async ValueTask PubSub(IServiceProvider provider)
+        {
+            var publisher = provider.GetService<IDistributedPublisher<int, byte[]>>() ?? throw new ArgumentNullException("publisher");
+            var subscriber = provider.GetService<IDistributedSubscriber<int, byte[]>>() ?? throw new ArgumentNullException("subscriber");
+            await using (await subscriber.SubscribeAsync(1, new MyAsyncMessageHandler()))
+            {
+                await publisher.PublishAsync(1, new byte[DataSize]);
+            }
+        }
         [Benchmark]
         public async ValueTask TcpIpRemoteRequest()
         {
@@ -83,6 +92,18 @@ namespace MessagePipe.Interprocess.Benchmark
             var provider = _TcpUdsProvider ?? throw new ArgumentNullException("_TcpUdsProvider");
             var handler = provider.GetService<IRemoteRequestHandler<int, byte[]>>();
             await RemoteRequest(handler);
+        }
+        [Benchmark]
+        public async ValueTask TcpIpPubSub()
+        {
+            var provider = _TcpIpProvider ?? throw new ArgumentNullException("_TcpUdsProvider");
+            await PubSub(provider);
+        }
+        [Benchmark]
+        public async ValueTask TcpUdsPubSub()
+        {
+            var provider = _TcpUdsProvider ?? throw new ArgumentNullException("_TcpUdsProvider");
+            await PubSub(provider);
         }
     }
 }
