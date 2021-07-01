@@ -81,7 +81,7 @@ namespace MessagePipe.Interprocess.Tests
         {
             if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
-                // Currently, windows's unix domain socket does not support UDP
+                helper.WriteLine("Currently, windows's unix domain socket does not support UDP, so skipped");
                 return;
             }
             var filePath = System.IO.Path.GetTempFileName();

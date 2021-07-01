@@ -231,6 +231,48 @@ namespace MessagePipe.Interprocess.Tests
         }
 
         [Fact]
+        public async Task MoreHugeSizeUdsTest()
+        {
+            var filePath = System.IO.Path.GetTempFileName();
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+            try
+            {
+                var provider = TestHelper.BuildServiceProviderTcpWithUds(filePath, helper);
+                using (provider as IDisposable)
+                {
+                    var p1 = provider.GetRequiredService<IDistributedPublisher<string, string>>();
+                    var s1 = provider.GetRequiredService<IDistributedSubscriber<string, string>>();
+
+                    var result = new List<string>();
+                    await s1.SubscribeAsync("hogemogeman", x =>
+                    {
+                        result.Add(x);
+                    });
+
+                    var ldata1 = new string('a', 99999);
+                    var ldata2 = new string('b', 99999);
+                    var ldata3 = new string('c', 99999);
+                    var ldata = string.Concat(ldata1, ldata2, ldata3);
+                    await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
+                    await p1.PublishAsync("hogemogeman", ldata);
+
+                    await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
+
+                    result.Should().Equal(ldata);
+                }
+            }
+            finally
+            {
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+            }
+        }
+        [Fact]
         public async Task RemoteRequestWithUdsTest()
         {
             var filePath = System.IO.Path.GetTempFileName();

@@ -65,9 +65,9 @@ namespace MessagePipe
 
 #if !UNITY_2018_3_OR_NEWER
 
-            // NamedPipe in Unity is slightly buggy so disable.
+        // NamedPipe in Unity is slightly buggy so disable.
 
-            public static ReturnType AddMessagePipeNamedPipeInterprocess(this IServiceCollection services, string pipeName)
+        public static ReturnType AddMessagePipeNamedPipeInterprocess(this IServiceCollection services, string pipeName)
         {
             return AddMessagePipeNamedPipeInterprocess(services, pipeName, _ => { });
         }
