@@ -44,8 +44,8 @@ namespace MessagePipe.Interprocess.Benchmark
             });
             return services.BuildServiceProvider();
         }
-        IServiceProvider _TcpIpProvider = null;
-        IServiceProvider _TcpUdsProvider = null;
+        IServiceProvider? _TcpIpProvider = null;
+        IServiceProvider? _TcpUdsProvider = null;
         string _TcpSocketPath = "";
         [GlobalSetup]
         public void Setup()
@@ -93,24 +93,40 @@ namespace MessagePipe.Interprocess.Benchmark
         [Benchmark]
         public async Task TcpIpRemoteRequest()
         {
+            if(_TcpIpProvider == null)
+            {
+                throw new ArgumentNullException(nameof(_TcpIpProvider));
+            }
             await ClientTask(_TcpIpProvider, TaskNum);
         }
         [Benchmark]
         public async Task TcpUdsRemoteRequest()
         {
+            if(_TcpUdsProvider == null)
+            {
+                throw new ArgumentNullException(nameof(_TcpUdsProvider));
+            }
             await ClientTask(_TcpUdsProvider, TaskNum);
         }
         [Benchmark]
         public async Task TcpIpPubSub()
         {
+            if (_TcpIpProvider == null)
+            {
+                throw new ArgumentNullException(nameof(_TcpIpProvider));
+            }
             using var cts = new CancellationTokenSource();
             await Task.WhenAll(PublisherAsync(_TcpIpProvider, TaskNum, cts), SubscriberTask(_TcpIpProvider, cts.Token));
         }
         [Benchmark]
         public async Task TcpUdsPubSub()
         {
+            if(_TcpUdsProvider == null)
+            {
+                throw new ArgumentNullException(nameof(_TcpUdsProvider));
+            }
             using var cts = new CancellationTokenSource();
-            await Task.WhenAll(PublisherAsync(_TcpUdsProvider, TaskNum, cts), SubscriberTask(_TcpIpProvider, cts.Token));
+            await Task.WhenAll(PublisherAsync(_TcpUdsProvider, TaskNum, cts), SubscriberTask(_TcpUdsProvider, cts.Token));
         }
     }
 }
