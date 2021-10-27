@@ -959,7 +959,7 @@ async void A(IRemoteRequestHandler<int, string> remoteHandler)
     var v = await remoteHandler.InvokeAsync(9999);
     Console.WriteLine(v); // ECHO:9999
 }
-``
+```
 
 For Unity, requires to import MessagePack-CSharp package and needs slightly different configuration.
 
@@ -1184,6 +1184,9 @@ public class GameLifetimeScope : LifetimeScope
         // RegisterMessagePipe returns options.
         var options = builder.RegisterMessagePipe(/* configure option */);
         
+        // Setup GlobalMessagePipe to enable diagnostics window and global function
+        builder.RegisterBuildCallback(c => GlobalMessagePipe.SetProvider(c.AsServiceProvider()));
+
         // RegisterMessageBroker: Register for IPublisher<T>/ISubscriber<T>, includes async and buffered.
         builder.RegisterMessageBroker<int>(options);
 
@@ -1201,13 +1204,10 @@ public class MessagePipeDemo : VContainer.Unity.IStartable
     readonly IPublisher<int> publisher;
     readonly ISubscriber<int> subscriber;
 
-    public MessagePipeDemo(IPublisher<int> publisher, ISubscriber<int> subscriber, IObjectResolver resolver)
+    public MessagePipeDemo(IPublisher<int> publisher, ISubscriber<int> subscriber)
     {
         this.publisher = publisher;
         this.subscriber = subscriber;
-
-        // set global to enable diagnostics window and global function
-        GlobalMessagePipe.SetProvider(resolver.AsServiceProvider());
     }
 
     public void Start()
