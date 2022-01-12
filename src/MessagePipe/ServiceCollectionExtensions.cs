@@ -54,6 +54,14 @@ namespace MessagePipe
                 services.Add(typeof(IBufferedPublisher<>), typeof(BufferedMessageBroker<>), lifetime);
                 services.Add(typeof(IBufferedSubscriber<>), typeof(BufferedMessageBroker<>), lifetime);
 
+                // keyless-variation
+                services.Add(typeof(SingletonMessageBrokerCore<>), InstanceLifetime.Singleton);
+                services.Add(typeof(ISingletonPublisher<>), typeof(SingletonMessageBroker<>), InstanceLifetime.Singleton);
+                services.Add(typeof(ISingletonSubscriber<>), typeof(SingletonMessageBroker<>), InstanceLifetime.Singleton);
+                services.Add(typeof(ScopedMessageBrokerCore<>), InstanceLifetime.Scoped);
+                services.Add(typeof(IScopedPublisher<>), typeof(ScopedMessageBroker<>), InstanceLifetime.Scoped);
+                services.Add(typeof(IScopedSubscriber<>), typeof(ScopedMessageBroker<>), InstanceLifetime.Scoped);
+
                 // keyless PubSub async
                 services.Add(typeof(AsyncMessageBrokerCore<>), lifetime);
                 services.Add(typeof(IAsyncPublisher<>), typeof(AsyncMessageBroker<>), lifetime);
@@ -62,15 +70,39 @@ namespace MessagePipe
                 services.Add(typeof(IBufferedAsyncPublisher<>), typeof(BufferedAsyncMessageBroker<>), lifetime);
                 services.Add(typeof(IBufferedAsyncSubscriber<>), typeof(BufferedAsyncMessageBroker<>), lifetime);
 
+                // keyless-async-variation
+                services.Add(typeof(SingletonAsyncMessageBrokerCore<>), InstanceLifetime.Singleton);
+                services.Add(typeof(ISingletonAsyncPublisher<>), typeof(SingletonAsyncMessageBroker<>), InstanceLifetime.Singleton);
+                services.Add(typeof(ISingletonAsyncSubscriber<>), typeof(SingletonAsyncMessageBroker<>), InstanceLifetime.Singleton);
+                services.Add(typeof(ScopedAsyncMessageBrokerCore<>), InstanceLifetime.Scoped);
+                services.Add(typeof(IScopedAsyncPublisher<>), typeof(ScopedAsyncMessageBroker<>), InstanceLifetime.Scoped);
+                services.Add(typeof(IScopedAsyncSubscriber<>), typeof(ScopedAsyncMessageBroker<>), InstanceLifetime.Scoped);
+
                 // keyed PubSub
                 services.Add(typeof(MessageBrokerCore<,>), lifetime);
                 services.Add(typeof(IPublisher<,>), typeof(MessageBroker<,>), lifetime);
                 services.Add(typeof(ISubscriber<,>), typeof(MessageBroker<,>), lifetime);
 
+                // keyed-variation
+                services.Add(typeof(SingletonMessageBrokerCore<,>), InstanceLifetime.Singleton);
+                services.Add(typeof(ISingletonPublisher<,>), typeof(SingletonMessageBroker<,>), InstanceLifetime.Singleton);
+                services.Add(typeof(ISingletonSubscriber<,>), typeof(SingletonMessageBroker<,>), InstanceLifetime.Singleton);
+                services.Add(typeof(ScopedMessageBrokerCore<,>), InstanceLifetime.Scoped);
+                services.Add(typeof(IScopedPublisher<,>), typeof(ScopedMessageBroker<,>), InstanceLifetime.Scoped);
+                services.Add(typeof(IScopedSubscriber<,>), typeof(ScopedMessageBroker<,>), InstanceLifetime.Scoped);
+
                 // keyed PubSub async
                 services.Add(typeof(AsyncMessageBrokerCore<,>), lifetime);
                 services.Add(typeof(IAsyncPublisher<,>), typeof(AsyncMessageBroker<,>), lifetime);
                 services.Add(typeof(IAsyncSubscriber<,>), typeof(AsyncMessageBroker<,>), lifetime);
+
+                // keyed-async-variation
+                services.Add(typeof(SingletonAsyncMessageBrokerCore<,>), InstanceLifetime.Singleton);
+                services.Add(typeof(ISingletonAsyncPublisher<,>), typeof(SingletonAsyncMessageBroker<,>), InstanceLifetime.Singleton);
+                services.Add(typeof(ISingletonAsyncSubscriber<,>), typeof(SingletonAsyncMessageBroker<,>), InstanceLifetime.Singleton);
+                services.Add(typeof(ScopedAsyncMessageBrokerCore<,>), InstanceLifetime.Scoped);
+                services.Add(typeof(IScopedAsyncPublisher<,>), typeof(ScopedAsyncMessageBroker<,>), InstanceLifetime.Scoped);
+                services.Add(typeof(IScopedAsyncSubscriber<,>), typeof(ScopedAsyncMessageBroker<,>), InstanceLifetime.Scoped);
             }
 
             var lifetime2 = options.RequestHandlerLifetime; // requesthandler lifetime
@@ -194,7 +226,7 @@ namespace MessagePipe
             {
                 throw new ArgumentException($"{type.FullName} does not implement {coreType.Name.Replace("Core", "")}.");
             }
-            else if(isAsync)
+            else if (isAsync)
             {
                 AsyncRequestHandlerRegistory.Add(coreType);
             }
@@ -298,7 +330,7 @@ namespace MessagePipe
                     }
                 }
 
-                NEXT_TYPE:
+            NEXT_TYPE:
                 continue;
             }
         }

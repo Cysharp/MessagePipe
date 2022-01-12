@@ -5,8 +5,8 @@ using System.Collections.Generic;
 namespace MessagePipe
 {
     [Preserve]
-    public sealed class MessageBroker<TKey, TMessage> : IPublisher<TKey, TMessage>, ISubscriber<TKey, TMessage>
-    where TKey : notnull
+    public class MessageBroker<TKey, TMessage> : IPublisher<TKey, TMessage>, ISubscriber<TKey, TMessage>
+        where TKey : notnull
     {
         readonly MessageBrokerCore<TKey, TMessage> core;
         readonly FilterAttachedMessageHandlerFactory handlerFactory;
@@ -30,7 +30,7 @@ namespace MessagePipe
     }
 
     [Preserve]
-    public sealed class MessageBrokerCore<TKey, TMessage> : IDisposable
+    public class MessageBrokerCore<TKey, TMessage> : IDisposable
     where TKey : notnull
     {
         readonly Dictionary<TKey, HandlerHolder> handlerGroup;
@@ -163,6 +163,48 @@ namespace MessagePipe
                     }
                 }
             }
+        }
+    }
+
+    // Singleton, Scoped variation
+
+    [Preserve]
+    public class SingletonMessageBroker<TKey, TMessage> : MessageBroker<TKey, TMessage>, ISingletonPublisher<TKey, TMessage>, ISingletonSubscriber<TKey, TMessage>
+        where TKey : notnull
+    {
+        public SingletonMessageBroker(SingletonMessageBrokerCore<TKey, TMessage> core, FilterAttachedMessageHandlerFactory handlerFactory)
+            : base(core, handlerFactory)
+        {
+        }
+    }
+
+    [Preserve]
+    public class SingletonMessageBrokerCore<TKey, TMessage> : MessageBrokerCore<TKey, TMessage>
+        where TKey : notnull
+    {
+        public SingletonMessageBrokerCore(MessagePipeDiagnosticsInfo diagnotics, MessagePipeOptions options)
+            : base(diagnotics, options)
+        {
+        }
+    }
+
+    [Preserve]
+    public class ScopedMessageBroker<TKey, TMessage> : MessageBroker<TKey, TMessage>, IScopedPublisher<TKey, TMessage>, IScopedSubscriber<TKey, TMessage>
+        where TKey : notnull
+    {
+        public ScopedMessageBroker(ScopedMessageBrokerCore<TKey, TMessage> core, FilterAttachedMessageHandlerFactory handlerFactory)
+            : base(core, handlerFactory)
+        {
+        }
+    }
+
+    [Preserve]
+    public class ScopedMessageBrokerCore<TKey, TMessage> : MessageBrokerCore<TKey, TMessage>
+        where TKey : notnull
+    {
+        public ScopedMessageBrokerCore(MessagePipeDiagnosticsInfo diagnotics, MessagePipeOptions options)
+            : base(diagnotics, options)
+        {
         }
     }
 }
