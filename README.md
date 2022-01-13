@@ -477,11 +477,11 @@ var value = await subscriber.FirstAsync(cts.Token);
 
 Filter
 ---
-Filter system can hook before and after method invocation. It is implemented with the Middleware pattern, which allows you to write synchronous and asynchronous code with similar syntax. MessagePipe's filter kind are sync(`MessageHandlerFilter<T>`) and async(`AsyncMessageHandlerFilter<T>`) and request(`RequestHandlerFilter<TReq, TRes>`) and async request (`AsyncRequestHandlerFilter<TReq, TRes>`), you can inherit theres to implement filter.
+Filter system can hook before and after method invocation. It is implemented with the Middleware pattern, which allows you to write synchronous and asynchronous code with similar syntax. MessagePipe provides different filter types - sync (`MessageHandlerFilter<T>`), async (`AsyncMessageHandlerFilter<T>`), request (`RequestHandlerFilter<TReq, TRes>`) and async request (`AsyncRequestHandlerFilter<TReq, TRes>`). To implement other concerete filters the above filter types can be extended.
 
-Filters can be specified in three places. Global(by `MessagePipeOptions.AddGlobalFilter`), per handler type, and per subscribe. The filters are sorted according to the Order specified in each of them, and are generated when subscribing.
+Filters can be specified in three places - global(by `MessagePipeOptions.AddGlobalFilter`), per handler type, and per subscription. These filters are sorted according to the Order specified in each of them, and are generated when subscribing.
 
-Since it is generated on a per-subscribe basis, the filter can have a state.
+Since the filter is generated on a per subscription basis, the filter can have a state.
 
 ```csharp
 public class ChangedValueFilter<T> : MessageHandlerFilter<T>
