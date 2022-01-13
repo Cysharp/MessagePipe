@@ -247,6 +247,10 @@ The before and after of execution can be changed by passing a custom filter. See
 
 If an error occurs, it will be propagated to the caller and subsequent subscribers will be stopped. This behavior can be changed by writing a filter to ignore errors.
 
+ISingleton***, IScoped***
+---
+I(Async)Publisher(Subscriber)'s lifetime is belonging `MessagePipeOptions.InstanceLifetime`. However if declare with `ISingletonPublisher<TMessage>/ISingletonSubscriber<TKey, TMessage>`, `ISingletonAsyncPublisher<TMessage>/ISingletonAsyncSubscriber<TKey, TMessage>` then used singleton lifetime. Also `IScopedPublisher<TMessage>/IScopedSubscriber<TKey, TMessage>`, `IScopedAsyncPublisher<TMessage>/IScopedAsyncSubscriber<TKey, TMessage>` uses scoped lifetime.
+
 Buffered
 ---
 `IBufferedPublisher<TMessage>/IBufferedSubscriber<TMessage>` pair is similar as `BehaviorSubject` or Reactive Extensions(More equal is RxSwift's `BehaviorRelay`). It returns latest value on `Subscribe`.
@@ -871,7 +875,7 @@ For the interprocess(NamedPipe/UDP/TCP) Pub/Sub(IPC), you can use `IDistributedP
 
 MessagePipe.Interprocess is also exsits on Unity(except NamedPipe).
 
-use `AddMessagePipeUdpInterprocess`, `AddMessagePipeTcpInterprocess`, `AddMessagePipeNamedPipeInterprocess` to enable interprocess provider.
+use `AddMessagePipeUdpInterprocess`, `AddMessagePipeTcpInterprocess`, `AddMessagePipeNamedPipeInterprocess`, `AddMessagePipeUdpInterprocessUds`, `AddMessagePipeTcpInterprocessUds` to enable interprocess provider(Uds is Unix domain socket, most performant option).
 
 ```csharp
 Host.CreateDefaultBuilder()
@@ -881,6 +885,8 @@ Host.CreateDefaultBuilder()
         services.AddMessagePipeUdpInterprocess("127.0.0.1", 3215, configure); // setup host and port.
         // services.AddMessagePipeTcpInterprocess("127.0.0.1", 3215, configure);
         // services.AddMessagePipeNamedPipeInterprocess("messagepipe-namedpipe", configure);
+        // services.AddMessagePipeUdpInterprocessUds("domainSocketPath")
+        // services.AddMessagePipeTcpInterprocessUds("domainSocketPath")
     })
 ```
 
