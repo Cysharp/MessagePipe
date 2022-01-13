@@ -461,7 +461,7 @@ public static ValueTask<TMessage> FirstAsync<TMessage>(this ISubscriber<TMessage
 
 Also, the `Func<TMessage, bool>` overload can filter messages by predicate (internally implemented with PredicateFilter, where Order is int.MinValue and is always checked first).
 
-`AsObservable` can convert message pipeline to `IObservable<T>`, it can handle by Reactive Extensions(in Unity, you can use `UniRx`). `AsObervable` exists in sync subscriber(keyless, keyed, buffered).
+`AsObservable` can convert message pipeline to `IObservable<T>`, it can handle by Reactive Extensions(in Unity, you can use `UniRx`). `AsObservable` exists in sync subscriber(keyless, keyed, buffered).
 
 `AsAsyncEnumerable` can convert message pipeline to `IAsyncEnumerable<T>`, it can handle by async LINQ and async foreach. `AsAsyncEnumerable` exists in async subscriber(keyless, keyed, buffered).
 
