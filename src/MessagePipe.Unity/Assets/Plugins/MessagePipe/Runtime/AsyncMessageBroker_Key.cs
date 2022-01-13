@@ -7,8 +7,8 @@ using Cysharp.Threading.Tasks;
 namespace MessagePipe
 {
     [Preserve]
-    public sealed class AsyncMessageBroker<TKey, TMessage> : IAsyncPublisher<TKey, TMessage>, IAsyncSubscriber<TKey, TMessage>
-    
+    public class AsyncMessageBroker<TKey, TMessage> : IAsyncPublisher<TKey, TMessage>, IAsyncSubscriber<TKey, TMessage>
+        
     {
         readonly AsyncMessageBrokerCore<TKey, TMessage> core;
         readonly FilterAttachedAsyncMessageHandlerFactory handlerFactory;
@@ -42,8 +42,8 @@ namespace MessagePipe
     }
 
     [Preserve]
-    public sealed class AsyncMessageBrokerCore<TKey, TMessage> : IDisposable
-    
+    public class AsyncMessageBrokerCore<TKey, TMessage> : IDisposable
+        
     {
         readonly Dictionary<TKey, HandlerHolder> handlerGroup;
         readonly MessagePipeDiagnosticsInfo diagnotics;
@@ -210,6 +210,48 @@ namespace MessagePipe
                     }
                 }
             }
+        }
+    }
+
+    // Singleton, Scoped variation
+
+    [Preserve]
+    public class SingletonAsyncMessageBroker<TKey, TMessage> : AsyncMessageBroker<TKey, TMessage>, ISingletonAsyncPublisher<TKey, TMessage>, ISingletonAsyncSubscriber<TKey, TMessage>
+        
+    {
+        public SingletonAsyncMessageBroker(SingletonAsyncMessageBrokerCore<TKey, TMessage> core, FilterAttachedAsyncMessageHandlerFactory handlerFactory)
+            : base(core, handlerFactory)
+        {
+        }
+    }
+
+    [Preserve]
+    public class SingletonAsyncMessageBrokerCore<TKey, TMessage> : AsyncMessageBrokerCore<TKey, TMessage>
+        
+    {
+        public SingletonAsyncMessageBrokerCore(MessagePipeDiagnosticsInfo diagnotics, MessagePipeOptions options)
+            : base(diagnotics, options)
+        {
+        }
+    }
+
+    [Preserve]
+    public class ScopedAsyncMessageBroker<TKey, TMessage> : AsyncMessageBroker<TKey, TMessage>, IScopedAsyncPublisher<TKey, TMessage>, IScopedAsyncSubscriber<TKey, TMessage>
+        
+    {
+        public ScopedAsyncMessageBroker(ScopedAsyncMessageBrokerCore<TKey, TMessage> core, FilterAttachedAsyncMessageHandlerFactory handlerFactory)
+            : base(core, handlerFactory)
+        {
+        }
+    }
+
+    [Preserve]
+    public class ScopedAsyncMessageBrokerCore<TKey, TMessage> : AsyncMessageBrokerCore<TKey, TMessage>
+        
+    {
+        public ScopedAsyncMessageBrokerCore(MessagePipeDiagnosticsInfo diagnotics, MessagePipeOptions options)
+            : base(diagnotics, options)
+        {
         }
     }
 }
