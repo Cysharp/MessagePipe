@@ -461,7 +461,7 @@ public static ValueTask<TMessage> FirstAsync<TMessage>(this ISubscriber<TMessage
 
 Also, the `Func<TMessage, bool>` overload can filter messages by predicate (internally implemented with PredicateFilter, where Order is int.MinValue and is always checked first).
 
-`AsObservable` can convert message pipeline to `IObservable<T>`, it can handle by Reactive Extensions(in Unity, you can use `UniRx`). `AsObervable` exists in sync subscriber(keyless, keyed, buffered).
+`AsObservable` can convert message pipeline to `IObservable<T>`, it can handle by Reactive Extensions(in Unity, you can use `UniRx`). `AsObservable` exists in sync subscriber(keyless, keyed, buffered).
 
 `AsAsyncEnumerable` can convert message pipeline to `IAsyncEnumerable<T>`, it can handle by async LINQ and async foreach. `AsAsyncEnumerable` exists in async subscriber(keyless, keyed, buffered).
 
@@ -477,11 +477,11 @@ var value = await subscriber.FirstAsync(cts.Token);
 
 Filter
 ---
-Filter system can hook before and after method invocation. It is implemented with the Middleware pattern, which allows you to write synchronous and asynchronous code with similar syntax. MessagePipe's filter kind are sync(`MessageHandlerFilter<T>`) and async(`AsyncMessageHandlerFilter<T>`) and request(`RequestHandlerFilter<TReq, TRes>`) and async request (`AsyncRequestHandlerFilter<TReq, TRes>`), you can inherit theres to implement filter.
+Filter system can hook before and after method invocation. It is implemented with the Middleware pattern, which allows you to write synchronous and asynchronous code with similar syntax. MessagePipe provides different filter types - sync (`MessageHandlerFilter<T>`), async (`AsyncMessageHandlerFilter<T>`), request (`RequestHandlerFilter<TReq, TRes>`) and async request (`AsyncRequestHandlerFilter<TReq, TRes>`). To implement other concerete filters the above filter types can be extended.
 
-Filters can be specified in three places. Global(by `MessagePipeOptions.AddGlobalFilter`), per handler type, and per subscribe. The filters are sorted according to the Order specified in each of them, and are generated when subscribing.
+Filters can be specified in three places - global(by `MessagePipeOptions.AddGlobalFilter`), per handler type, and per subscription. These filters are sorted according to the Order specified in each of them, and are generated when subscribing.
 
-Since it is generated on a per-subscribe basis, the filter can have a state.
+Since the filter is generated on a per subscription basis, the filter can have a state.
 
 ```csharp
 public class ChangedValueFilter<T> : MessageHandlerFilter<T>
@@ -959,7 +959,7 @@ async void A(IRemoteRequestHandler<int, string> remoteHandler)
     var v = await remoteHandler.InvokeAsync(9999);
     Console.WriteLine(v); // ECHO:9999
 }
-``
+```
 
 For Unity, requires to import MessagePack-CSharp package and needs slightly different configuration.
 
@@ -1184,6 +1184,9 @@ public class GameLifetimeScope : LifetimeScope
         // RegisterMessagePipe returns options.
         var options = builder.RegisterMessagePipe(/* configure option */);
         
+        // Setup GlobalMessagePipe to enable diagnostics window and global function
+        builder.RegisterBuildCallback(c => GlobalMessagePipe.SetProvider(c.AsServiceProvider()));
+
         // RegisterMessageBroker: Register for IPublisher<T>/ISubscriber<T>, includes async and buffered.
         builder.RegisterMessageBroker<int>(options);
 
@@ -1201,13 +1204,10 @@ public class MessagePipeDemo : VContainer.Unity.IStartable
     readonly IPublisher<int> publisher;
     readonly ISubscriber<int> subscriber;
 
-    public MessagePipeDemo(IPublisher<int> publisher, ISubscriber<int> subscriber, IObjectResolver resolver)
+    public MessagePipeDemo(IPublisher<int> publisher, ISubscriber<int> subscriber)
     {
         this.publisher = publisher;
         this.subscriber = subscriber;
-
-        // set global to enable diagnostics window and global function
-        GlobalMessagePipe.SetProvider(resolver.AsServiceProvider());
     }
 
     public void Start()

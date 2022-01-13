@@ -40,6 +40,15 @@ namespace MessagePipe
         IDisposable Subscribe(IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
     }
 
+    public interface ISingletonPublisher<TMessage> : IPublisher<TMessage> { }
+    public interface ISingletonSubscriber<TMessage> : ISubscriber<TMessage> { }
+    public interface IScopedPublisher<TMessage> : IPublisher<TMessage> { }
+    public interface IScopedSubscriber<TMessage> : ISubscriber<TMessage> { }
+    public interface ISingletonAsyncPublisher<TMessage> : IAsyncPublisher<TMessage> { }
+    public interface ISingletonAsyncSubscriber<TMessage> : IAsyncSubscriber<TMessage> { }
+    public interface IScopedAsyncPublisher<TMessage> : IAsyncPublisher<TMessage> { }
+    public interface IScopedAsyncSubscriber<TMessage> : IAsyncSubscriber<TMessage> { }
+
     // Keyed
 
     public interface IPublisher<TKey, TMessage>
@@ -67,6 +76,15 @@ namespace MessagePipe
     {
         IDisposable Subscribe(TKey key, IAsyncMessageHandler<TMessage> asyncHandler, params AsyncMessageHandlerFilter<TMessage>[] filters);
     }
+
+    public interface ISingletonPublisher<TKey, TMessage> : IPublisher<TKey, TMessage> where TKey : notnull { }
+    public interface ISingletonSubscriber<TKey, TMessage> : ISubscriber<TKey, TMessage> where TKey : notnull { }
+    public interface IScopedPublisher<TKey, TMessage> : IPublisher<TKey, TMessage> where TKey : notnull { }
+    public interface IScopedSubscriber<TKey, TMessage> : ISubscriber<TKey, TMessage> where TKey : notnull { }
+    public interface ISingletonAsyncPublisher<TKey, TMessage> : IAsyncPublisher<TKey, TMessage> where TKey : notnull { }
+    public interface ISingletonAsyncSubscriber<TKey, TMessage> : IAsyncSubscriber<TKey, TMessage> where TKey : notnull { }
+    public interface IScopedAsyncPublisher<TKey, TMessage> : IAsyncPublisher<TKey, TMessage> where TKey : notnull { }
+    public interface IScopedAsyncSubscriber<TKey, TMessage> : IAsyncSubscriber<TKey, TMessage> where TKey : notnull { }
 
     // buffered keyless
 
