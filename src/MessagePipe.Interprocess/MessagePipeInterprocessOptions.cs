@@ -64,4 +64,34 @@ namespace MessagePipe.Interprocess
             this.HostAsServer = null;
         }
     }
+#if NET5_0_OR_GREATER
+    public sealed class MessagePipeInterprocessUdpUdsOptions : MessagePipeInterprocessOptions
+    {
+        public string SocketPath { get; set; }
+
+        public MessagePipeInterprocessUdpUdsOptions(string socketPath)
+            : base()
+        {
+            this.SocketPath = socketPath;
+        }
+
+    }
+    public sealed class MessagePipeInterprocessTcpUdsOptions : MessagePipeInterprocessOptions
+    {
+        public string SocketPath { get; set; }
+        public int? SendBufferSize { get; set; }
+        public int? ReceiveBufferSize { get; set; }
+        public bool? HostAsServer { get; set; }
+        public MessagePipeInterprocessTcpUdsOptions(string socketPath): this(socketPath, null, null)
+        {
+        }
+        public MessagePipeInterprocessTcpUdsOptions(string socketPath, int? sendBufferSize, int? recvBufferSize)
+        {
+            this.SocketPath = socketPath;
+            HostAsServer = null;
+            this.SendBufferSize = sendBufferSize;
+            this.ReceiveBufferSize = recvBufferSize;
+        }
+    }
+#endif
 }

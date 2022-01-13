@@ -14,7 +14,7 @@ namespace MessagePipe.Interprocess.Workers
     {
         readonly CancellationTokenSource cancellationTokenSource;
         readonly IAsyncPublisher<IInterprocessKey, IInterprocessValue> publisher;
-        readonly MessagePipeInterprocessUdpOptions options;
+        readonly MessagePipeInterprocessOptions options;
 
         // Channel is used from publisher for thread safety of write packet
         int initializedServer = 0;
@@ -53,7 +53,36 @@ namespace MessagePipe.Interprocess.Workers
             this.channel = Channel.CreateSingleConsumerUnbounded<byte[]>();
 #endif
         }
+#if NET5_0_OR_GREATER
+        [Preserve]
+        public UdpWorker(MessagePipeInterprocessUdpUdsOptions options, IAsyncPublisher<IInterprocessKey, IInterprocessValue> publisher)
+        {
+            this.cancellationTokenSource = new CancellationTokenSource();
+            this.options = options;
+            this.publisher = publisher;
 
+            this.server = new Lazy<SocketUdpServer>(() =>
+            {
+                return SocketUdpServer.BindUds(options.SocketPath, 0x10000);
+            });
+
+            this.client = new Lazy<SocketUdpClient>(() =>
+            {
+                return SocketUdpClient.ConnectUds(options.SocketPath, 0x10000);
+            });
+
+#if !UNITY_2018_3_OR_NEWER
+            this.channel = Channel.CreateUnbounded<byte[]>(new UnboundedChannelOptions()
+            {
+                SingleReader = true,
+                SingleWriter = false,
+                AllowSynchronousContinuations = true
+            });
+#else
+            this.channel = Channel.CreateSingleConsumerUnbounded<byte[]>();
+#endif
+        }
+#endif
         public void Publish<TKey, TMessage>(TKey key, TMessage message)
         {
             if (Interlocked.Increment(ref initializedClient) == 1) // first incr, channel not yet started

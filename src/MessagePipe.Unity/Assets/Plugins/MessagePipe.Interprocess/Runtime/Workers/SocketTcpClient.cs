@@ -14,20 +14,46 @@ namespace MessagePipe.Interprocess.Workers
 
         readonly Socket socket;
 
-        SocketTcpServer(AddressFamily addressFamily)
+        SocketTcpServer(AddressFamily addressFamily, ProtocolType protocolType, int? sendBufferSize, int? recvBufferSize)
         {
-            socket = new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp);
+            socket = new Socket(addressFamily, SocketType.Stream, protocolType);
+            if(sendBufferSize.HasValue)
+            {
+                socket.SendBufferSize = sendBufferSize.Value;
+            }
+            if(recvBufferSize.HasValue)
+            {
+                socket.ReceiveBufferSize = recvBufferSize.Value;
+            }
         }
 
         public static SocketTcpServer Listen(string host, int port)
         {
             var ip = new IPEndPoint(IPAddress.Parse(host), port);
-            var server = new SocketTcpServer(ip.AddressFamily);
+            var server = new SocketTcpServer(ip.AddressFamily, ProtocolType.Tcp, null, null);
 
             server.socket.Bind(ip);
             server.socket.Listen(MaxConnections);
             return server;
         }
+
+#if NET5_0_OR_GREATER
+        /// <summary>
+        /// create TCP unix domain socket server and listen
+        /// </summary>
+        /// <param name="domainSocketPath">path to unix domain socket</param>
+        /// <param name="recvBufferSize">socket's receive buffer size</param>
+        /// <param name="sendBufferSize">socket's send buffer size</param>
+        /// <exception cref="SocketException">unix domain socket not supported or socket already exists</exception>
+        /// <returns>TCP unix domain socket server</returns>
+        public static SocketTcpServer ListenUds(string domainSocketPath, int? sendBufferSize = null, int? recvBufferSize = null)
+        {
+            var server = new SocketTcpServer(AddressFamily.Unix, ProtocolType.IP, sendBufferSize, recvBufferSize);
+            server.socket.Bind(new UnixDomainSocketEndPoint(domainSocketPath));
+            server.socket.Listen(MaxConnections);
+            return server;
+        }
+#endif
 
         public async void StartAcceptLoopAsync(Action<SocketTcpClient> onAccept, CancellationToken cancellationToken)
         {
@@ -56,9 +82,9 @@ namespace MessagePipe.Interprocess.Workers
     {
         readonly Socket socket;
 
-        SocketTcpClient(AddressFamily addressFamily)
+        SocketTcpClient(AddressFamily addressFamily, ProtocolType protocolType)
         {
-            socket = new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp);
+            socket = new Socket(addressFamily, SocketType.Stream, protocolType);
         }
 
         internal SocketTcpClient(Socket socket)
@@ -69,10 +95,24 @@ namespace MessagePipe.Interprocess.Workers
         public static SocketTcpClient Connect(string host, int port)
         {
             var ip = new IPEndPoint(IPAddress.Parse(host), port);
-            var client = new SocketTcpClient(ip.AddressFamily);
+            var client = new SocketTcpClient(ip.AddressFamily, ProtocolType.Tcp);
             client.socket.Connect(ip);
             return client;
         }
+#if NET5_0_OR_GREATER
+        /// <summary>
+        /// create TCP unix domain socket client and connect to server
+        /// </summary>
+        /// <param name="domainSocketPath">path to unix domain socket</param>
+        /// <exception cref="SocketException">unix domain socket not supported or server does not listen</exception>
+        /// <returns>TCP socket client.</returns>
+        public static SocketTcpClient ConnectUds(string domainSocketPath)
+        {
+            var client = new SocketTcpClient(AddressFamily.Unix, ProtocolType.IP);
+            client.socket.Connect(new UnixDomainSocketEndPoint(domainSocketPath));
+            return client;
+        }
+#endif
 
         public async UniTask<int> ReceiveAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {

@@ -20,7 +20,7 @@ namespace MessagePipe.Interprocess.Workers
         readonly IServiceProvider provider;
         readonly CancellationTokenSource cancellationTokenSource;
         readonly IAsyncPublisher<IInterprocessKey, IInterprocessValue> publisher;
-        readonly MessagePipeInterprocessTcpOptions options;
+        readonly MessagePipeInterprocessOptions options;
 
         // Channel is used from publisher for thread safety of write packet
         int initializedServer = 0;
@@ -69,7 +69,42 @@ namespace MessagePipe.Interprocess.Workers
                 StartReceiver();
             }
         }
+#if NET5_0_OR_GREATER
+        [Preserve]
+        public TcpWorker(IServiceProvider provider, MessagePipeInterprocessTcpUdsOptions options, IAsyncPublisher<IInterprocessKey, IInterprocessValue> publisher)
+        {
+            this.provider = provider;
+            this.cancellationTokenSource = new CancellationTokenSource();
+            this.options = options;
+            this.publisher = publisher;
 
+            this.server = new Lazy<SocketTcpServer>(() =>
+            {
+                return SocketTcpServer.ListenUds(options.SocketPath);
+            });
+
+            this.client = new Lazy<SocketTcpClient>(() =>
+            {
+                return SocketTcpClient.ConnectUds(options.SocketPath);
+            });
+
+#if !UNITY_2018_3_OR_NEWER
+            this.channel = Channel.CreateUnbounded<byte[]>(new UnboundedChannelOptions()
+            {
+                SingleReader = true,
+                SingleWriter = false,
+                AllowSynchronousContinuations = true
+            });
+#else
+            this.channel = Channel.CreateSingleConsumerUnbounded<byte[]>();
+#endif
+
+            if (options.HostAsServer != null && options.HostAsServer.Value)
+            {
+                StartReceiver();
+            }
+        }
+#endif
         public void Publish<TKey, TMessage>(TKey key, TMessage message)
         {
             if (Interlocked.Increment(ref initializedClient) == 1) // first incr, channel not yet started

@@ -76,5 +76,48 @@ namespace MessagePipe.Interprocess.Tests
                 result.Should().Equal("abidatoxurusika");
             }
         }
+        [Fact]
+        public async Task SimpleStringStringUds()
+        {
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                helper.WriteLine("Currently, windows's unix domain socket does not support UDP, so skipped");
+                return;
+            }
+            var filePath = System.IO.Path.GetTempFileName();
+            if(System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+            try
+            {
+                var provider = TestHelper.BuildServiceProviderUdpWithUds(filePath, helper);
+                using (provider as IDisposable)
+                {
+                    var p1 = provider.GetRequiredService<IDistributedPublisher<string, string>>();
+                    var s1 = provider.GetRequiredService<IDistributedSubscriber<string, string>>();
+
+                    var result = new List<string>();
+                    await s1.SubscribeAsync("hogemogeman", x =>
+                    {
+                        result.Add(x);
+                    });
+
+                    await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
+                    await p1.PublishAsync("hogemogeman", "abidatoxurusika");
+
+                    await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
+
+                    result.Should().Equal("abidatoxurusika");
+                }
+            }
+            finally
+            {
+                if(System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+            }
+        }
     }
 }

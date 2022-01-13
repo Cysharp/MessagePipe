@@ -163,5 +163,52 @@ namespace MessagePipe
         //}
 
 #endif
+#if NET5_0_OR_GREATER
+        public static ReturnType AddMessagePipeUdpInterprocessUds(this IServiceCollection services, string domainSocketPath)
+        {
+            return AddMessagePipeUdpInterprocessUds(services, domainSocketPath, _ => { });
+        }
+        public static ReturnType AddMessagePipeUdpInterprocessUds(this IServiceCollection services, string domainSocketPath, Action<MessagePipeInterprocessUdpUdsOptions> configure)
+        {
+            var options = new MessagePipeInterprocessUdpUdsOptions(domainSocketPath);
+            configure(options);
+
+            services.AddSingleton(options);
+            services.Add(typeof(UdpWorker), options.InstanceLifetime);
+
+#if !UNITY_2018_3_OR_NEWER
+            services.Add(typeof(IDistributedPublisher<,>), typeof(UdpDistributedPublisher<,>), options.InstanceLifetime);
+            services.Add(typeof(IDistributedSubscriber<,>), typeof(UdpDistributedSubscriber<,>), options.InstanceLifetime);
+            return services;
+#else
+            AddAsyncMessageBroker<IInterprocessKey, IInterprocessValue>(services, options);
+            return options;
+#endif
+        }
+        public static ReturnType AddMessagePipeTcpInterprocessUds(this IServiceCollection services, string domainSocketPath)
+        {
+            return AddMessagePipeTcpInterprocessUds(services, domainSocketPath, _ => { });
+        }
+
+        public static ReturnType AddMessagePipeTcpInterprocessUds(this IServiceCollection services, string domainSocketPath, Action<MessagePipeInterprocessTcpUdsOptions> configure)
+        {
+            var options = new MessagePipeInterprocessTcpUdsOptions(domainSocketPath);
+            configure(options);
+
+            services.AddSingleton(options);
+            services.Add(typeof(TcpWorker), options.InstanceLifetime);
+
+#if !UNITY_2018_3_OR_NEWER
+            services.Add(typeof(IDistributedPublisher<,>), typeof(TcpDistributedPublisher<,>), options.InstanceLifetime);
+            services.Add(typeof(IDistributedSubscriber<,>), typeof(TcpDistributedSubscriber<,>), options.InstanceLifetime);
+            services.Add(typeof(IRemoteRequestHandler<,>), typeof(TcpRemoteRequestHandler<,>), options.InstanceLifetime);
+            return services;
+#else
+            AddAsyncMessageBroker<IInterprocessKey, IInterprocessValue>(services, options);
+            return options;
+#endif
+
+        }
+#endif // NET5_0_OR_GREATER
     }
 }

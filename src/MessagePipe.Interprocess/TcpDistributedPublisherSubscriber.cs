@@ -28,7 +28,7 @@ namespace MessagePipe.Interprocess
     public sealed class TcpDistributedSubscriber<TKey, TMessage> : IDistributedSubscriber<TKey, TMessage>
     {
         // Pubsished from UdpWorker.
-        readonly MessagePipeInterprocessTcpOptions options;
+        readonly MessagePipeInterprocessOptions options;
         readonly IAsyncSubscriber<IInterprocessKey, IInterprocessValue> subscriberCore;
         readonly FilterAttachedMessageHandlerFactory syncHandlerFactory;
         readonly FilterAttachedAsyncMessageHandlerFactory asyncHandlerFactory;
@@ -43,7 +43,18 @@ namespace MessagePipe.Interprocess
 
             worker.StartReceiver();
         }
+#if NET5_0_OR_GREATER
+        [Preserve]
+        public TcpDistributedSubscriber(TcpWorker worker, MessagePipeInterprocessTcpUdsOptions options, IAsyncSubscriber<IInterprocessKey, IInterprocessValue> subscriberCore, FilterAttachedMessageHandlerFactory syncHandlerFactory, FilterAttachedAsyncMessageHandlerFactory asyncHandlerFactory)
+        {
+            this.options = options;
+            this.subscriberCore = subscriberCore;
+            this.syncHandlerFactory = syncHandlerFactory;
+            this.asyncHandlerFactory = asyncHandlerFactory;
 
+            worker.StartReceiver();
+        }
+#endif
         public ValueTask<IAsyncDisposable> SubscribeAsync(TKey key, IMessageHandler<TMessage> handler, CancellationToken cancellationToken = default)
         {
             return SubscribeAsync(key, handler, Array.Empty<MessageHandlerFilter<TMessage>>(), cancellationToken);
