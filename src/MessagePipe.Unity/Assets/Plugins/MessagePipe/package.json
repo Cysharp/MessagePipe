@@ -2,7 +2,7 @@
     "name": "com.cysharp.messagepipe",
     "displayName": "MessagePipe",
     "author": { "name": "Cysharp, Inc.", "url": "https://cysharp.co.jp/en/" },
-    "version": "1.7.0",
+    "version": "1.7.1",
     "unity": "2018.4",
     "description": "High performance messaging pipeline.",
     "keywords": [ "pubsub", "event", "Scripting", "DI" ],
