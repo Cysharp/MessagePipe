@@ -263,8 +263,10 @@ namespace MessagePipe.Interprocess.Workers
                                 try
                                 {
                                     var t = AsyncRequestHandlerRegistory.Get(reqTypeName, resTypeName);
-                                    var interfaceType = t.GetInterfaces().First(x => x.IsGenericType && x.Name.StartsWith("IAsyncRequestHandler"));
-                                    var coreInterfaceType = t.GetInterfaces().First(x => x.IsGenericType && x.Name.StartsWith("IAsyncRequestHandlerCore"));
+                                    var interfaceType = t.GetInterfaces().Where(x => x.IsGenericType && x.Name.StartsWith("IAsyncRequestHandler"))
+                                        .First(x => x.GetGenericArguments().Any(x => x.FullName == header.RequestType));
+                                    var coreInterfaceType = t.GetInterfaces().Where(x => x.IsGenericType && x.Name.StartsWith("IAsyncRequestHandlerCore"))
+                                        .First(x => x.GetGenericArguments().Any(x => x.FullName == header.RequestType));
                                     var service = provider.GetRequiredService(interfaceType); // IAsyncRequestHandler<TRequest,TResponse>
                                     var genericArgs = interfaceType.GetGenericArguments(); // [TRequest, TResponse]
                                     // Unity IL2CPP does not work(can not invoke nongenerics MessagePackSerializer)
