@@ -970,7 +970,7 @@ async void A(IRemoteRequestHandler<int, string> remoteHandler)
 
 For Unity, requires to import MessagePack-CSharp package and needs slightly different configuration.
 
-```
+```csharp
 // example of VContainer
 var builder = new ContainerBuilder();
 var options = builder.RegisterMessagePipe(configure);
