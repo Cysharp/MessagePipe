@@ -5,3 +5,7 @@ services:
     image: "redis:6.2.1"
     ports:
       - "6379:6379"
+  nats:
+    image: nats
+    ports:
+      - 4222:4222

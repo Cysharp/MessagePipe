@@ -35,7 +35,7 @@ namespace __MessagePipe.Tests
             var token = source.Token;
 
             source.Cancel();
-            pingHandler.Awaiting(x => x.InvokeAsync(new Ping("hoge"), token)).Should().Throw<OperationCanceledException>();
+            pingHandler.Awaiting(x => x.InvokeAsync(new Ping("hoge"), token)).Should().ThrowAsync<OperationCanceledException>();
 
         }
 
