@@ -37,12 +37,12 @@ namespace MessagePipe.Interprocess.Benchmark
             }
             var services = new ServiceCollection();
             services.AddMessagePipe();
-            //services.AddMessagePipeTcpInterprocessUds(_TcpUdsSocketPath, opt =>
-            //{
-            //    opt.HostAsServer = true;
-            //    opt.SendBufferSize = Math.Min(DataSize, 0x1000);
-            //    opt.ReceiveBufferSize = Math.Min(DataSize, 0x1000);
-            //});
+            services.AddMessagePipeTcpInterprocessUds(_TcpUdsSocketPath, opt =>
+            {
+                opt.HostAsServer = true;
+                opt.SendBufferSize = Math.Min(DataSize, 0x1000);
+                opt.ReceiveBufferSize = Math.Min(DataSize, 0x1000);
+            });
             return services.BuildServiceProvider();
         }
         [GlobalSetup]
