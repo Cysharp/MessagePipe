@@ -103,6 +103,10 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
+      nats:
+        image: nats
+        ports:
+          - 4222:4222
     steps:
       - run: echo ${{ needs.update-packagejson.outputs.sha }}
       - uses: actions/checkout@v2
@@ -116,6 +120,7 @@ jobs:
       - run: dotnet pack ./src/MessagePipe.Analyzer/MessagePipe.Analyzer.csproj -c Release --no-build -p:Version=${{ env.GIT_TAG }} -o ./publish
       - run: dotnet pack ./src/MessagePipe.Redis/MessagePipe.Redis.csproj -c Release --no-build -p:Version=${{ env.GIT_TAG }} -o ./publish
       - run: dotnet pack ./src/MessagePipe.Interprocess/MessagePipe.Interprocess.csproj -c Release --no-build -p:Version=${{ env.GIT_TAG }} -o ./publish
+      - run: dotnet pack ./src/MessagePipe.Nats/MessagePipe.Nats.csproj -c Release --no-build -p:Version=${{ env.GIT_TAG }} -o ./publish
       # Store artifacts.
       - uses: actions/upload-artifact@v2
         with:

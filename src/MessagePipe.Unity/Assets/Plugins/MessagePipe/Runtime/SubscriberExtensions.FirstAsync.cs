@@ -168,7 +168,7 @@ namespace MessagePipe
 
         void IUniTaskSource.GetResult(short token) => GetResult(token);
         public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
-        public UniTaskStatus GetStatus(short token)
+        public /*replaced*/ UniTaskStatus GetStatus(short token)
         {
             return core.GetStatus(token);
         }
@@ -249,7 +249,7 @@ namespace MessagePipe
 
         void IUniTaskSource.GetResult(short token) => GetResult(token);
         public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
-        public UniTaskStatus GetStatus(short token)
+        public /*replaced*/ UniTaskStatus GetStatus(short token)
         {
             return core.GetStatus(token);
         }
@@ -331,7 +331,7 @@ namespace MessagePipe
 
         void IUniTaskSource.GetResult(short token) => GetResult(token);
         public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
-        public UniTaskStatus GetStatus(short token)
+        public /*replaced*/ UniTaskStatus GetStatus(short token)
         {
             return core.GetStatus(token);
         }
@@ -422,7 +422,7 @@ namespace MessagePipe
 
         void IUniTaskSource.GetResult(short token) => GetResult(token);
         public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
-        public UniTaskStatus GetStatus(short token)
+        public /*replaced*/ UniTaskStatus GetStatus(short token)
         {
             return core.GetStatus(token);
         }
@@ -512,7 +512,7 @@ namespace MessagePipe
 
         void IUniTaskSource.GetResult(short token) => GetResult(token);
         public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
-        public UniTaskStatus GetStatus(short token)
+        public /*replaced*/ UniTaskStatus GetStatus(short token)
         {
             return core.GetStatus(token);
         }
@@ -604,7 +604,7 @@ namespace MessagePipe
 
         void IUniTaskSource.GetResult(short token) => GetResult(token);
         public UniTaskStatus UnsafeGetStatus() => core.UnsafeGetStatus();
-        public UniTaskStatus GetStatus(short token)
+        public /*replaced*/ UniTaskStatus GetStatus(short token)
         {
             return core.GetStatus(token);
         }

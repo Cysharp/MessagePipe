@@ -27,6 +27,10 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
+      nats:
+        image: nats
+        ports:
+          - 4222:4222
     steps:
       - uses: actions/checkout@v2
       - run: dotnet build ./tools/PostBuildUtility/ -c Debug

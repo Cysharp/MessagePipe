@@ -19,7 +19,7 @@ namespace __MessagePipe.Tests
 
             var pongs = pingHandler.InvokeAll(new Ping("myon!"));
 
-            pongs.Should().BeEquivalentTo(new Pong("myon!"), new Pong("myon!myon!"));
+            pongs.Should().BeEquivalentTo(new[] { new Pong("myon!"), new Pong("myon!myon!")});
 
         }
         [Fact]
@@ -30,7 +30,7 @@ namespace __MessagePipe.Tests
 
             var pongs = pingHandler.InvokeAllLazy(new Ping("myon!"));
 
-            pongs.Should().BeEquivalentTo(new Pong("myon!"), new Pong("myon!myon!"));
+            pongs.Should().BeEquivalentTo(new[] { new Pong("myon!"), new Pong("myon!myon!")});
 
         }
         [Fact]
