@@ -16,7 +16,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AlterNats" Version="0.0.2" />
+		<PackageReference Include="AlterNats" Version="1.0.0" />
 		<PackageReference Include="MessagePack" Version="2.3.85" />
 	</ItemGroup>
 
