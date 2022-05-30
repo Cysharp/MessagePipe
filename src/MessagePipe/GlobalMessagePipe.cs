@@ -109,6 +109,30 @@ namespace MessagePipe
             return provider.GetRequiredService<IAsyncRequestAllHandler<TRequest, TResponse>>();
         }
 
+        public static IBufferedPublisher<TMessage> GetPublisher<TMessage>()
+        {
+            ThrowIfNotInitialized();
+            return provider.GetRequiredService<IBufferedPublisher<TMessage>>();
+        }
+
+        public static IBufferedSubscriber<TMessage> GetSubscriber<TMessage>()
+        {
+            ThrowIfNotInitialized();
+            return provider.GetRequiredService<IBufferedSubscriber<TMessage>>();
+        }
+
+        public static IBufferedAsyncPublisher<TMessage> GetPublisher<TMessage>()
+        {
+            ThrowIfNotInitialized();
+            return provider.GetRequiredService<IBufferedAsyncPublisher<TMessage>>();
+        }
+
+        public static IBufferedAsyncSubscriber<TMessage> GetSubscriber<TMessage>()
+        {
+            ThrowIfNotInitialized();
+            return provider.GetRequiredService<IBufferedAsyncSubscriber<TMessage>>();
+        }
+
 #if !UNITY_2018_3_OR_NEWER
 
         public static IDistributedPublisher<TKey, TMessage> GetDistributedPublisher<TKey, TMessage>()
