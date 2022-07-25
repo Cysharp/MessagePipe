@@ -8,6 +8,7 @@
         <PackageTags>pubsub;eventaggregator</PackageTags>
         <Description>Redis IDistributedPublisher/Subscriber provider for MessagePipe.</Description>
         <SignAssembly>true</SignAssembly>
+        <IsPackable>true</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>

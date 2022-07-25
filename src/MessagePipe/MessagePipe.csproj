@@ -9,6 +9,7 @@
         <PackageTags>pubsub;eventaggregator</PackageTags>
         <Description>High performance in-memory/distributed messaging pipeline for .NET and Unity.</Description>
         <SignAssembly>true</SignAssembly>
+        <IsPackable>true</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
