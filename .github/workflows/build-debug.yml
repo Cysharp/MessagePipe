@@ -11,10 +11,7 @@ on:
 jobs:
   build-dotnet:
     runs-on: ubuntu-latest
-    env:
-      DOTNET_CLI_TELEMETRY_OPTOUT: 1
-      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-      NUGET_XMLDOC_MODE: skip
+    timeout-minutes: 10
     services:
       redis:
         image: redis
@@ -55,6 +52,7 @@ jobs:
           - unity: 2019.4.25f1
             license: UNITY_LICENSE_2019
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v2
       # Execute scripts: RuntimeUnitTestToolkit
