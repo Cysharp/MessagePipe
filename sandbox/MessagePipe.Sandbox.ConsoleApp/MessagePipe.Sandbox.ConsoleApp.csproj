@@ -5,6 +5,7 @@
         <TargetFramework>net6.0</TargetFramework>
         <Configurations>Debug;Release;WinBenchmark</Configurations>
         <SignAssembly>true</SignAssembly>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>

@@ -9,6 +9,7 @@
 		<PackageTags>pubsub;eventaggregator</PackageTags>
 		<Description>Nats IDistributedPublisher/Subscriber provider for MessagePipe.</Description>
 		<SignAssembly>true</SignAssembly>
+        <IsPackable>true</IsPackable>
 	</PropertyGroup>
 
 	<ItemGroup>
