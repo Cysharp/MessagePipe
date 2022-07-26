@@ -49,7 +49,7 @@ jobs:
           - 4222:4222
     steps:
       - run: echo ${{ needs.update-packagejson.outputs.sha }}
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: ${{ needs.update-packagejson.outputs.sha }}
       - uses: Cysharp/Actions/.github/actions/setup-dotnet@main
@@ -87,13 +87,13 @@ jobs:
     timeout-minutes: 15
     steps:
       - run: echo ${{ needs.update-packagejson.outputs.sha }}
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: ${{ needs.update-packagejson.outputs.sha }}
       # Execute scripts: Export Package
       # /opt/Unity/Editor/Unity -quit -batchmode -nographics -silent-crashes -logFile -projectPath . -executeMethod PackageExporter.Export
       - name: Export unitypackage
-        uses: game-ci/unity-builder@v2.0-alpha-6
+        uses: game-ci/unity-builder@v2
         env:
           UNITY_LICENSE: ${{ secrets[matrix.license] }}
         with:

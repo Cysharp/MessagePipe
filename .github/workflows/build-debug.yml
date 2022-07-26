@@ -54,11 +54,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       # Execute scripts: RuntimeUnitTestToolkit
       # /opt/Unity/Editor/Unity -quit -batchmode -nographics -silent-crashes -logFile -projectPath . -executeMethod UnitTestBuilder.BuildUnitTest /headless /ScriptBackend mono /BuildTarget StandaloneLinux64
       - name: Build UnitTest(Linux64, mono)
-        uses: game-ci/unity-builder@v2.0-alpha-6
+        uses: game-ci/unity-builder@v2
         env:
           UNITY_LICENSE: ${{ secrets[matrix.license] }}
         with:
@@ -74,7 +74,7 @@ jobs:
       # Execute scripts: Export Package
       #  /opt/Unity/Editor/Unity -quit -batchmode -nographics -silent-crashes -logFile -projectPath . -executeMethod PackageExporter.Export
       - name: Export unitypackage
-        uses: game-ci/unity-builder@v2.0-alpha-6
+        uses: game-ci/unity-builder@v2
         env:
           UNITY_LICENSE: ${{ secrets[matrix.license] }}
         with:
