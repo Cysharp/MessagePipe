@@ -250,7 +250,7 @@ If an error occurs, it will be propagated to the caller and subsequent subscribe
 
 ISingleton***, IScoped***
 ---
-I(Async)Publisher(Subscriber)'s lifetime is belonging `MessagePipeOptions.InstanceLifetime`. However if declare with `ISingletonPublisher<TMessage>/ISingletonSubscriber<TKey, TMessage>`, `ISingletonAsyncPublisher<TMessage>/ISingletonAsyncSubscriber<TKey, TMessage>` then used singleton lifetime. Also `IScopedPublisher<TMessage>/IScopedSubscriber<TKey, TMessage>`, `IScopedAsyncPublisher<TMessage>/IScopedAsyncSubscriber<TKey, TMessage>` uses scoped lifetime.
+I(Async)Publisher(Subscriber)'s lifetime is belonging to `MessagePipeOptions.InstanceLifetime`. However if declare with `ISingletonPublisher<TMessage>`/`ISingletonSubscriber<TKey, TMessage>`, `ISingletonAsyncPublisher<TMessage>`/`ISingletonAsyncSubscriber<TKey, TMessage>` then used singleton lifetime. Also `IScopedPublisher<TMessage>`/`IScopedSubscriber<TKey, TMessage>`, `IScopedAsyncPublisher<TMessage>`/`IScopedAsyncSubscriber<TKey, TMessage>` uses scoped lifetime.
 
 Buffered
 ---
@@ -1084,7 +1084,7 @@ Configure MessageBroker(publisher/subscriber manager)'s lifetime of DI cotainer.
 
 ### RequestHandlerLifetime
 
-Configure IRequestHandler/IAsyncRequestHandler's lifetime of DI cotainer. You can choose `Singleton` or `Scoped` or `Transient`. Default is `Scoped`.
+Configure IRequestHandler/IAsyncRequestHandler's lifetime of DI container. You can choose `Singleton` or `Scoped` or `Transient`. Default is `Scoped`.
 
 ### EnableAutoRegistration/SetAutoRegistrationSearchAssemblies/SetAutoRegistrationSearchTypes
 
