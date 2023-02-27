@@ -49,10 +49,7 @@ namespace MessagePipe.Interprocess.Workers
 
             this.server = CreateLazyServerStream();
 
-            this.client = new Lazy<NamedPipeClientStream>(() =>
-            {
-                return new NamedPipeClientStream(options.ServerName, options.PipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-            });
+            this.client = CreateLazyClientStream();
 
 #if !UNITY_2018_3_OR_NEWER
             this.channel = Channel.CreateUnbounded<byte[]>(new UnboundedChannelOptions()
@@ -71,9 +68,17 @@ namespace MessagePipe.Interprocess.Workers
             }
         }
 
+        private Lazy<NamedPipeClientStream> CreateLazyClientStream()
+        {
+            return new Lazy<NamedPipeClientStream>(() =>
+            {
+                return new NamedPipeClientStream(options.ServerName, options.PipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+            });
+        }
+
         Lazy<NamedPipeServerStream> CreateLazyServerStream()
         {
-            return new Lazy<NamedPipeServerStream>(() => new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous));
+            return new Lazy<NamedPipeServerStream>(() => new NamedPipeServerStream(pipeName, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances, PipeTransmissionMode.Byte, PipeOptions.Asynchronous));
         }
 
         public void Publish<TKey, TMessage>(TKey key, TMessage message)
@@ -123,6 +128,7 @@ namespace MessagePipe.Interprocess.Workers
         // Send packet to udp socket from publisher
         async void RunPublishLoop()
         {
+            RESTART:
             var reader = channel.Reader;
             var token = cancellationTokenSource.Token;
             var pipeStream = client.Value;
@@ -151,7 +157,9 @@ namespace MessagePipe.Interprocess.Workers
                     }
                     catch (IOException)
                     {
-                        return; // connection closed.
+                        client.Value.Dispose();
+                        client = CreateLazyClientStream();
+                        goto RESTART;
                     }
                     catch (Exception ex)
                     {
