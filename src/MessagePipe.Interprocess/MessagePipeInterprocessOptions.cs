@@ -40,6 +40,8 @@ namespace MessagePipe.Interprocess
         public string PipeName { get; }
         public string ServerName { get; set; }
         public bool? HostAsServer { get; set; }
+        public int MaxSimultaneousServerInstances { get; set; } = 1;
+        public bool AllowClientReconnect { get; set; }
 
         public MessagePipeInterprocessNamedPipeOptions(string pipeName)
             : base()

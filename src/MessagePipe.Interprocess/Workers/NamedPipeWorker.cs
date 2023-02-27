@@ -78,7 +78,7 @@ namespace MessagePipe.Interprocess.Workers
 
         Lazy<NamedPipeServerStream> CreateLazyServerStream()
         {
-            return new Lazy<NamedPipeServerStream>(() => new NamedPipeServerStream(pipeName, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances, PipeTransmissionMode.Byte, PipeOptions.Asynchronous));
+            return new Lazy<NamedPipeServerStream>(() => new NamedPipeServerStream(pipeName, PipeDirection.InOut, options.MaxSimultaneousServerInstances, PipeTransmissionMode.Byte, PipeOptions.Asynchronous));
         }
 
         public void Publish<TKey, TMessage>(TKey key, TMessage message)
@@ -201,10 +201,14 @@ namespace MessagePipe.Interprocess.Workers
                     {
                         if (waitForConnection != null)
                         {
-                            server.Value.Dispose();
-                            server = CreateLazyServerStream();
-                            pipeStream = server.Value;
-                            goto RECONNECT; // end of stream(disconnect, wait reconnect)
+                            if (options.AllowClientReconnect)
+                            {
+                                server.Value.Dispose();
+                                server = CreateLazyServerStream();
+                                pipeStream = server.Value;
+                                goto RECONNECT; // end of stream(disconnect, wait reconnect)
+                            }
+                            return; // connection closed.
                         }
                     }
 
