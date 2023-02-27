@@ -157,9 +157,13 @@ namespace MessagePipe.Interprocess.Workers
                     }
                     catch (IOException)
                     {
-                        client.Value.Dispose();
-                        client = CreateLazyClientStream();
-                        goto RESTART;
+                        if (options.AllowClientReconnect)
+                        {
+                            client.Value.Dispose();
+                            client = CreateLazyClientStream();
+                            goto RESTART;
+                        }
+                        return; // connection closed.
                     }
                     catch (Exception ex)
                     {
@@ -201,14 +205,10 @@ namespace MessagePipe.Interprocess.Workers
                     {
                         if (waitForConnection != null)
                         {
-                            if (options.AllowClientReconnect)
-                            {
-                                server.Value.Dispose();
-                                server = CreateLazyServerStream();
-                                pipeStream = server.Value;
-                                goto RECONNECT; // end of stream(disconnect, wait reconnect)
-                            }
-                            return; // connection closed.
+                            server.Value.Dispose();
+                            server = CreateLazyServerStream();
+                            pipeStream = server.Value;
+                            goto RECONNECT; // end of stream(disconnect, wait reconnect)
                         }
                     }
 
