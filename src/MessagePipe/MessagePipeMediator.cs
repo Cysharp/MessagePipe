@@ -16,24 +16,38 @@ public class MessagePipeMediator : IMessagePipeMediator
         this._serviceProvider = serviceProvider;
     }
 
+
+    public IRequestHandler<TRequest, TResponse> GetHandler<TRequest, TResponse>()
+    {
+        return _serviceProvider.GetRequiredService<IRequestHandler<TRequest, TResponse>>();
+    }
+    
     public TResponse Send<TRequest, TResponse>(TRequest request)
     {
-        IRequestHandler<TRequest, TResponse> handler =
-            _serviceProvider.GetRequiredService<IRequestHandler<TRequest, TResponse>>();
+        var handler = this.GetHandler<TRequest, TResponse>();
 
         return handler.Invoke(request);
     }
 
+
+
+    public IAsyncRequestHandler<TRequest, TResponse> GetAsyncHandler<TRequest, TResponse>()
+    {
+        return _serviceProvider.GetRequiredService<IAsyncRequestHandler<TRequest, TResponse>>();
+    }
 
     public async ValueTask<TResponse> SendAsync<TRequest, TResponse>(TRequest request,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        IAsyncRequestHandler<TRequest, TResponse> handler =
-            _serviceProvider.GetRequiredService<IAsyncRequestHandler<TRequest, TResponse>>();
+        var asyncHandler = this.GetAsyncHandler<TRequest, TResponse>();
 
-        return await handler.InvokeAsync(request);
+        return await asyncHandler.InvokeAsync(request);
     }
+    
+    
+    
+    
     
 }
