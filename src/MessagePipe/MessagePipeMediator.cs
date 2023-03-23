@@ -8,6 +8,9 @@ namespace MessagePipe;
 
 public class MessagePipeMediator : IMessagePipeMediator
 {
+    private readonly ConcurrentDictionary<(Type, Type), IRequestHandler> syncHandlersCache = new();
+    private readonly ConcurrentDictionary<(Type, Type), IAsyncRequestHandler> asyncHandlersCache = new();
+    
     private readonly IServiceProvider _serviceProvider;
     
     
@@ -18,10 +21,12 @@ public class MessagePipeMediator : IMessagePipeMediator
 
     public TResponse Send<TRequest, TResponse>(TRequest request)
     {
-        IRequestHandler<TRequest, TResponse> handler =
-            _serviceProvider.GetRequiredService<IRequestHandler<TRequest, TResponse>>();
+        var syncHandler = (IRequestHandler<TRequest, TResponse>)
+            syncHandlersCache.GetOrAdd(
+            (typeof(TRequest), typeof(TResponse)), 
+            (a) => _serviceProvider.GetRequiredService<IRequestHandler<TRequest, TResponse>>());
 
-        return handler.Invoke(request);
+        return syncHandler.Invoke(request);
     }
 
 
@@ -30,10 +35,12 @@ public class MessagePipeMediator : IMessagePipeMediator
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        IAsyncRequestHandler<TRequest, TResponse> handler =
-            _serviceProvider.GetRequiredService<IAsyncRequestHandler<TRequest, TResponse>>();
+        var asyncHandler = (IAsyncRequestHandler<TRequest, TResponse>)
+            asyncHandlersCache.GetOrAdd(
+            (typeof(TRequest), typeof(TResponse)), 
+            (a) => _serviceProvider.GetRequiredService<IAsyncRequestHandler<TRequest, TResponse>>());
 
-        return await handler.InvokeAsync(request);
+        return await asyncHandler.InvokeAsync(request, cancellationToken);
     }
     
 }
