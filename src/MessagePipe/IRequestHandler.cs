@@ -53,7 +53,6 @@ namespace MessagePipe
     // Remote
 
     public interface IRemoteRequestHandler<in TRequest, TResponse>
-    // where TAsyncRequestHandler : IAsyncRequestHandler<TRequest, TResponse>
     {
         ValueTask<TResponse> InvokeAsync(TRequest request, CancellationToken cancellationToken = default);
     }

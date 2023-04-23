@@ -191,6 +191,43 @@ namespace MessagePipe.Interprocess.Tests
                 ex.Message.Should().Contain("NO -1");
             }
         }
+
+        [Fact]
+        public async Task RemoteRequestScopedTest()
+        {
+            var provider = TestHelper.BuildServiceProviderNamedPipe("aewrw", helper, true, true);
+
+            using (provider as IDisposable)
+            {
+                var remoteHandler = provider.GetRequiredService<IRemoteRequestHandler<int, (string, string)>>();
+
+                var v = await remoteHandler.InvokeAsync(9999);
+                v.Item1.Should().Be(v.Item2);
+
+                var v2 = await remoteHandler.InvokeAsync(9999);
+                v2.Item1.Should().Be(v2.Item2);
+
+                v.Item1.Should().NotBe(v2.Item1);
+            }
+        }
+
+        [Fact]
+        public async Task RemoteRequestNotScopedTest()
+        {
+            var provider = TestHelper.BuildServiceProviderNamedPipe("aewrw", helper, true, false);
+            using (provider as IDisposable)
+            {
+                var remoteHandler = provider.GetRequiredService<IRemoteRequestHandler<int, (string, string)>>();
+
+                var v = await remoteHandler.InvokeAsync(9999);
+                v.Item1.Should().Be(v.Item2);
+
+                var v2 = await remoteHandler.InvokeAsync(9999);
+                v2.Item1.Should().Be(v2.Item2);
+
+                v.Item1.Should().Be(v2.Item1);
+            }
+        }
     }
 
     public class MyAsyncHandler : IAsyncRequestHandler<int, string>
@@ -206,6 +243,30 @@ namespace MessagePipe.Interprocess.Tests
             {
                 return "ECHO:" + request.ToString();
             }
+        }
+    }
+
+    public class ScopeTestService
+    {
+        public string UniqueId { get; } = Guid.NewGuid().ToString();
+    }
+
+    public class ScopeTestHandler : IAsyncRequestHandler<int, (string, string)>
+    {
+
+        public ScopeTestService scopeTestService { get; }
+        public ScopeTestService scopeTestService2 { get; }
+
+        public ScopeTestHandler(ScopeTestService scopeTestService, ScopeTestService scopeTestService2)
+        {
+            this.scopeTestService = scopeTestService;
+            this.scopeTestService2 = scopeTestService2;
+        }
+
+        public async ValueTask<(string, string)> InvokeAsync(int request, CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(1);
+            return (scopeTestService.UniqueId, scopeTestService2.UniqueId);
         }
     }
 }

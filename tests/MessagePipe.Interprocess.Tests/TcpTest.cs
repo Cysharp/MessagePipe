@@ -310,5 +310,109 @@ namespace MessagePipe.Interprocess.Tests
                 }
             }
         }
+
+        [Fact]
+        public async Task RemoteRequestScopedTest()
+        {
+            var provider = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1355, helper, true, true);
+
+            using (provider as IDisposable)
+            {
+                var remoteHandler = provider.GetRequiredService<IRemoteRequestHandler<int, (string, string)>>();
+
+                var v = await remoteHandler.InvokeAsync(9999);
+                v.Item1.Should().Be(v.Item2);
+
+                var v2 = await remoteHandler.InvokeAsync(9999);
+                v2.Item1.Should().Be(v2.Item2);
+
+                v.Item1.Should().NotBe(v2.Item1);
+            }
+        }
+
+        [Fact]
+        public async Task RemoteRequestNotScopedTest()
+        {
+            var provider = TestHelper.BuildServiceProviderTcp("127.0.0.1", 1355, helper, true, false);
+            using (provider as IDisposable)
+            {
+                var remoteHandler = provider.GetRequiredService<IRemoteRequestHandler<int, (string, string)>>();
+
+                var v = await remoteHandler.InvokeAsync(9999);
+                v.Item1.Should().Be(v.Item2);
+
+                var v2 = await remoteHandler.InvokeAsync(9999);
+                v2.Item1.Should().Be(v2.Item2);
+
+                v.Item1.Should().Be(v2.Item1);
+            }
+        }
+
+        [Fact]
+        public async Task RemoteRequestWithUdsScopedTest()
+        {
+            var filePath = System.IO.Path.GetTempFileName();
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+            try
+            {
+                var provider = TestHelper.BuildServiceProviderTcpWithUds(filePath, helper, true, true);
+
+                using (provider as IDisposable)
+                {
+                    var remoteHandler = provider.GetRequiredService<IRemoteRequestHandler<int, (string, string)>>();
+
+                    var v = await remoteHandler.InvokeAsync(9999);
+                    v.Item1.Should().Be(v.Item2);
+
+                    var v2 = await remoteHandler.InvokeAsync(9999);
+                    v2.Item1.Should().Be(v2.Item2);
+
+                    v.Item1.Should().NotBe(v2.Item1);
+                }
+            }
+            finally
+            {
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+            }
+        }
+
+        [Fact]
+        public async Task RemoteRequestWithUdsNotScopedTest()
+        {
+            var filePath = System.IO.Path.GetTempFileName();
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+            try
+            {
+                var provider = TestHelper.BuildServiceProviderTcpWithUds(filePath, helper, true, false);
+                using (provider as IDisposable)
+                {
+                    var remoteHandler = provider.GetRequiredService<IRemoteRequestHandler<int, (string, string)>>();
+
+                    var v = await remoteHandler.InvokeAsync(9999);
+                    v.Item1.Should().Be(v.Item2);
+
+                    var v2 = await remoteHandler.InvokeAsync(9999);
+                    v2.Item1.Should().Be(v2.Item2);
+
+                    v.Item1.Should().Be(v2.Item1);
+                }
+            }
+            finally
+            {
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+            }
+        }
     }
 }

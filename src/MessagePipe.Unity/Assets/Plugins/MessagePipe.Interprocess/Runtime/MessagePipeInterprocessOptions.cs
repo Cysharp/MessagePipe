@@ -9,6 +9,7 @@ namespace MessagePipe.Interprocess
         public MessagePackSerializerOptions MessagePackSerializerOptions { get; set; }
         public InstanceLifetime InstanceLifetime { get; set; }
         public Action<string, Exception> UnhandledErrorHandler { get; set; }
+        public bool ScopedRequestHandling { get; set; } = false;
 
         public MessagePipeInterprocessOptions()
         {

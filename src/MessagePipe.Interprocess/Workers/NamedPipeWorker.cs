@@ -245,6 +245,7 @@ namespace MessagePipe.Interprocess.Workers
                                 var header = Deserialize<RequestHeader>(message.KeyMemory, options.MessagePackSerializerOptions);
                                 var (mid, reqTypeName, resTypeName) = (header.MessageId, header.RequestType, header.ResponseType);
                                 byte[] resultBytes;
+                                AsyncServiceScope? scope = null;
                                 try
                                 {
                                     var t = AsyncRequestHandlerRegistory.Get(reqTypeName, resTypeName);
@@ -252,19 +253,25 @@ namespace MessagePipe.Interprocess.Workers
                                         .First(x => x.GetGenericArguments().Any(y => y.FullName == header.RequestType));
                                     var coreInterfaceType = t.GetInterfaces().Where(x => x.IsGenericType && x.Name.StartsWith("IAsyncRequestHandlerCore"))
                                         .First(x => x.GetGenericArguments().Any(y => y.FullName == header.RequestType));
-                                    var service = provider.GetRequiredService(interfaceType); // IAsyncRequestHandler<TRequest,TResponse>
+                                    scope = options.ScopedRequestHandling ? provider.CreateAsyncScope() : null; // Create scope if needed.
+                                    var service = (scope?.ServiceProvider ?? provider).GetRequiredService(interfaceType); // IAsyncRequestHandler<TRequest,TResponse>
                                     var genericArgs = interfaceType.GetGenericArguments(); // [TRequest, TResponse]
                                     var request = MessagePackSerializer.Deserialize(genericArgs[0], message.ValueMemory, options.MessagePackSerializerOptions);
                                     var responseTask = coreInterfaceType.GetMethod("InvokeAsync")!.Invoke(service, new[] { request, CancellationToken.None });
                                     var task = typeof(ValueTask<>).MakeGenericType(genericArgs[1]).GetMethod("AsTask")!.Invoke(responseTask, null);
                                     await ((System.Threading.Tasks.Task)task!); // Task<T> -> Task
                                     var result = task.GetType().GetProperty("Result")!.GetValue(task);
+
                                     resultBytes = MessageBuilder.BuildRemoteResponseMessage(mid, genericArgs[1], result!, options.MessagePackSerializerOptions);
                                 }
                                 catch (Exception ex)
                                 {
                                     // NOTE: ok to send stacktrace?
                                     resultBytes = MessageBuilder.BuildRemoteResponseError(mid, ex.ToString(), options.MessagePackSerializerOptions);
+                                }
+                                finally
+                                {
+                                    scope?.Dispose();
                                 }
 
                                 await pipeStream.WriteAsync(resultBytes, 0, resultBytes.Length).ConfigureAwait(false);
