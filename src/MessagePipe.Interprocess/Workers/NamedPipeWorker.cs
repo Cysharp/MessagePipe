@@ -245,7 +245,7 @@ namespace MessagePipe.Interprocess.Workers
                                 var header = Deserialize<RequestHeader>(message.KeyMemory, options.MessagePackSerializerOptions);
                                 var (mid, reqTypeName, resTypeName) = (header.MessageId, header.RequestType, header.ResponseType);
                                 byte[] resultBytes;
-                                AsyncServiceScope? scope = null;
+                                AsyncServiceScope scope = default;
                                 try
                                 {
                                     var t = AsyncRequestHandlerRegistory.Get(reqTypeName, resTypeName);
@@ -253,8 +253,8 @@ namespace MessagePipe.Interprocess.Workers
                                         .First(x => x.GetGenericArguments().Any(y => y.FullName == header.RequestType));
                                     var coreInterfaceType = t.GetInterfaces().Where(x => x.IsGenericType && x.Name.StartsWith("IAsyncRequestHandlerCore"))
                                         .First(x => x.GetGenericArguments().Any(y => y.FullName == header.RequestType));
-                                    scope = options.ScopedRequestHandling ? provider.CreateAsyncScope() : null; // Create scope if needed.
-                                    var service = (scope?.ServiceProvider ?? provider).GetRequiredService(interfaceType); // IAsyncRequestHandler<TRequest,TResponse>
+                                    scope = options.ScopedRequestHandling ? provider.CreateAsyncScope() : default; // Create scope if needed.
+                                    var service = (options.ScopedRequestHandling ? scope.ServiceProvider : provider).GetRequiredService(interfaceType); // IAsyncRequestHandler<TRequest,TResponse>
                                     var genericArgs = interfaceType.GetGenericArguments(); // [TRequest, TResponse]
                                     var request = MessagePackSerializer.Deserialize(genericArgs[0], message.ValueMemory, options.MessagePackSerializerOptions);
                                     var responseTask = coreInterfaceType.GetMethod("InvokeAsync")!.Invoke(service, new[] { request, CancellationToken.None });
@@ -271,9 +271,9 @@ namespace MessagePipe.Interprocess.Workers
                                 }
                                 finally
                                 {
-                                    if (scope != null)
+                                    if (!scope.Equals(default(AsyncServiceScope)))
                                     {
-                                        await scope.Value.DisposeAsync().ConfigureAwait(false);
+                                        await scope.DisposeAsync().ConfigureAwait(false);
                                     }
                                 }
 
