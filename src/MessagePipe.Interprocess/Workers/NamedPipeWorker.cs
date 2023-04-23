@@ -271,7 +271,10 @@ namespace MessagePipe.Interprocess.Workers
                                 }
                                 finally
                                 {
-                                    scope?.Dispose();
+                                    if (scope != null)
+                                    {
+                                        await scope.Value.DisposeAsync().ConfigureAwait(false);
+                                    }
                                 }
 
                                 await pipeStream.WriteAsync(resultBytes, 0, resultBytes.Length).ConfigureAwait(false);

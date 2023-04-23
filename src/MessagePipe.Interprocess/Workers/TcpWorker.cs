@@ -292,7 +292,10 @@ namespace MessagePipe.Interprocess.Workers
                                 }
                                 finally
                                 {
-                                    scope?.Dispose();
+                                    if(scope != null)
+                                    {
+                                        await scope.Value.DisposeAsync().ConfigureAwait(false);
+                                    }
                                 }
 
                                 await client.SendAsync(resultBytes).ConfigureAwait(false);
