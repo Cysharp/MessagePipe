@@ -1,4 +1,5 @@
 ﻿using System;
+using MessagePipe;
 using MessagePipe.Interprocess;
 using MessagePipe.Interprocess.Workers;
 #if !UNITY_2018_3_OR_NEWER
@@ -6,58 +7,58 @@ using Microsoft.Extensions.DependencyInjection;
 #endif
 
 #if !UNITY_2018_3_OR_NEWER
-using ReturnType = Microsoft.Extensions.DependencyInjection.IServiceCollection;
+using ReturnType = Microsoft.Extensions.DependencyInjection.IMessagePipeBuilder;
+namespace Microsoft.Extensions.DependencyInjection
 #else
 using ReturnType = MessagePipe.Interprocess.MessagePipeInterprocessOptions;
-#endif
-
 namespace MessagePipe
+#endif
 {
     public static class ServiceCollectionInterprocessExtensions
     {
-        public static ReturnType AddMessagePipeUdpInterprocess(this IServiceCollection services, string host, int port)
+        public static ReturnType AddMessagePipeUdpInterprocess(this IMessagePipeBuilder builder, string host, int port)
         {
-            return AddMessagePipeUdpInterprocess(services, host, port, _ => { });
+            return AddMessagePipeUdpInterprocess(builder, host, port, _ => { });
         }
 
-        public static ReturnType AddMessagePipeUdpInterprocess(this IServiceCollection services, string host, int port, Action<MessagePipeInterprocessUdpOptions> configure)
+        public static ReturnType AddMessagePipeUdpInterprocess(this IMessagePipeBuilder builder, string host, int port, Action<MessagePipeInterprocessUdpOptions> configure)
         {
             var options = new MessagePipeInterprocessUdpOptions(host, port);
             configure(options);
 
-            services.AddSingleton(options);
-            services.Add(typeof(UdpWorker), options.InstanceLifetime);
+            builder.Services.AddSingleton(options);
+            builder.Services.Add(typeof(UdpWorker), options.InstanceLifetime);
 
 #if !UNITY_2018_3_OR_NEWER
-            services.Add(typeof(IDistributedPublisher<,>), typeof(UdpDistributedPublisher<,>), options.InstanceLifetime);
-            services.Add(typeof(IDistributedSubscriber<,>), typeof(UdpDistributedSubscriber<,>), options.InstanceLifetime);
-            return services;
+            builder.Services.Add(typeof(IDistributedPublisher<,>), typeof(UdpDistributedPublisher<,>), options.InstanceLifetime);
+            builder.Services.Add(typeof(IDistributedSubscriber<,>), typeof(UdpDistributedSubscriber<,>), options.InstanceLifetime);
+            return builder;
 #else
-            AddAsyncMessageBroker<IInterprocessKey, IInterprocessValue>(services, options);
+            AddAsyncMessageBroker<IInterprocessKey, IInterprocessValue>(builder, options);
             return options;
 #endif
         }
 
-        public static ReturnType AddMessagePipeTcpInterprocess(this IServiceCollection services, string host, int port)
+        public static ReturnType AddMessagePipeTcpInterprocess(this IMessagePipeBuilder builder, string host, int port)
         {
-            return AddMessagePipeTcpInterprocess(services, host, port, _ => { });
+            return AddMessagePipeTcpInterprocess(builder, host, port, _ => { });
         }
 
-        public static ReturnType AddMessagePipeTcpInterprocess(this IServiceCollection services, string host, int port, Action<MessagePipeInterprocessTcpOptions> configure)
+        public static ReturnType AddMessagePipeTcpInterprocess(this IMessagePipeBuilder builder, string host, int port, Action<MessagePipeInterprocessTcpOptions> configure)
         {
             var options = new MessagePipeInterprocessTcpOptions(host, port);
             configure(options);
 
-            services.AddSingleton(options);
-            services.Add(typeof(TcpWorker), options.InstanceLifetime);
+            builder.Services.AddSingleton(options);
+            builder.Services.Add(typeof(TcpWorker), options.InstanceLifetime);
 
 #if !UNITY_2018_3_OR_NEWER
-            services.Add(typeof(IDistributedPublisher<,>), typeof(TcpDistributedPublisher<,>), options.InstanceLifetime);
-            services.Add(typeof(IDistributedSubscriber<,>), typeof(TcpDistributedSubscriber<,>), options.InstanceLifetime);
-            services.Add(typeof(IRemoteRequestHandler<,>), typeof(TcpRemoteRequestHandler<,>), options.InstanceLifetime);
-            return services;
+            builder.Services.Add(typeof(IDistributedPublisher<,>), typeof(TcpDistributedPublisher<,>), options.InstanceLifetime);
+            builder.Services.Add(typeof(IDistributedSubscriber<,>), typeof(TcpDistributedSubscriber<,>), options.InstanceLifetime);
+            builder.Services.Add(typeof(IRemoteRequestHandler<,>), typeof(TcpRemoteRequestHandler<,>), options.InstanceLifetime);
+            return builder;
 #else
-            AddAsyncMessageBroker<IInterprocessKey, IInterprocessValue>(services, options);
+            AddAsyncMessageBroker<IInterprocessKey, IInterprocessValue>(builder, options);
             return options;
 #endif
 
@@ -67,26 +68,26 @@ namespace MessagePipe
 
         // NamedPipe in Unity is slightly buggy so disable.
 
-        public static ReturnType AddMessagePipeNamedPipeInterprocess(this IServiceCollection services, string pipeName)
+        public static ReturnType AddMessagePipeNamedPipeInterprocess(this IMessagePipeBuilder builder, string pipeName)
         {
-            return AddMessagePipeNamedPipeInterprocess(services, pipeName, _ => { });
+            return AddMessagePipeNamedPipeInterprocess(builder, pipeName, _ => { });
         }
 
-        public static ReturnType AddMessagePipeNamedPipeInterprocess(this IServiceCollection services, string pipeName, Action<MessagePipeInterprocessNamedPipeOptions> configure)
+        public static ReturnType AddMessagePipeNamedPipeInterprocess(this IMessagePipeBuilder builder, string pipeName, Action<MessagePipeInterprocessNamedPipeOptions> configure)
         {
             var options = new MessagePipeInterprocessNamedPipeOptions(pipeName);
             configure(options);
 
-            services.AddSingleton(options);
-            services.Add(typeof(NamedPipeWorker), options.InstanceLifetime);
+            builder.Services.AddSingleton(options);
+            builder.Services.Add(typeof(NamedPipeWorker), options.InstanceLifetime);
 
 #if !UNITY_2018_3_OR_NEWER
-            services.Add(typeof(IDistributedPublisher<,>), typeof(NamedPipeDistributedPublisher<,>), InstanceLifetime.Singleton);
-            services.Add(typeof(IDistributedSubscriber<,>), typeof(NamedPipeDistributedSubscriber<,>), InstanceLifetime.Singleton);
-            services.Add(typeof(IRemoteRequestHandler<,>), typeof(NamedPipeRemoteRequestHandler<,>), options.InstanceLifetime);
-            return services;
+            builder.Services.Add(typeof(IDistributedPublisher<,>), typeof(NamedPipeDistributedPublisher<,>), InstanceLifetime.Singleton);
+            builder.Services.Add(typeof(IDistributedSubscriber<,>), typeof(NamedPipeDistributedSubscriber<,>), InstanceLifetime.Singleton);
+            builder.Services.Add(typeof(IRemoteRequestHandler<,>), typeof(NamedPipeRemoteRequestHandler<,>), options.InstanceLifetime);
+            return builder;
 #else
-            AddAsyncMessageBroker<IInterprocessKey, IInterprocessValue>(services, options);
+            AddAsyncMessageBroker<IInterprocessKey, IInterprocessValue>(builder, options);
             return options;
 #endif
         }
@@ -114,97 +115,97 @@ namespace MessagePipe
 
 #if UNITY_2018_3_OR_NEWER
 
-        static void AddAsyncMessageBroker<TKey,TMessage>(this IServiceCollection services, MessagePipeInterprocessOptions options)
+        static void AddAsyncMessageBroker<TKey,TMessage>(this IMessagePipeBuilder builder, MessagePipeInterprocessOptions options)
         {
-            services.Add(typeof(AsyncMessageBrokerCore<TKey, TMessage>), options.InstanceLifetime);
-            services.Add(typeof(IAsyncPublisher<TKey, TMessage>), typeof(AsyncMessageBroker<TKey, TMessage>), options.InstanceLifetime);
-            services.Add(typeof(IAsyncSubscriber<TKey, TMessage>), typeof(AsyncMessageBroker<TKey, TMessage>), options.InstanceLifetime);
+            builder.Services.Add(typeof(AsyncMessageBrokerCore<TKey, TMessage>), options.InstanceLifetime);
+            builder.Services.Add(typeof(IAsyncPublisher<TKey, TMessage>), typeof(AsyncMessageBroker<TKey, TMessage>), options.InstanceLifetime);
+            builder.Services.Add(typeof(IAsyncSubscriber<TKey, TMessage>), typeof(AsyncMessageBroker<TKey, TMessage>), options.InstanceLifetime);
         }
 
-        public static IServiceCollection RegisterUpdInterprocessMessageBroker<TKey, TMessage>(this IServiceCollection services, MessagePipeInterprocessOptions options)
+        public static IMessagePipeBuilder RegisterUpdInterprocessMessageBroker<TKey, TMessage>(this IMessagePipeBuilder builder, MessagePipeInterprocessOptions options)
         {
-            AddAsyncMessageBroker<TKey, TMessage>(services, options);
-            services.Add(typeof(IDistributedPublisher<TKey, TMessage>), typeof(UdpDistributedPublisher<TKey, TMessage>), options.InstanceLifetime);
-            services.Add(typeof(IDistributedSubscriber<TKey, TMessage>), typeof(UdpDistributedSubscriber<TKey, TMessage>), options.InstanceLifetime);
+            AddAsyncMessageBroker<TKey, TMessage>(builder, options);
+            builder.Services.Add(typeof(IDistributedPublisher<TKey, TMessage>), typeof(UdpDistributedPublisher<TKey, TMessage>), options.InstanceLifetime);
+            builder.Services.Add(typeof(IDistributedSubscriber<TKey, TMessage>), typeof(UdpDistributedSubscriber<TKey, TMessage>), options.InstanceLifetime);
 
-            return services;
+            return builder;
         }
 
-        public static IServiceCollection RegisterTcpInterprocessMessageBroker<TKey, TMessage>(this IServiceCollection services, MessagePipeInterprocessOptions options)
+        public static IMessagePipeBuilder RegisterTcpInterprocessMessageBroker<TKey, TMessage>(this IMessagePipeBuilder builder, MessagePipeInterprocessOptions options)
         {
-            AddAsyncMessageBroker<TKey, TMessage>(services, options);
-            services.Add(typeof(IDistributedPublisher<TKey, TMessage>), typeof(TcpDistributedPublisher<TKey, TMessage>), options.InstanceLifetime);
-            services.Add(typeof(IDistributedSubscriber<TKey, TMessage>), typeof(TcpDistributedSubscriber<TKey, TMessage>), options.InstanceLifetime);
+            AddAsyncMessageBroker<TKey, TMessage>(builder, options);
+            builder.Services.Add(typeof(IDistributedPublisher<TKey, TMessage>), typeof(TcpDistributedPublisher<TKey, TMessage>), options.InstanceLifetime);
+            builder.Services.Add(typeof(IDistributedSubscriber<TKey, TMessage>), typeof(TcpDistributedSubscriber<TKey, TMessage>), options.InstanceLifetime);
 
-            return services;
+            return builder;
         }
 
-        //public static IServiceCollection RegisterNamedPipeInterprocessMessageBroker<TKey, TMessage>(this IServiceCollection services, MessagePipeInterprocessOptions options)
+        //public static IMessagePipeBuilder RegisterNamedPipeInterprocessMessageBroker<TKey, TMessage>(this IMessagePipeBuilder builder, MessagePipeInterprocessOptions options)
         //{
-        //    AddAsyncMessageBroker<TKey, TMessage>(services, options);
-        //    services.Add(typeof(IDistributedPublisher<TKey, TMessage>), typeof(NamedPipeDistributedPublisher<TKey, TMessage>), options.InstanceLifetime);
-        //    services.Add(typeof(IDistributedSubscriber<TKey, TMessage>), typeof(NamedPipeDistributedSubscriber<TKey, TMessage>), options.InstanceLifetime);
+        //    AddAsyncMessageBroker<TKey, TMessage>(builder, options);
+        //    builder.Services.Add(typeof(IDistributedPublisher<TKey, TMessage>), typeof(NamedPipeDistributedPublisher<TKey, TMessage>), options.InstanceLifetime);
+        //    builder.Services.Add(typeof(IDistributedSubscriber<TKey, TMessage>), typeof(NamedPipeDistributedSubscriber<TKey, TMessage>), options.InstanceLifetime);
 
-        //    return services;
+        //    return builder;
         //}
 
-        public static IServiceCollection RegisterTcpRemoteRequestHandler<TRequest, TResponse>(this IServiceCollection services, MessagePipeInterprocessOptions options)
+        public static IMessagePipeBuilder RegisterTcpRemoteRequestHandler<TRequest, TResponse>(this IMessagePipeBuilder builder, MessagePipeInterprocessOptions options)
         {
-            services.Add(typeof(IRemoteRequestHandler<TRequest, TResponse>), typeof(TcpRemoteRequestHandler<TRequest, TResponse>), options.InstanceLifetime);
+            builder.Services.Add(typeof(IRemoteRequestHandler<TRequest, TResponse>), typeof(TcpRemoteRequestHandler<TRequest, TResponse>), options.InstanceLifetime);
 
-            return services;
+            return builder;
         }
 
-        //public static IServiceCollection RegisterNamedPipeRemoteRequestHandler<TRequest, TResponse>(this IServiceCollection services, MessagePipeInterprocessOptions options)
+        //public static IMessagePipeBuilder RegisterNamedPipeRemoteRequestHandler<TRequest, TResponse>(this IMessagePipeBuilder builder, MessagePipeInterprocessOptions options)
         //{
-        //    services.Add(typeof(IRemoteRequestHandler<TRequest, TResponse>), typeof(NamedPipeRemoteRequestHandler<TRequest, TResponse>), options.InstanceLifetime);
+        //    builder.Services.Add(typeof(IRemoteRequestHandler<TRequest, TResponse>), typeof(NamedPipeRemoteRequestHandler<TRequest, TResponse>), options.InstanceLifetime);
 
-        //    return services;
+        //    return builder;
         //}
 
 #endif
 #if NET5_0_OR_GREATER
-        public static ReturnType AddMessagePipeUdpInterprocessUds(this IServiceCollection services, string domainSocketPath)
+        public static ReturnType AddMessagePipeUdpInterprocessUds(this IMessagePipeBuilder builder, string domainSocketPath)
         {
-            return AddMessagePipeUdpInterprocessUds(services, domainSocketPath, _ => { });
+            return AddMessagePipeUdpInterprocessUds(builder, domainSocketPath, _ => { });
         }
-        public static ReturnType AddMessagePipeUdpInterprocessUds(this IServiceCollection services, string domainSocketPath, Action<MessagePipeInterprocessUdpUdsOptions> configure)
+        public static ReturnType AddMessagePipeUdpInterprocessUds(this IMessagePipeBuilder builder, string domainSocketPath, Action<MessagePipeInterprocessUdpUdsOptions> configure)
         {
             var options = new MessagePipeInterprocessUdpUdsOptions(domainSocketPath);
             configure(options);
 
-            services.AddSingleton(options);
-            services.Add(typeof(UdpWorker), options.InstanceLifetime);
+            builder.Services.AddSingleton(options);
+            builder.Services.Add(typeof(UdpWorker), options.InstanceLifetime);
 
 #if !UNITY_2018_3_OR_NEWER
-            services.Add(typeof(IDistributedPublisher<,>), typeof(UdpDistributedPublisher<,>), options.InstanceLifetime);
-            services.Add(typeof(IDistributedSubscriber<,>), typeof(UdpDistributedSubscriber<,>), options.InstanceLifetime);
-            return services;
+            builder.Services.Add(typeof(IDistributedPublisher<,>), typeof(UdpDistributedPublisher<,>), options.InstanceLifetime);
+            builder.Services.Add(typeof(IDistributedSubscriber<,>), typeof(UdpDistributedSubscriber<,>), options.InstanceLifetime);
+            return builder;
 #else
-            AddAsyncMessageBroker<IInterprocessKey, IInterprocessValue>(services, options);
+            AddAsyncMessageBroker<IInterprocessKey, IInterprocessValue>(builder, options);
             return options;
 #endif
         }
-        public static ReturnType AddMessagePipeTcpInterprocessUds(this IServiceCollection services, string domainSocketPath)
+        public static ReturnType AddMessagePipeTcpInterprocessUds(this IMessagePipeBuilder builder, string domainSocketPath)
         {
-            return AddMessagePipeTcpInterprocessUds(services, domainSocketPath, _ => { });
+            return AddMessagePipeTcpInterprocessUds(builder, domainSocketPath, _ => { });
         }
 
-        public static ReturnType AddMessagePipeTcpInterprocessUds(this IServiceCollection services, string domainSocketPath, Action<MessagePipeInterprocessTcpUdsOptions> configure)
+        public static ReturnType AddMessagePipeTcpInterprocessUds(this IMessagePipeBuilder builder, string domainSocketPath, Action<MessagePipeInterprocessTcpUdsOptions> configure)
         {
             var options = new MessagePipeInterprocessTcpUdsOptions(domainSocketPath);
             configure(options);
 
-            services.AddSingleton(options);
-            services.Add(typeof(TcpWorker), options.InstanceLifetime);
+            builder.Services.AddSingleton(options);
+            builder.Services.Add(typeof(TcpWorker), options.InstanceLifetime);
 
 #if !UNITY_2018_3_OR_NEWER
-            services.Add(typeof(IDistributedPublisher<,>), typeof(TcpDistributedPublisher<,>), options.InstanceLifetime);
-            services.Add(typeof(IDistributedSubscriber<,>), typeof(TcpDistributedSubscriber<,>), options.InstanceLifetime);
-            services.Add(typeof(IRemoteRequestHandler<,>), typeof(TcpRemoteRequestHandler<,>), options.InstanceLifetime);
-            return services;
+            builder.Services.Add(typeof(IDistributedPublisher<,>), typeof(TcpDistributedPublisher<,>), options.InstanceLifetime);
+            builder.Services.Add(typeof(IDistributedSubscriber<,>), typeof(TcpDistributedSubscriber<,>), options.InstanceLifetime);
+            builder.Services.Add(typeof(IRemoteRequestHandler<,>), typeof(TcpRemoteRequestHandler<,>), options.InstanceLifetime);
+            return builder;
 #else
-            AddAsyncMessageBroker<IInterprocessKey, IInterprocessValue>(services, options);
+            AddAsyncMessageBroker<IInterprocessKey, IInterprocessValue>(builder, options);
             return options;
 #endif
 

@@ -119,15 +119,15 @@ public static class TestHelper
     public static IServiceProvider BuildNatsServiceProvider(INatsSerializer? serializer = default)
     {
         var sc = new ServiceCollection();
-        sc.AddMessagePipe();
+        var builder = sc.AddMessagePipe();
 
         if (serializer == default)
         {
-            sc.AddMessagePipeNats(new NatsConnectionFactory());
+            builder.AddMessagePipeNats(new NatsConnectionFactory());
         }
         else
         {
-            sc.AddMessagePipeNats(new NatsConnectionFactory(NatsOptions.Default with
+            builder.AddMessagePipeNats(new NatsConnectionFactory(NatsOptions.Default with
             {
                 Serializer = serializer
             }));

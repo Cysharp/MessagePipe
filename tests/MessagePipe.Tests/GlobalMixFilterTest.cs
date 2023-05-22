@@ -23,7 +23,7 @@ namespace MessagePipe.Tests
             }, builder =>
             {
                 builder.AddMessageHandlerFilter<MyFilter<int>>();
-                builder.AddSingleton(store);
+                builder.Services.AddSingleton(store);
             });
 
             var pub = provider.GetRequiredService<IPublisher<int>>();
@@ -54,7 +54,7 @@ namespace MessagePipe.Tests
             }, builder =>
             {
                 builder.AddRequestHandler<MyRequestHandler>();
-                builder.AddSingleton(store);
+                builder.Services.AddSingleton(store);
             });
 
             var handler = provider.GetRequiredService<IRequestHandler<int, int>>();
@@ -82,7 +82,7 @@ namespace MessagePipe.Tests
             {
                 builder.AddRequestHandler<MyRequestHandler>();
                 builder.AddRequestHandler<MyRequestHandler2>();
-                builder.AddSingleton(store);
+                builder.Services.AddSingleton(store);
             });
 
             var handler = provider.GetRequiredService<IRequestAllHandler<int, int>>();

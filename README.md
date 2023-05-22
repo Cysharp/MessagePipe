@@ -854,16 +854,16 @@ Host.CreateDefaultBuilder()
     {
         var config = ctx.Configuration.Get<MyConfig>();
 
-        services.AddMessagePipe();
+        var builder = services.AddMessagePipe();
         if (config.IsLocal)
         {
             // use in-memory IDistributedPublisher/Subscriber in local.
-            services.AddInMemoryDistributedMessageBroker();   
+            builder.AddInMemoryDistributedMessageBroker();   
         }
         else
         {
             // use Redis IDistributedPublisher/Subscriber
-            services.AddMessagePipeRedis();
+            builder.AddMessagePipeRedis();
         }
     });
 ```
@@ -882,12 +882,12 @@ use `AddMessagePipeUdpInterprocess`, `AddMessagePipeTcpInterprocess`, `AddMessag
 Host.CreateDefaultBuilder()
     .ConfigureServices((ctx, services) =>
     {
-        services.AddMessagePipe();
-        services.AddMessagePipeUdpInterprocess("127.0.0.1", 3215, configure); // setup host and port.
-        // services.AddMessagePipeTcpInterprocess("127.0.0.1", 3215, configure);
-        // services.AddMessagePipeNamedPipeInterprocess("messagepipe-namedpipe", configure);
-        // services.AddMessagePipeUdpInterprocessUds("domainSocketPath")
-        // services.AddMessagePipeTcpInterprocessUds("domainSocketPath")
+        services.AddMessagePipe()
+            .AddMessagePipeUdpInterprocess("127.0.0.1", 3215, configure); // setup host and port.
+            // .AddMessagePipeTcpInterprocess("127.0.0.1", 3215, configure);
+            // .AddMessagePipeNamedPipeInterprocess("messagepipe-namedpipe", configure);
+            // .AddMessagePipeUdpInterprocessUds("domainSocketPath")
+            // .AddMessagePipeTcpInterprocessUds("domainSocketPath")
     })
 ```
 
@@ -932,11 +932,11 @@ For IPC-RPC, you can use `IRemoteRequestHandler<in TRequest, TResponse>` that in
 Host.CreateDefaultBuilder()
     .ConfigureServices((ctx, services) =>
     {
-        services.AddMessagePipe();
-        services.AddMessagePipeTcpInterprocess("127.0.0.1", 3215, x =>
-        {
-            x.HostAsServer = true; // if remote process as server, set true(otherwise false(default)).
-        });
+        services.AddMessagePipe()
+            .AddMessagePipeTcpInterprocess("127.0.0.1", 3215, x =>
+            {
+                x.HostAsServer = true; // if remote process as server, set true(otherwise false(default)).
+            });
     });
 ```
 

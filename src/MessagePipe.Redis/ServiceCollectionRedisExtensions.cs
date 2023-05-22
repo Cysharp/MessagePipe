@@ -1,42 +1,41 @@
 ﻿using MessagePipe;
 using MessagePipe.Redis;
-using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MessagePipe
+namespace Microsoft.Extensions.DependencyInjection
 {
     public static class ServiceCollectionRedisExtensions
     {
-        public static IServiceCollection AddMessagePipeRedis(this IServiceCollection services, IConnectionMultiplexer connectionMultiplexer)
+        public static IMessagePipeBuilder AddMessagePipeRedis(this IMessagePipeBuilder builder, IConnectionMultiplexer connectionMultiplexer)
         {
-            return AddMessagePipeRedis(services, new SingleConnectionMultiplexerFactory(connectionMultiplexer), _ => { });
+            return AddMessagePipeRedis(builder, new SingleConnectionMultiplexerFactory(connectionMultiplexer), _ => { });
         }
 
-        public static IServiceCollection AddMessagePipeRedis(this IServiceCollection services, IConnectionMultiplexerFactory connectionMultiplexerFactory)
+        public static IMessagePipeBuilder AddMessagePipeRedis(this IMessagePipeBuilder builder, IConnectionMultiplexerFactory connectionMultiplexerFactory)
         {
-            return AddMessagePipeRedis(services, connectionMultiplexerFactory, _ => { });
+            return AddMessagePipeRedis(builder, connectionMultiplexerFactory, _ => { });
         }
 
-        public static IServiceCollection AddMessagePipeRedis(this IServiceCollection services, IConnectionMultiplexer connectionMultiplexer, Action<MessagePipeRedisOptions> configure)
+        public static IMessagePipeBuilder AddMessagePipeRedis(this IMessagePipeBuilder builder, IConnectionMultiplexer connectionMultiplexer, Action<MessagePipeRedisOptions> configure)
         {
-            return AddMessagePipeRedis(services, new SingleConnectionMultiplexerFactory(connectionMultiplexer), configure);
+            return AddMessagePipeRedis(builder, new SingleConnectionMultiplexerFactory(connectionMultiplexer), configure);
         }
 
-        public static IServiceCollection AddMessagePipeRedis(this IServiceCollection services, IConnectionMultiplexerFactory connectionMultiplexerFactory, Action<MessagePipeRedisOptions> configure)
+        public static IMessagePipeBuilder AddMessagePipeRedis(this IMessagePipeBuilder builder, IConnectionMultiplexerFactory connectionMultiplexerFactory, Action<MessagePipeRedisOptions> configure)
         {
             var options = new MessagePipeRedisOptions(connectionMultiplexerFactory);
             configure(options);
-            services.AddSingleton(options); // add as singleton instance
-            services.AddSingleton<IConnectionMultiplexerFactory>(options.ConnectionMultiplexerFactory);
-            services.AddSingleton<IRedisSerializer>(options.RedisSerializer);
+            builder.Services.AddSingleton(options); // add as singleton instance
+            builder.Services.AddSingleton<IConnectionMultiplexerFactory>(options.ConnectionMultiplexerFactory);
+            builder.Services.AddSingleton<IRedisSerializer>(options.RedisSerializer);
 
-            services.Add(typeof(IDistributedPublisher<,>), typeof(RedisPublisher<,>), InstanceLifetime.Singleton);
-            services.Add(typeof(IDistributedSubscriber<,>), typeof(RedisSubscriber<,>), InstanceLifetime.Singleton);
+            builder.Services.Add(typeof(IDistributedPublisher<,>), typeof(RedisPublisher<,>), InstanceLifetime.Singleton);
+            builder.Services.Add(typeof(IDistributedSubscriber<,>), typeof(RedisSubscriber<,>), InstanceLifetime.Singleton);
 
-            return services;
+            return builder;
         }
 
         static void Add(this IServiceCollection services, Type serviceType, Type implementationType, InstanceLifetime scope)

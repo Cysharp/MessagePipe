@@ -36,7 +36,7 @@ namespace MessagePipe.Benchmark
 
         public BenchmarkDotNetRun()
         {
-            var provider = new ServiceCollection().AddMessagePipe().BuildServiceProvider();
+            var provider = new ServiceCollection().AddMessagePipe().Services.BuildServiceProvider();
 
             prism = new Prism.Events.EventAggregator().GetEvent<Message>();
             prismStrong = new Prism.Events.EventAggregator().GetEvent<Message>();
