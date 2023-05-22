@@ -15,13 +15,11 @@ namespace MessagePipe.Redis
 
     public sealed class MessagePipeRedisOptions
     {
-        public IConnectionMultiplexerFactory ConnectionMultiplexerFactory { get; }
         public IRedisSerializer RedisSerializer { get; set; }
 
-        public MessagePipeRedisOptions(IConnectionMultiplexerFactory connectionMultiplexerFactory)
+        public MessagePipeRedisOptions()
         {
             this.RedisSerializer = new MessagePackRedisSerializer();
-            this.ConnectionMultiplexerFactory = connectionMultiplexerFactory;
         }
     }
 }
