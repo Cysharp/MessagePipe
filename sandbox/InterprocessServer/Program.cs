@@ -33,7 +33,7 @@ namespace InterprocessServer
                 .ConfigureServices(x =>
                 {
                     x.AddMessagePipe()
-                        .AddMessagePipeNamedPipeInterprocess("messagepipe-pipe");
+                        .AddNamedPipeInterprocess("messagepipe-pipe");
                 })
                 .RunConsoleAppFrameworkAsync<Program>(args);
         }
