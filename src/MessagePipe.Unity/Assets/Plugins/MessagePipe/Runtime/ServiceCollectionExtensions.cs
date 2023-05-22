@@ -15,12 +15,15 @@ namespace Microsoft.Extensions.DependencyInjection
 namespace MessagePipe
 #endif
 {
+    /// <summary>
+    /// An interface for configuring MessagePipe services.
+    /// </summary>
     public interface IMessagePipeBuilder
     {
         IServiceCollection Services { get; }
     }
 
-    internal class MessagePipeBuilder : IMessagePipeBuilder
+    public class MessagePipeBuilder : IMessagePipeBuilder
     {
         public IServiceCollection Services { get; }
 

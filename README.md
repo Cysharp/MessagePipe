@@ -975,16 +975,16 @@ For Unity, requires to import MessagePack-CSharp package and needs slightly diff
 var builder = new ContainerBuilder();
 var options = builder.RegisterMessagePipe(configure);
 
-var sc = builder.AsServiceCollection(); // require to convert ServiceCollection to enable Intereprocess
+var messagePipeBuilder = builder.ToMessagePipeBuilder(); // require to convert ServiceCollection to enable Intereprocess
 
-var interprocessOptions = sc.AddMessagePipeTcpInterprocess();
+var interprocessOptions = messagePipeBuilder.AddTcpInterprocess();
 
 // register manually.
 // IDistributedPublisher/Subscriber
-sc.RegisterTcpInterprocessMessageBroker<int, int>(interprocessOptions);
+messagePipeBuilder.RegisterTcpInterprocessMessageBroker<int, int>(interprocessOptions);
 // RemoteHandler
 builder.RegisterAsyncRequestHandler<int, string, MyAsyncHandler>(options); // for server
-sc.RegisterTcpRemoteRequestHandler<int, string>(interprocessOptions); // for client
+messagePipeBuilder.RegisterTcpRemoteRequestHandler<int, string>(interprocessOptions); // for client
 ```
 
 MessagePipeOptions
