@@ -18,10 +18,10 @@ namespace MessagePipe
             MessagePipeOptions options = null;
             var proxy = new ContainerBuilderProxy(builder);
             proxy.AddMessagePipe(x =>
-             {
-                 configure(x);
-                 options = x;
-             });
+            {
+                configure(x);
+                options = x;
+            });
 
             builder.Register<IServiceProvider, ObjectResolverProxy>(Lifetime.Scoped);
 
@@ -155,6 +155,11 @@ namespace MessagePipe
         public static IServiceCollection AsServiceCollection(this IContainerBuilder builder)
         {
             return new ContainerBuilderProxy(builder);
+        }
+
+        public static IMessagePipeBuilder ToMessagePipeBuilder(this IContainerBuilder builder)
+        {
+            return new MessagePipeBuilder(builder.AsServiceCollection());
         }
 
         static Lifetime GetLifetime(InstanceLifetime lifetime)

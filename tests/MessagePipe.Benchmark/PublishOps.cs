@@ -91,7 +91,7 @@ namespace MessagePipe.Benchmark
 
         public unsafe PublishOps()
         {
-            var provider = new ServiceCollection().AddMessagePipe().BuildServiceProvider();
+            var provider = new ServiceCollection().AddMessagePipe().Services.BuildServiceProvider();
 
             prism = new Prism.Events.EventAggregator().GetEvent<Message>();
             prismStrong = new Prism.Events.EventAggregator().GetEvent<Message>();
@@ -110,11 +110,11 @@ namespace MessagePipe.Benchmark
 
 
 
-            var px = new ServiceCollection().AddMessagePipe().BuildServiceProvider();
+            var px = new ServiceCollection().AddMessagePipe().Services.BuildServiceProvider();
             filter1 = px.GetRequiredService<IPublisher<Message>>();
             var filter1Sub = px.GetRequiredService<ISubscriber<Message>>();
 
-            var px2 = new ServiceCollection().AddMessagePipe().BuildServiceProvider();
+            var px2 = new ServiceCollection().AddMessagePipe().Services.BuildServiceProvider();
             filter2 = px2.GetRequiredService<IPublisher<Message>>();
             var filter2Sub = px2.GetRequiredService<ISubscriber<Message>>();
 

@@ -32,8 +32,8 @@ namespace InterprocessServer
             Host.CreateDefaultBuilder()
                 .ConfigureServices(x =>
                 {
-                    x.AddMessagePipe();
-                    x.AddMessagePipeNamedPipeInterprocess("messagepipe-pipe");
+                    x.AddMessagePipe()
+                        .AddNamedPipeInterprocess("messagepipe-pipe");
                 })
                 .RunConsoleAppFrameworkAsync<Program>(args);
         }

@@ -38,24 +38,24 @@ namespace MessagePipe.Tests
         public static IServiceProvider BuildRedisServiceProvider(IConnectionMultiplexer connection)
         {
             var sc = new ServiceCollection();
-            sc.AddMessagePipe();
-            sc.AddMessagePipeRedis(connection);
+            sc.AddMessagePipe()
+              .AddRedis(connection);
             return sc.BuildServiceProvider();
         }
 
         public static IServiceProvider BuildRedisServiceProvider(IConnectionMultiplexer connection, Action<MessagePipeOptions> configure)
         {
             var sc = new ServiceCollection();
-            sc.AddMessagePipe(configure);
-            sc.AddMessagePipeRedis(connection);
+            sc.AddMessagePipe(configure)
+              .AddRedis(connection);
             return sc.BuildServiceProvider();
         }
 
         public static IServiceProvider BuildRedisServiceProvider(IConnectionMultiplexer connection, Action<MessagePipeOptions> configure, Action<MessagePipeRedisOptions> redisConfigure)
         {
             var sc = new ServiceCollection();
-            sc.AddMessagePipe(configure);
-            sc.AddMessagePipeRedis(connection, redisConfigure);
+            sc.AddMessagePipe(configure)
+              .AddRedis(connection, redisConfigure);
             return sc.BuildServiceProvider();
         }
     }

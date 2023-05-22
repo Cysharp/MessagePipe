@@ -16,8 +16,8 @@ public class ConnectionMultiplexerFactoryTest
     {
         var connection = TestHelper.GetLocalConnectionMultiplexer();
         var services = new ServiceCollection();
-        services.AddMessagePipe();
-        services.AddMessagePipeRedis(connection);
+        services.AddMessagePipe()
+                .AddRedis(connection);
         var sp = services.BuildServiceProvider();
 
         var publisher = sp.GetRequiredService<IDistributedPublisher<string, string>>();
@@ -37,8 +37,8 @@ public class ConnectionMultiplexerFactoryTest
         var connection = TestHelper.GetLocalConnectionMultiplexer();
         var services = new ServiceCollection();
         services.AddSingleton<IConnectionMultiplexer>(connection);
-        services.AddMessagePipe();
-        services.AddMessagePipeRedis<TestConnectionMultiplexerFactory>();
+        services.AddMessagePipe()
+                .AddRedis<TestConnectionMultiplexerFactory>();
         var sp = services.BuildServiceProvider();
 
         var publisher = sp.GetRequiredService<IDistributedPublisher<string, string>>();

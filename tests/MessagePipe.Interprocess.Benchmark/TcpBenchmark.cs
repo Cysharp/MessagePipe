@@ -21,11 +21,11 @@ namespace MessagePipe.Interprocess.Benchmark
         IServiceProvider CreateTcpIpServiceProvider()
         {
             var services = new ServiceCollection();
-            services.AddMessagePipe();
-            services.AddMessagePipeTcpInterprocess("127.0.0.1", 10000, opts =>
-            {
-                opts.HostAsServer = true;
-            });
+            services.AddMessagePipe()
+                .AddTcpInterprocess("127.0.0.1", 10000, opts =>
+                {
+                    opts.HostAsServer = true;
+                });
             return services.BuildServiceProvider();
         }
         IServiceProvider CreateTcpUdsServiceProvider()
@@ -36,13 +36,13 @@ namespace MessagePipe.Interprocess.Benchmark
                 System.IO.File.Delete(_TcpUdsSocketPath);
             }
             var services = new ServiceCollection();
-            services.AddMessagePipe();
-            services.AddMessagePipeTcpInterprocessUds(_TcpUdsSocketPath, opt =>
-            {
-                opt.HostAsServer = true;
-                opt.SendBufferSize = Math.Min(DataSize, 0x1000);
-                opt.ReceiveBufferSize = Math.Min(DataSize, 0x1000);
-            });
+            services.AddMessagePipe()
+                .AddTcpInterprocessUds(_TcpUdsSocketPath, opt =>
+                {
+                    opt.HostAsServer = true;
+                    opt.SendBufferSize = Math.Min(DataSize, 0x1000);
+                    opt.ReceiveBufferSize = Math.Min(DataSize, 0x1000);
+                });
             return services.BuildServiceProvider();
         }
         [GlobalSetup]

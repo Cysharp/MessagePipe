@@ -19,12 +19,12 @@ public class InterprocessTest
         {
         }, (options, builder) =>
         {
-            var sc = builder.AsServiceCollection();
-            var newOptions = sc.AddMessagePipeUdpInterprocess("127.0.0.1", 1192, x =>
+            var messagePipeBuilder = builder.ToMessagePipeBuilder();
+            var newOptions = messagePipeBuilder.AddUdpInterprocess("127.0.0.1", 1192, x =>
             {
                 x.InstanceLifetime = InstanceLifetime.Scoped;
             });
-            sc.RegisterUpdInterprocessMessageBroker<int, int>(newOptions);
+            messagePipeBuilder.RegisterUpdInterprocessMessageBroker<int, int>(newOptions);
         });
 
         using (var provider = rootProvider)
@@ -62,13 +62,13 @@ public class InterprocessTest
         {
         }, (options, builder) =>
         {
-            var sc = builder.AsServiceCollection();
-            var newOptions = sc.AddMessagePipeTcpInterprocess("127.0.0.1", 1211, x =>
+            var messagePipeBuilder = builder.ToMessagePipeBuilder();
+            var newOptions = messagePipeBuilder.AddTcpInterprocess("127.0.0.1", 1211, x =>
              {
                  x.InstanceLifetime = InstanceLifetime.Scoped;
                  x.HostAsServer = true;
              });
-            sc.RegisterTcpInterprocessMessageBroker<int, int>(newOptions);
+            messagePipeBuilder.RegisterTcpInterprocessMessageBroker<int, int>(newOptions);
         });
 
         using (var provider = rootProvider)
