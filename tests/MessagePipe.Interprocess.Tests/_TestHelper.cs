@@ -10,7 +10,7 @@ namespace MessagePipe.Interprocess.Tests
         {
             var sc = new ServiceCollection();
             sc.AddMessagePipe()
-                .AddMessagePipeUdpInterprocess(host, port, x =>
+                .AddUdpInterprocess(host, port, x =>
                 {
                     x.UnhandledErrorHandler = (msg, e) => helper.WriteLine(msg + e);
                 });
@@ -20,7 +20,7 @@ namespace MessagePipe.Interprocess.Tests
         {
             var sc = new ServiceCollection();
             sc.AddMessagePipe()
-                .AddMessagePipeUdpInterprocessUds(domainSocketPath, x =>
+                .AddUdpInterprocessUds(domainSocketPath, x =>
                 {
                     x.UnhandledErrorHandler = (msg, e) => helper.WriteLine(msg + e);
                 });
@@ -30,7 +30,7 @@ namespace MessagePipe.Interprocess.Tests
         {
             var sc = new ServiceCollection();
             sc.AddMessagePipe()
-                .AddMessagePipeTcpInterprocess(host, port, x =>
+                .AddTcpInterprocess(host, port, x =>
                 {
                     x.HostAsServer = asServer;
                     x.UnhandledErrorHandler = (msg, e) => helper.WriteLine(msg + e);
@@ -41,7 +41,7 @@ namespace MessagePipe.Interprocess.Tests
         {
             var sc = new ServiceCollection();
             sc.AddMessagePipe()
-                .AddMessagePipeTcpInterprocessUds(domainSocketPath, x =>
+                .AddTcpInterprocessUds(domainSocketPath, x =>
                 {
                     x.HostAsServer = asServer;
                     x.UnhandledErrorHandler = (msg, e) => helper.WriteLine(msg + e);
@@ -53,7 +53,7 @@ namespace MessagePipe.Interprocess.Tests
         {
             var sc = new ServiceCollection();
             sc.AddMessagePipe()
-                .AddMessagePipeNamedPipeInterprocess(pipeName, x =>
+                .AddNamedPipeInterprocess(pipeName, x =>
                 {
                     x.HostAsServer = asServer;
                     x.UnhandledErrorHandler = (msg, e) => helper.WriteLine(msg + e);

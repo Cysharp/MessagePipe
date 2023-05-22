@@ -16,12 +16,12 @@ namespace MessagePipe
 {
     public static class ServiceCollectionInterprocessExtensions
     {
-        public static ReturnType AddMessagePipeUdpInterprocess(this IMessagePipeBuilder builder, string host, int port)
+        public static ReturnType AddUdpInterprocess(this IMessagePipeBuilder builder, string host, int port)
         {
-            return AddMessagePipeUdpInterprocess(builder, host, port, _ => { });
+            return AddUdpInterprocess(builder, host, port, _ => { });
         }
 
-        public static ReturnType AddMessagePipeUdpInterprocess(this IMessagePipeBuilder builder, string host, int port, Action<MessagePipeInterprocessUdpOptions> configure)
+        public static ReturnType AddUdpInterprocess(this IMessagePipeBuilder builder, string host, int port, Action<MessagePipeInterprocessUdpOptions> configure)
         {
             var options = new MessagePipeInterprocessUdpOptions(host, port);
             configure(options);
@@ -39,12 +39,12 @@ namespace MessagePipe
 #endif
         }
 
-        public static ReturnType AddMessagePipeTcpInterprocess(this IMessagePipeBuilder builder, string host, int port)
+        public static ReturnType AddTcpInterprocess(this IMessagePipeBuilder builder, string host, int port)
         {
-            return AddMessagePipeTcpInterprocess(builder, host, port, _ => { });
+            return AddTcpInterprocess(builder, host, port, _ => { });
         }
 
-        public static ReturnType AddMessagePipeTcpInterprocess(this IMessagePipeBuilder builder, string host, int port, Action<MessagePipeInterprocessTcpOptions> configure)
+        public static ReturnType AddTcpInterprocess(this IMessagePipeBuilder builder, string host, int port, Action<MessagePipeInterprocessTcpOptions> configure)
         {
             var options = new MessagePipeInterprocessTcpOptions(host, port);
             configure(options);
@@ -68,12 +68,12 @@ namespace MessagePipe
 
         // NamedPipe in Unity is slightly buggy so disable.
 
-        public static ReturnType AddMessagePipeNamedPipeInterprocess(this IMessagePipeBuilder builder, string pipeName)
+        public static ReturnType AddNamedPipeInterprocess(this IMessagePipeBuilder builder, string pipeName)
         {
-            return AddMessagePipeNamedPipeInterprocess(builder, pipeName, _ => { });
+            return AddNamedPipeInterprocess(builder, pipeName, _ => { });
         }
 
-        public static ReturnType AddMessagePipeNamedPipeInterprocess(this IMessagePipeBuilder builder, string pipeName, Action<MessagePipeInterprocessNamedPipeOptions> configure)
+        public static ReturnType AddNamedPipeInterprocess(this IMessagePipeBuilder builder, string pipeName, Action<MessagePipeInterprocessNamedPipeOptions> configure)
         {
             var options = new MessagePipeInterprocessNamedPipeOptions(pipeName);
             configure(options);
@@ -165,11 +165,11 @@ namespace MessagePipe
 
 #endif
 #if NET5_0_OR_GREATER
-        public static ReturnType AddMessagePipeUdpInterprocessUds(this IMessagePipeBuilder builder, string domainSocketPath)
+        public static ReturnType AddUdpInterprocessUds(this IMessagePipeBuilder builder, string domainSocketPath)
         {
-            return AddMessagePipeUdpInterprocessUds(builder, domainSocketPath, _ => { });
+            return AddUdpInterprocessUds(builder, domainSocketPath, _ => { });
         }
-        public static ReturnType AddMessagePipeUdpInterprocessUds(this IMessagePipeBuilder builder, string domainSocketPath, Action<MessagePipeInterprocessUdpUdsOptions> configure)
+        public static ReturnType AddUdpInterprocessUds(this IMessagePipeBuilder builder, string domainSocketPath, Action<MessagePipeInterprocessUdpUdsOptions> configure)
         {
             var options = new MessagePipeInterprocessUdpUdsOptions(domainSocketPath);
             configure(options);
@@ -186,12 +186,12 @@ namespace MessagePipe
             return options;
 #endif
         }
-        public static ReturnType AddMessagePipeTcpInterprocessUds(this IMessagePipeBuilder builder, string domainSocketPath)
+        public static ReturnType AddTcpInterprocessUds(this IMessagePipeBuilder builder, string domainSocketPath)
         {
-            return AddMessagePipeTcpInterprocessUds(builder, domainSocketPath, _ => { });
+            return AddTcpInterprocessUds(builder, domainSocketPath, _ => { });
         }
 
-        public static ReturnType AddMessagePipeTcpInterprocessUds(this IMessagePipeBuilder builder, string domainSocketPath, Action<MessagePipeInterprocessTcpUdsOptions> configure)
+        public static ReturnType AddTcpInterprocessUds(this IMessagePipeBuilder builder, string domainSocketPath, Action<MessagePipeInterprocessTcpUdsOptions> configure)
         {
             var options = new MessagePipeInterprocessTcpUdsOptions(domainSocketPath);
             configure(options);

@@ -22,7 +22,7 @@ namespace MessagePipe.Interprocess.Benchmark
         {
             var services = new ServiceCollection();
             services.AddMessagePipe()
-                .AddMessagePipeTcpInterprocess(ip, port, opts =>
+                .AddTcpInterprocess(ip, port, opts =>
                 {
                     opts.HostAsServer = true;
                 });
@@ -36,7 +36,7 @@ namespace MessagePipe.Interprocess.Benchmark
             }
             var services = new ServiceCollection();
             services.AddMessagePipe()
-                .AddMessagePipeTcpInterprocessUds(socketPath, opt =>
+                .AddTcpInterprocessUds(socketPath, opt =>
                 {
                     opt.HostAsServer = true;
                     opt.SendBufferSize = Math.Min(DataSize, 0x1000);

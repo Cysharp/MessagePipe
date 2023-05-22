@@ -39,7 +39,7 @@ namespace MessagePipe.Tests
         {
             var sc = new ServiceCollection();
             sc.AddMessagePipe()
-              .AddMessagePipeRedis(connection);
+              .AddRedis(connection);
             return sc.BuildServiceProvider();
         }
 
@@ -47,7 +47,7 @@ namespace MessagePipe.Tests
         {
             var sc = new ServiceCollection();
             sc.AddMessagePipe(configure)
-              .AddMessagePipeRedis(connection);
+              .AddRedis(connection);
             return sc.BuildServiceProvider();
         }
 
@@ -55,7 +55,7 @@ namespace MessagePipe.Tests
         {
             var sc = new ServiceCollection();
             sc.AddMessagePipe(configure)
-              .AddMessagePipeRedis(connection, redisConfigure);
+              .AddRedis(connection, redisConfigure);
             return sc.BuildServiceProvider();
         }
     }

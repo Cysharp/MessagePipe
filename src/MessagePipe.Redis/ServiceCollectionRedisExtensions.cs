@@ -9,22 +9,22 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class ServiceCollectionRedisExtensions
     {
-        public static IMessagePipeBuilder AddMessagePipeRedis(this IMessagePipeBuilder builder, IConnectionMultiplexer connectionMultiplexer)
+        public static IMessagePipeBuilder AddRedis(this IMessagePipeBuilder builder, IConnectionMultiplexer connectionMultiplexer)
         {
-            return AddMessagePipeRedis(builder, new SingleConnectionMultiplexerFactory(connectionMultiplexer), _ => { });
+            return AddRedis(builder, new SingleConnectionMultiplexerFactory(connectionMultiplexer), _ => { });
         }
 
-        public static IMessagePipeBuilder AddMessagePipeRedis(this IMessagePipeBuilder builder, IConnectionMultiplexerFactory connectionMultiplexerFactory)
+        public static IMessagePipeBuilder AddRedis(this IMessagePipeBuilder builder, IConnectionMultiplexerFactory connectionMultiplexerFactory)
         {
-            return AddMessagePipeRedis(builder, connectionMultiplexerFactory, _ => { });
+            return AddRedis(builder, connectionMultiplexerFactory, _ => { });
         }
 
-        public static IMessagePipeBuilder AddMessagePipeRedis(this IMessagePipeBuilder builder, IConnectionMultiplexer connectionMultiplexer, Action<MessagePipeRedisOptions> configure)
+        public static IMessagePipeBuilder AddRedis(this IMessagePipeBuilder builder, IConnectionMultiplexer connectionMultiplexer, Action<MessagePipeRedisOptions> configure)
         {
-            return AddMessagePipeRedis(builder, new SingleConnectionMultiplexerFactory(connectionMultiplexer), configure);
+            return AddRedis(builder, new SingleConnectionMultiplexerFactory(connectionMultiplexer), configure);
         }
 
-        public static IMessagePipeBuilder AddMessagePipeRedis(this IMessagePipeBuilder builder, IConnectionMultiplexerFactory connectionMultiplexerFactory, Action<MessagePipeRedisOptions> configure)
+        public static IMessagePipeBuilder AddRedis(this IMessagePipeBuilder builder, IConnectionMultiplexerFactory connectionMultiplexerFactory, Action<MessagePipeRedisOptions> configure)
         {
             var options = new MessagePipeRedisOptions(connectionMultiplexerFactory);
             configure(options);

@@ -822,8 +822,8 @@ use `AddMessagePipeRedis` to enable redis provider.
 Host.CreateDefaultBuilder()
     .ConfigureServices((ctx, services) =>
     {
-        services.AddMessagePipe();
-        services.AddMessagePipeRedis(IConnectionMultiplexer | IConnectionMultiplexerFactory, configure);
+        services.AddMessagePipe()
+            .AddRedis(IConnectionMultiplexer | IConnectionMultiplexerFactory, configure);
     })
 ```
 
@@ -863,7 +863,7 @@ Host.CreateDefaultBuilder()
         else
         {
             // use Redis IDistributedPublisher/Subscriber
-            builder.AddMessagePipeRedis();
+            builder.AddRedis();
         }
     });
 ```
@@ -876,18 +876,18 @@ For the interprocess(NamedPipe/UDP/TCP) Pub/Sub(IPC), you can use `IDistributedP
 
 MessagePipe.Interprocess is also exsits on Unity(except NamedPipe).
 
-use `AddMessagePipeUdpInterprocess`, `AddMessagePipeTcpInterprocess`, `AddMessagePipeNamedPipeInterprocess`, `AddMessagePipeUdpInterprocessUds`, `AddMessagePipeTcpInterprocessUds` to enable interprocess provider(Uds is Unix domain socket, most performant option).
+use `AddUdpInterprocess`, `AddTcpInterprocess`, `AddNamedPipeInterprocess`, `AddUdpInterprocessUds`, `AddTcpInterprocessUds` to enable interprocess provider(Uds is Unix domain socket, most performant option).
 
 ```csharp
 Host.CreateDefaultBuilder()
     .ConfigureServices((ctx, services) =>
     {
         services.AddMessagePipe()
-            .AddMessagePipeUdpInterprocess("127.0.0.1", 3215, configure); // setup host and port.
-            // .AddMessagePipeTcpInterprocess("127.0.0.1", 3215, configure);
-            // .AddMessagePipeNamedPipeInterprocess("messagepipe-namedpipe", configure);
-            // .AddMessagePipeUdpInterprocessUds("domainSocketPath")
-            // .AddMessagePipeTcpInterprocessUds("domainSocketPath")
+            .AddUdpInterprocess("127.0.0.1", 3215, configure); // setup host and port.
+            // .AddTcpInterprocess("127.0.0.1", 3215, configure);
+            // .AddNamedPipeInterprocess("messagepipe-namedpipe", configure);
+            // .AddUdpInterprocessUds("domainSocketPath")
+            // .AddTcpInterprocessUds("domainSocketPath")
     })
 ```
 
@@ -919,7 +919,7 @@ Tcp has no such restrictions and is the most flexible of all the options.
 In default uses [MessagePack for C#](https://github.com/neuecc/MessagePack-CSharp)'s `ContractlessStandardResolver` for message serialization. You can change to use other `MessagePackSerializerOptions` by MessagePipeInterprocessOptions.MessagePackSerializerOptions.
 
 ```csharp
-services.AddMessagePipeUdpInterprocess("127.0.0.1", 3215, options =>
+builder.AddUdpInterprocess("127.0.0.1", 3215, options =>
 {
     // You can configure other options, `InstanceLifetime` and `UnhandledErrorHandler`.
     options.MessagePackSerializerOptions = StandardResolver.Options;
@@ -933,7 +933,7 @@ Host.CreateDefaultBuilder()
     .ConfigureServices((ctx, services) =>
     {
         services.AddMessagePipe()
-            .AddMessagePipeTcpInterprocess("127.0.0.1", 3215, x =>
+            .AddTcpInterprocess("127.0.0.1", 3215, x =>
             {
                 x.HostAsServer = true; // if remote process as server, set true(otherwise false(default)).
             });

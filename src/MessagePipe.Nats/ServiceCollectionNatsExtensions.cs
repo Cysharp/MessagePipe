@@ -6,12 +6,12 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class ServiceCollectionNatsExtensions
 {
-    public static IMessagePipeBuilder AddMessagePipeNats(this IMessagePipeBuilder builder, NatsConnectionFactory connectionFactory)
+    public static IMessagePipeBuilder AddNats(this IMessagePipeBuilder builder, NatsConnectionFactory connectionFactory)
     {
-        return AddMessagePipeNats(builder, connectionFactory, _ => { });
+        return AddNats(builder, connectionFactory, _ => { });
     }
 
-    public static IMessagePipeBuilder AddMessagePipeNats(this IMessagePipeBuilder builder, NatsConnectionFactory connectionFactory, Action<MessagePipeNatsOptions> configure)
+    public static IMessagePipeBuilder AddNats(this IMessagePipeBuilder builder, NatsConnectionFactory connectionFactory, Action<MessagePipeNatsOptions> configure)
     {
         var options = new MessagePipeNatsOptions(connectionFactory);
         configure(options);

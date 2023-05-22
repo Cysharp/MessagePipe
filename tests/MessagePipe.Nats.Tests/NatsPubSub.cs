@@ -123,11 +123,11 @@ public static class TestHelper
 
         if (serializer == default)
         {
-            builder.AddMessagePipeNats(new NatsConnectionFactory());
+            builder.AddNats(new NatsConnectionFactory());
         }
         else
         {
-            builder.AddMessagePipeNats(new NatsConnectionFactory(NatsOptions.Default with
+            builder.AddNats(new NatsConnectionFactory(NatsOptions.Default with
             {
                 Serializer = serializer
             }));
