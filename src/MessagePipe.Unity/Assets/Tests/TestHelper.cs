@@ -5,6 +5,13 @@ using Zenject;
 
 public static class TestHelper
 {
+    public static IObjectResolver BuildVContainer()
+    {
+        var builder = new ContainerBuilder();
+        builder.RegisterMessagePipe();
+        return builder.Build();
+    }
+    
     public static IObjectResolver BuildVContainer(Action<MessagePipeOptions> configure, Action<MessagePipeOptions, ContainerBuilder> use)
     {
         var builder = new ContainerBuilder();

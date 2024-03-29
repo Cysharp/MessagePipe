@@ -13,10 +13,7 @@ public class VContainerTest
     [Test]
     public void SimpelePush()
     {
-        var resolver = TestHelper.BuildVContainer((options, builder) =>
-       {
-           builder.RegisterMessageBroker<int>(options);
-       });
+        var resolver = TestHelper.BuildVContainer();
 
         var pub = resolver.Resolve<IPublisher<int>>();
         var sub1 = resolver.Resolve<ISubscriber<int>>();
@@ -40,10 +37,7 @@ public class VContainerTest
     [UnityTest]
     public IEnumerator SimpleAsyncPush() => UniTask.ToCoroutine(async () =>
     {
-        var resolver = TestHelper.BuildVContainer((options, builder) =>
-       {
-           builder.RegisterMessageBroker<int>(options);
-       });
+        var resolver = TestHelper.BuildVContainer();
 
         var pub = resolver.Resolve<IAsyncPublisher<int>>();
         var sub1 = resolver.Resolve<IAsyncSubscriber<int>>();
@@ -74,8 +68,6 @@ public class VContainerTest
            options.AddGlobalMessageHandlerFilter<MyFilter<int>>(1200);
        }, (options, builder) =>
        {
-           builder.RegisterMessageBroker<int>(options);
-
            builder.RegisterMessageHandlerFilter<MyFilter<int>>();
            builder.RegisterInstance(store);
        });
@@ -160,10 +152,7 @@ public class VContainerTest
     [Test]
     public void Buffered()
     {
-        var provider = TestHelper.BuildVContainer((options, builder) =>
-        {
-            builder.RegisterMessageBroker<IntClass>(options);
-        });
+        var provider = TestHelper.BuildVContainer();
 
         var p = provider.Resolve<IBufferedPublisher<IntClass>>();
         var s = provider.Resolve<IBufferedSubscriber<IntClass>>();
