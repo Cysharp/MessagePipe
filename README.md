@@ -1179,7 +1179,8 @@ You need to install Core library and choose [VContainer](https://github.com/hada
 
 Andalso, requires [UniTask](https://github.com/Cysharp/UniTask) to install, all `ValueTask` declaration in .NET is replaced to `UniTask`.
 
-Unity version does not have open generics support(for IL2CPP) and does not support auto registration. Therefore, all required types need to be manually registered.
+> [!NOTE]
+> Unity version does not have open generics support(for IL2CPP) and does not support auto registration. Therefore, all required types need to be manually registered.
 
 VContainer's installation sample.
 
@@ -1232,6 +1233,15 @@ public class MessagePipeDemo : VContainer.Unity.IStartable
     }
 }
 ```
+
+> [!TIP]
+> If you are using Unity 2022.1 or later and VContainer 1.14.0 or later, you do not need `RegsiterMessageBroker<>`. 
+> A set of types including `ISubscriber<>`, `IPublisher<>` or its asynchronous version will be resolved automatically.
+> Note that `IRequesthandler<>` and `IRequestAllHanlder<>` still require manual registration.
+
+
+Unity version does not have open generics support(for IL2CPP) and does not support auto registration. Therefore, all required types need to be manually registered.
+
 
 Zenject's installation sample.
 
