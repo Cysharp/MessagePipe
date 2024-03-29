@@ -169,6 +169,10 @@ namespace MessagePipe
         }
 
 
+        public void Add(Type serviceType, InstanceLifetime lifetime)
+        {
+            Add(serviceType, serviceType, lifetime);
+        }
 
         public void Add(Type serviceType, Type implementationType, InstanceLifetime lifetime)
         {

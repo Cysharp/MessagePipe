@@ -40,7 +40,7 @@ namespace MessagePipe
                 services.TryAddTransient(item); // filter itself is Transient
             }
 
-#if !UNITY_2018_3_OR_NEWER
+#if !UNITY_2018_3_OR_NEWER || (MESSAGEPIPE_OPENGENERICS_SUPPORT && UNITY_2022_1_OR_NEWER)
             // open generics implemntations(.NET Only)
 
             {
@@ -107,6 +107,8 @@ namespace MessagePipe
 
             var lifetime2 = options.RequestHandlerLifetime; // requesthandler lifetime
 
+#endif
+#if !UNITY_2018_3_OR_NEWER
             // RequestHandler
             services.Add(typeof(IRequestHandler<,>), typeof(RequestHandler<,>), lifetime2);
             services.Add(typeof(IAsyncRequestHandler<,>), typeof(AsyncRequestHandler<,>), lifetime2);
@@ -114,7 +116,7 @@ namespace MessagePipe
             // RequestAll
             services.Add(typeof(IRequestAllHandler<,>), typeof(RequestAllHandler<,>), lifetime2);
             services.Add(typeof(IAsyncRequestAllHandler<,>), typeof(AsyncRequestAllHandler<,>), lifetime2);
-
+            
             // auto registration is .NET only.
             if (options.EnableAutoRegistration)
             {

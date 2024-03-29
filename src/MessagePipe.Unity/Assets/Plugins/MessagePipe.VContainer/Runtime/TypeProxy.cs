@@ -46,6 +46,15 @@ namespace MessagePipe.VContainer
             builder.Register(implementationType, lifetime).As(serviceType);
         }
 
+        public void Add(Type serviceType, InstanceLifetime lifetime)
+        {
+            var l = (lifetime == InstanceLifetime.Singleton) ? Lifetime.Singleton
+                : (lifetime == InstanceLifetime.Scoped) ? Lifetime.Scoped
+                : Lifetime.Transient;
+            
+            builder.Register(serviceType, l);
+        }
+
         public void Add(Type serviceType, Type implementationType, InstanceLifetime lifetime)
         {
             var l = (lifetime == InstanceLifetime.Singleton) ? Lifetime.Singleton
