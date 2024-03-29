@@ -40,7 +40,7 @@ namespace MessagePipe
                 services.TryAddTransient(item); // filter itself is Transient
             }
 
-#if !UNITY_2018_3_OR_NEWER || MESSAGEPIPE_OPENGENERICS_SUPPORT
+#if !UNITY_2018_3_OR_NEWER || (MESSAGEPIPE_OPENGENERICS_SUPPORT && UNITY_2022_1_OR_NEWER)
             // open generics implemntations(.NET Only)
 
             {
