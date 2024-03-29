@@ -19,19 +19,19 @@ namespace MessagePipe.Tests
             return sc.BuildServiceProvider();
         }
 
-        public static IServiceProvider BuildServiceProvider2(Action<ServiceCollection> configureService)
+        public static IServiceProvider BuildServiceProvider2(Action<IMessagePipeBuilder> configureService)
         {
             var sc = new ServiceCollection();
-            sc.AddMessagePipe();
-            configureService(sc);
+            var builder = sc.AddMessagePipe();
+            configureService(builder);
             return sc.BuildServiceProvider();
         }
 
-        public static IServiceProvider BuildServiceProvider3(Action<MessagePipeOptions> configure, Action<ServiceCollection> configureService)
+        public static IServiceProvider BuildServiceProvider3(Action<MessagePipeOptions> configure, Action<IMessagePipeBuilder> configureService)
         {
             var sc = new ServiceCollection();
-            sc.AddMessagePipe(configure);
-            configureService(sc);
+            var builder = sc.AddMessagePipe(configure);
+            configureService(builder);
             return sc.BuildServiceProvider();
         }
     }

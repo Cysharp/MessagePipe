@@ -7,17 +7,40 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
+#if !UNITY_2018_3_OR_NEWER
+namespace Microsoft.Extensions.DependencyInjection
+#else
 namespace MessagePipe
+#endif
 {
+    /// <summary>
+    /// An interface for configuring MessagePipe services.
+    /// </summary>
+    public interface IMessagePipeBuilder
+    {
+        IServiceCollection Services { get; }
+    }
+
+    public class MessagePipeBuilder : IMessagePipeBuilder
+    {
+        public IServiceCollection Services { get; }
+
+        public MessagePipeBuilder(IServiceCollection services)
+        {
+            Services = services;
+        }
+    }
+
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddMessagePipe(this IServiceCollection services)
+        public static IMessagePipeBuilder AddMessagePipe(this IServiceCollection services)
         {
             return AddMessagePipe(services, _ => { });
         }
 
-        public static IServiceCollection AddMessagePipe(this IServiceCollection services, Action<MessagePipeOptions> configure)
+        public static IMessagePipeBuilder AddMessagePipe(this IServiceCollection services, Action<MessagePipeOptions> configure)
         {
             var options = new MessagePipeOptions();
             configure(options);
@@ -139,67 +162,67 @@ namespace MessagePipe
 
 #endif
 
-            return services;
+            return new MessagePipeBuilder(services);
         }
 
 #if !UNITY_2018_3_OR_NEWER
 
-        public static IServiceCollection AddMessageHandlerFilter<T>(this IServiceCollection services)
+        public static IMessagePipeBuilder AddMessageHandlerFilter<T>(this IMessagePipeBuilder builder)
             where T : class, IMessageHandlerFilter
         {
-            services.TryAddTransient<T>();
-            return services;
+            builder.Services.TryAddTransient<T>();
+            return builder;
         }
 
-        public static IServiceCollection AddAsyncMessageHandlerFilter<T>(this IServiceCollection services)
+        public static IMessagePipeBuilder AddAsyncMessageHandlerFilter<T>(this IMessagePipeBuilder builder)
             where T : class, IAsyncMessageHandlerFilter
         {
-            services.TryAddTransient<T>();
-            return services;
+            builder.Services.TryAddTransient<T>();
+            return builder;
         }
 
-        public static IServiceCollection AddRequestHandlerFilter<T>(this IServiceCollection services)
+        public static IMessagePipeBuilder AddRequestHandlerFilter<T>(this IMessagePipeBuilder builder)
             where T : class, IRequestHandlerFilter
         {
-            services.TryAddTransient<T>();
-            return services;
+            builder.Services.TryAddTransient<T>();
+            return builder;
         }
 
-        public static IServiceCollection AddAsyncRequestHandlerFilter<T>(this IServiceCollection services)
+        public static IMessagePipeBuilder AddAsyncRequestHandlerFilter<T>(this IMessagePipeBuilder builder)
             where T : class, IAsyncRequestHandlerFilter
         {
-            services.TryAddTransient<T>();
-            return services;
+            builder.Services.TryAddTransient<T>();
+            return builder;
         }
 
-        public static IServiceCollection AddRequestHandler(this IServiceCollection services, Type type)
+        public static IMessagePipeBuilder AddRequestHandler(this IMessagePipeBuilder builder, Type type)
         {
-            return AddRequestHandlerCore(services, type, typeof(IRequestHandlerCore<,>));
+            return AddRequestHandlerCore(builder, type, typeof(IRequestHandlerCore<,>));
         }
 
-        public static IServiceCollection AddRequestHandler<T>(this IServiceCollection services)
+        public static IMessagePipeBuilder AddRequestHandler<T>(this IMessagePipeBuilder builder)
             where T : IRequestHandler
         {
-            return AddRequestHandler(services, typeof(T));
+            return AddRequestHandler(builder, typeof(T));
         }
 
-        public static IServiceCollection AddAsyncRequestHandler(this IServiceCollection services, Type type)
+        public static IMessagePipeBuilder AddAsyncRequestHandler(this IMessagePipeBuilder builder, Type type)
         {
-            return AddRequestHandlerCore(services, type, typeof(IAsyncRequestHandlerCore<,>));
+            return AddRequestHandlerCore(builder, type, typeof(IAsyncRequestHandlerCore<,>));
         }
 
-        public static IServiceCollection AddAsyncRequestHandler<T>(this IServiceCollection services)
+        public static IMessagePipeBuilder AddAsyncRequestHandler<T>(this IMessagePipeBuilder builder)
             where T : IAsyncRequestHandler
         {
-            return AddAsyncRequestHandler(services, typeof(T));
+            return AddAsyncRequestHandler(builder, typeof(T));
         }
 
-        static IServiceCollection AddRequestHandlerCore(IServiceCollection services, Type type, Type coreType)
+        static IMessagePipeBuilder AddRequestHandlerCore(IMessagePipeBuilder builder, Type type, Type coreType)
         {
-            var options = services.FirstOrDefault(x => x.ServiceType == typeof(MessagePipeOptions));
+            var options = builder.Services.FirstOrDefault(x => x.ServiceType == typeof(MessagePipeOptions));
             if (options == null)
             {
-                throw new ArgumentException($"Not yet added MessagePipeOptions, please call servcies.AddMessagePipe() before.");
+                throw new ArgumentException($"Not yet added MessagePipeOptions, please call services.AddMessagePipe() before.");
             }
             var isAsync = (coreType == typeof(IAsyncRequestHandlerCore<,>));
 
@@ -220,7 +243,7 @@ namespace MessagePipe
                     }
 
                     registered = true;
-                    services.Add(iType, type, ((MessagePipeOptions)options.ImplementationInstance!).RequestHandlerLifetime);
+                    builder.Services.Add(iType, type, ((MessagePipeOptions)options.ImplementationInstance!).RequestHandlerLifetime);
                 }
             }
 
@@ -233,22 +256,22 @@ namespace MessagePipe
                 AsyncRequestHandlerRegistory.Add(coreType);
             }
 
-            return services;
+            return builder;
         }
 
-        public static IServiceCollection AddInMemoryDistributedMessageBroker(this IServiceCollection services)
+        public static IMessagePipeBuilder AddInMemoryDistributedMessageBroker(this IMessagePipeBuilder builder)
         {
-            var options = services.FirstOrDefault(x => x.ServiceType == typeof(MessagePipeOptions));
+            var options = builder.Services.FirstOrDefault(x => x.ServiceType == typeof(MessagePipeOptions));
             if (options == null)
             {
-                throw new ArgumentException($"Not yet added MessagePipeOptions, please call servcies.AddMessagePipe() before.");
+                throw new ArgumentException($"Not yet added MessagePipeOptions, please call services.AddMessagePipe() before.");
             }
 
             var lifetime = ((MessagePipeOptions)options.ImplementationInstance!).InstanceLifetime;
-            services.Add(typeof(IDistributedPublisher<,>), typeof(InMemoryDistributedPublisher<,>), lifetime);
-            services.Add(typeof(IDistributedSubscriber<,>), typeof(InMemoryDistributedSubscriber<,>), lifetime);
+            builder.Services.Add(typeof(IDistributedPublisher<,>), typeof(InMemoryDistributedPublisher<,>), lifetime);
+            builder.Services.Add(typeof(IDistributedSubscriber<,>), typeof(InMemoryDistributedSubscriber<,>), lifetime);
 
-            return services;
+            return builder;
         }
 
         internal static void Add(this IServiceCollection services, Type serviceType, InstanceLifetime lifetime)

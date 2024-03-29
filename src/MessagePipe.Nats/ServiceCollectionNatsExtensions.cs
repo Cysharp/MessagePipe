@@ -1,25 +1,27 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿
+using MessagePipe;
+using MessagePipe.Nats;
 
-namespace MessagePipe.Nats;
+namespace Microsoft.Extensions.DependencyInjection;
 
 public static class ServiceCollectionNatsExtensions
 {
-    public static IServiceCollection AddMessagePipeNats(this IServiceCollection services, NatsConnectionFactory connectionFactory)
+    public static IMessagePipeBuilder AddNats(this IMessagePipeBuilder builder, NatsConnectionFactory connectionFactory)
     {
-        return AddMessagePipeNats(services, connectionFactory, _ => { });
+        return AddNats(builder, connectionFactory, _ => { });
     }
 
-    public static IServiceCollection AddMessagePipeNats(this IServiceCollection services, NatsConnectionFactory connectionFactory, Action<MessagePipeNatsOptions> configure)
+    public static IMessagePipeBuilder AddNats(this IMessagePipeBuilder builder, NatsConnectionFactory connectionFactory, Action<MessagePipeNatsOptions> configure)
     {
         var options = new MessagePipeNatsOptions(connectionFactory);
         configure(options);
-        services.AddSingleton(options);
-        services.AddSingleton(options.NatsConnectionFactory);
+        builder.Services.AddSingleton(options);
+        builder.Services.AddSingleton(options.NatsConnectionFactory);
 
-        services.Add(typeof(IDistributedPublisher<,>), typeof(NatsPublisher<,>), InstanceLifetime.Singleton);
-        services.Add(typeof(IDistributedSubscriber<,>), typeof(NatsSubscriber<,>), InstanceLifetime.Singleton);
+        builder.Services.Add(typeof(IDistributedPublisher<,>), typeof(NatsPublisher<,>), InstanceLifetime.Singleton);
+        builder.Services.Add(typeof(IDistributedSubscriber<,>), typeof(NatsSubscriber<,>), InstanceLifetime.Singleton);
 
-        return services;
+        return builder;
     }
 
     static void Add(this IServiceCollection services, Type serviceType, Type implementationType, InstanceLifetime scope)
