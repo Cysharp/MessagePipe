@@ -25,7 +25,7 @@ namespace MessagePipe.Redis
 
         public T Deserialize<T>(byte[] value)
         {
-            return MessagePackSerializer.Deserialize<T>(value);
+            return MessagePackSerializer.Deserialize<T>(value, options);
         }
     }
 }
