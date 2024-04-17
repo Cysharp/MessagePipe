@@ -44,22 +44,33 @@ jobs:
           path: ./src/MessagePipe.Analyzer/bin/Debug/netstandard2.0/MessagePipe.Analyzer.dll
 
   build-unity:
-    if: "((github.event_name == 'push' && github.repository_owner == 'Cysharp') || startsWith(github.event.pull_request.head.label, 'Cysharp:'))"
+    if: ${{ (github.event_name == 'push' && github.repository_owner == 'Cysharp') || startsWith(github.event.pull_request.head.label, 'Cysharp:') }}
     strategy:
       matrix:
         unity: ["2019.4.25f1"]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Load secrets
+        id: op-load-secret
+        uses: 1password/load-secrets-action@v2
+        with:
+          export-env: false
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN_PUBLIC }}
+          UNITY_EMAIL: "op://GitHubActionsPublic/UNITY_LICENSE/username"
+          UNITY_PASSWORD: "op://GitHubActionsPublic/UNITY_LICENSE/credential"
+          UNITY_SERIAL: "op://GitHubActionsPublic/UNITY_LICENSE/serial"
+
       - uses: actions/checkout@v3
       # Execute scripts: RuntimeUnitTestToolkit
       # /opt/Unity/Editor/Unity -quit -batchmode -nographics -silent-crashes -logFile -projectPath . -executeMethod UnitTestBuilder.BuildUnitTest /headless /ScriptBackend mono /BuildTarget StandaloneLinux64
       - name: Build UnitTest(Linux64, mono)
         uses: Cysharp/Actions/.github/actions/unity-builder@main
         env:
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ steps.op-load-secret.outputs.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ steps.op-load-secret.outputs.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ steps.op-load-secret.outputs.UNITY_SERIAL }}
         with:
           projectPath: src/MessagePipe.Unity
           unityVersion: ${{ matrix.unity }}
@@ -75,9 +86,9 @@ jobs:
       - name: Build Unity (.unitypacakge)
         uses: Cysharp/Actions/.github/actions/unity-builder@main
         env:
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ steps.op-load-secret.outputs.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ steps.op-load-secret.outputs.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ steps.op-load-secret.outputs.UNITY_SERIAL }}
         with:
           projectPath: src/MessagePipe.Unity
           unityVersion: ${{ matrix.unity }}
