@@ -64,11 +64,13 @@ jobs:
           name: nuget
           path: ./publish/
           if-no-files-found: error
+          retention-days: 1
       # Upload analyzer.
       - uses: Cysharp/Actions/.github/actions/upload-artifact@main
         with:
           name: MessagePipe.Analyzer
           path: ./src/MessagePipe.Analyzer/bin/Release/netstandard2.0/MessagePipe.Analyzer.dll
+          retention-days: 1
 
   build-unity:
     needs: [update-packagejson]
@@ -117,6 +119,7 @@ jobs:
           name: MessagePipe.Unity.${{ inputs.tag }}.unitypackage
           path: ./src/MessagePipe.Unity/MessagePipe*.${{ inputs.tag }}.unitypackage
           if-no-files-found: error
+          retention-days: 1
 
   # release
   create-release:
