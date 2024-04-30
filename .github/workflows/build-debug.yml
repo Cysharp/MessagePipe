@@ -38,10 +38,11 @@ jobs:
       - run: dotnet build -c Debug
       - run: dotnet test -c Debug --no-build
       # Store artifacts.
-      - uses: actions/upload-artifact@v2
+      - uses: Cysharp/Actions/.github/actions/upload-artifact@main
         with:
           name: MessagePipe.Analyzer
           path: ./src/MessagePipe.Analyzer/bin/Debug/netstandard2.0/MessagePipe.Analyzer.dll
+          retention-days: 1
 
   build-unity:
     if: ${{ (github.event_name == 'push' && github.repository_owner == 'Cysharp') || startsWith(github.event.pull_request.head.label, 'Cysharp:') }}
@@ -100,7 +101,8 @@ jobs:
           directory: src/MessagePipe.Unity
 
       # Store artifacts.
-      - uses: actions/upload-artifact@v2
+      - uses: Cysharp/Actions/.github/actions/upload-artifact@main
         with:
           name: MessagePipe.${{ matrix.unity }}.unitypackage.zip
           path: ./src/MessagePipe.Unity/*.unitypackage
+          retention-days: 1
