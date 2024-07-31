@@ -123,8 +123,8 @@ BenchmarkDotNet.Artifacts/
 src/MessagePipe.Unity/Library/*
 src/MessagePipe.Unity/Temp/*
 src/MessagePipe.Unity/Logs/*
-src/MessagePipe.Unity/Assembly-CSharp.csproj
 src/MessagePipe.Unity/[Uu]ser[Ss]ettings/
-src/MessagePipe.Unity/*.csproj
 src/MessagePipe.Unity/*.sln
+src/MessagePipe.Unity/*.csproj
+src/MessagePipe.Unity/*.unitypackage
 !src/MessagePipe.Unity/Packages/
