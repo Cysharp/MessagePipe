@@ -57,7 +57,7 @@ _ReSharper*
 *.ncrunch*
 .*crunch*.local.xml
 
-# Installshield output folder 
+# Installshield output folder
 [Ee]xpress
 
 # DocProject is a documentation generator add-in
@@ -77,7 +77,7 @@ publish
 *.Publish.xml
 
 # NuGet Packages Directory
-# packages # upm pacakge will use Packages
+packages
 
 # Windows Azure Build Output
 csx
@@ -115,33 +115,16 @@ nuget/*.unitypackage
 # Jetbrains Rider
 .idea/
 
-# Unity
+# Benchamrk
+BenchmarkDotNet.Artifacts/
 
+# Unity
+.vsconfig
 src/MessagePipe.Unity/Library/*
 src/MessagePipe.Unity/Temp/*
 src/MessagePipe.Unity/Logs/*
 src/MessagePipe.Unity/Assembly-CSharp.csproj
-
-src/MessagePipe.Unity/MessagePipe.csproj
-
-src/MessagePipe.Unity/MessagePipe.Unity.sln
-
-src/MessagePipe.Unity/MessagePipe.VContainer.csproj
-
-src/MessagePipe.Unity/RuntimeUnitTestToolkit.csproj
-
-src/MessagePipe.Unity/Tests.csproj
-
-src/MessagePipe.Unity/Assembly-CSharp-firstpass.csproj
-
-src/MessagePipe.Unity/MessagePipe.Zenject.csproj
-
-src/MessagePipe.Unity/Assembly-CSharp-Editor.csproj
-
-src/MessagePipe.Unity/Zenject-Editor.csproj
-
-src/MessagePipe.Unity/Zenject.csproj
-
-src/MessagePipe.Unity/MessagePipe.Editor.csproj
-
-BenchmarkDotNet.Artifacts/
+src/MessagePipe.Unity/[Uu]ser[Ss]ettings/
+src/MessagePipe.Unity/*.csproj
+src/MessagePipe.Unity/*.sln
+!src/MessagePipe.Unity/Packages/
