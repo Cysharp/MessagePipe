@@ -1,12 +1,13 @@
 {
   "dependencies": {
+    "com.cysharp.runtimeunittesttoolkit": "https://github.com/Cysharp/RuntimeUnitTestToolkit.git?path=RuntimeUnitTestToolkit/Assets/RuntimeUnitTestToolkit#2.6.0",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
-    "com.unity.ide.rider": "3.0.6",
-    "com.unity.ide.visualstudio": "2.0.7",
-    "com.unity.ide.vscode": "1.2.3",
-    "com.unity.test-framework": "1.1.24",
-    "com.unity.toolchain.win-x86_64-linux-x86_64": "0.1.20-preview",
-    "com.unity.ugui": "1.0.0",
-    "jp.hadashikick.vcontainer": "https://github.com/hadashiA/VContainer.git?path=VContainer/Assets/VContainer#1.15.2"
+    "jp.hadashikick.vcontainer": "https://github.com/hadashiA/VContainer.git?path=VContainer/Assets/VContainer#1.15.2",
+    "com.unity.ide.rider": "3.0.31",
+    "com.unity.ide.visualstudio": "2.0.22",
+    "com.unity.ide.vscode": "1.2.5",
+    "com.unity.test-framework": "1.1.33",
+    "com.unity.toolchain.win-x86_64-linux-x86_64": "2.0.9",
+    "com.unity.ugui": "1.0.0"
   }
 }
