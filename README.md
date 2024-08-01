@@ -1235,7 +1235,7 @@ public class MessagePipeDemo : VContainer.Unity.IStartable
 ```
 
 > [!TIP]
-> If you are using Unity 2022.1 or later and VContainer 1.14.0 or later, you do not need `RegsiterMessageBroker<>`. 
+> If you are using Unity 2021.3 or later and VContainer 1.14.0 or later, you do not need `RegsiterMessageBroker<>`. 
 > A set of types including `ISubscriber<>`, `IPublisher<>` or its asynchronous version will be resolved automatically.
 > Note that `IRequesthandler<>` and `IRequestAllHanlder<>` still require manual registration.
 
