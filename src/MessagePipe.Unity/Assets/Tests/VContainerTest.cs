@@ -15,7 +15,7 @@ public class VContainerTest
     {
         var resolver = TestHelper.BuildVContainer((options, builder) =>
         {
-#if !UNITY_2022_1_OR_NEWER            
+#if !UNITY_2021_3_OR_NEWER            
             builder.RegisterMessageBroker<int>(options);
 #endif
         });            
@@ -44,7 +44,7 @@ public class VContainerTest
     {
         var resolver = TestHelper.BuildVContainer((options, builder) =>
         {
-#if !UNITY_2022_1_OR_NEWER            
+#if !UNITY_2021_3_OR_NEWER            
             builder.RegisterMessageBroker<int>(options);
 #endif
         });        
@@ -78,7 +78,7 @@ public class VContainerTest
            options.AddGlobalMessageHandlerFilter<MyFilter<int>>(1200);
        }, (options, builder) =>
        {
-#if !UNITY_2022_1_OR_NEWER           
+#if !UNITY_2021_3_OR_NEWER           
            builder.RegisterMessageBroker<int>(options);
 #endif
            
@@ -168,7 +168,7 @@ public class VContainerTest
     {
         var provider = TestHelper.BuildVContainer((options, builder) =>
         {
-#if !UNITY_2022_1_OR_NEWER            
+#if !UNITY_2021_3_OR_NEWER            
             builder.RegisterMessageBroker<IntClass>(options);
 #endif
         });        
