@@ -105,6 +105,7 @@ jobs:
 
       # Store artifacts.
       - uses: Cysharp/Actions/.github/actions/upload-artifact@main
+        if: ${{ startsWith(matrix.unity, '2021') }} # only execute once
         with:
           name: MessagePipe.${{ matrix.unity }}.unitypackage.zip
           path: ./src/MessagePipe.Unity/*.unitypackage
