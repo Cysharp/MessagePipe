@@ -31,8 +31,6 @@ jobs:
       - uses: Cysharp/Actions/.github/actions/setup-dotnet@main
         with:
           dotnet-version: |
-            3.1.x
-            5.0.x
             6.0.x
       - run: dotnet build ./tools/PostBuildUtility/ -c Debug
       - run: dotnet build -c Debug
@@ -107,6 +105,7 @@ jobs:
 
       # Store artifacts.
       - uses: Cysharp/Actions/.github/actions/upload-artifact@main
+        if: ${{ startsWith(matrix.unity, '2021') }} # only execute once
         with:
           name: MessagePipe.${{ matrix.unity }}.unitypackage.zip
           path: ./src/MessagePipe.Unity/*.unitypackage
