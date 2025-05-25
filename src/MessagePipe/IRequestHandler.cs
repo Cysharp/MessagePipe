@@ -94,4 +94,11 @@ namespace MessagePipe
             throw new InvalidOperationException($"IAsyncHandler<{requestType}, {responseType}> is not registered.");
         }
     }
+
+    // Stream
+
+    public interface IStreamRequestHandler<in TRequest, out TResponse>
+    {
+        IAsyncEnumerable<TResponse> HandleAsync(TRequest request, CancellationToken cancellationToken = default);
+    }
 }

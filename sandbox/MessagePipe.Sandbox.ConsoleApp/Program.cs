@@ -386,6 +386,12 @@ namespace MessagePipe
 
             intPublisher.Publish(10);
         }
+
+        // StreamRequestHandler demo
+        var services = new ServiceCollection();
+        services.AddTransient<IStreamRequestHandler<MessagePipe.Sandbox.ConsoleApp.MyRequest, MessagePipe.Sandbox.ConsoleApp.MyResponse>, MessagePipe.Sandbox.ConsoleApp.MyStreamRequestHandler>();
+        var provider = services.BuildServiceProvider();
+        await MessagePipe.Sandbox.ConsoleApp.StreamDemo.RunAsync(provider);
     }
 
 

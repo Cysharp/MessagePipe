@@ -175,6 +175,12 @@ namespace MessagePipe
             return eventFactory.CreateBufferedAsyncEvent<T>(initialValue);
         }
 
+        public static IStreamRequestHandler<TRequest, TResponse> GetStreamRequestHandler<TRequest, TResponse>()
+        {
+            ThrowIfNotInitialized();
+            return provider.GetRequiredService<IStreamRequestHandler<TRequest, TResponse>>();
+        }
+
         // [MemberNotNull(nameof(provider), nameof(eventFactory), nameof(diagnosticsInfo))]
         static void ThrowIfNotInitialized()
         {
