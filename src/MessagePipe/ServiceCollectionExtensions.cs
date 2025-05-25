@@ -217,6 +217,18 @@ namespace MessagePipe
             return AddAsyncRequestHandler(builder, typeof(T));
         }
 
+        public static IMessagePipeBuilder AddStreamRequestHandler(this IMessagePipeBuilder builder, Type type)
+        {
+            builder.Services.AddTransient(typeof(IStreamRequestHandler<,>).MakeGenericType(type.GetGenericArguments()));
+            return builder;
+        }
+
+        public static IMessagePipeBuilder AddStreamRequestHandler<T>(this IMessagePipeBuilder builder)
+            where T : IStreamRequestHandler<object, object>
+        {
+            return AddStreamRequestHandler(builder, typeof(T));
+        }
+
         static IMessagePipeBuilder AddRequestHandlerCore(IMessagePipeBuilder builder, Type type, Type coreType)
         {
             var options = builder.Services.FirstOrDefault(x => x.ServiceType == typeof(MessagePipeOptions));
