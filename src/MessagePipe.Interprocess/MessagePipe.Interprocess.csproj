@@ -13,7 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MessagePack" Version="2.3.85" />
+    <PackageReference Include="MessagePack" Version="3.1.4" />
     <PackageReference Include="System.IO.Pipelines" Version="6.0.3" />
     <ProjectReference Include="..\MessagePipe\MessagePipe.csproj" />
   </ItemGroup>
