@@ -4,7 +4,6 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>net6.0</TargetFramework>
         <Configurations>Debug;Release;WinBenchmark</Configurations>
-        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>

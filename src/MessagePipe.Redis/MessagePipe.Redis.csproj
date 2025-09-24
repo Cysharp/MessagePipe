@@ -1,27 +1,27 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
-        <Configurations>Debug;Release;WinBenchmark</Configurations>
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
+    <Configurations>Debug;Release;WinBenchmark</Configurations>
 
-        <!-- NuGet Packaging -->
-        <PackageTags>pubsub;eventaggregator</PackageTags>
-        <Description>Redis IDistributedPublisher/Subscriber provider for MessagePipe.</Description>
-        <SignAssembly>true</SignAssembly>
-        <IsPackable>true</IsPackable>
-    </PropertyGroup>
+    <!-- NuGet Packaging -->
+    <PackageTags>pubsub;eventaggregator</PackageTags>
+    <Description>Redis IDistributedPublisher/Subscriber provider for MessagePipe.</Description>
+    <SignAssembly>true</SignAssembly>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <None Include="Icon.png" Pack="true" PackagePath="/" />
-    </ItemGroup>
+  <ItemGroup>
+    <None Include="Icon.png" Pack="true" PackagePath="/" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="MessagePack" Version="2.3.85" />
-        <PackageReference Include="StackExchange.Redis" Version="2.5.61" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MessagePack" Version="2.3.85" />
+    <PackageReference Include="StackExchange.Redis" Version="2.5.61" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\MessagePipe\MessagePipe.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MessagePipe\MessagePipe.csproj" />
+  </ItemGroup>
 
 </Project>
