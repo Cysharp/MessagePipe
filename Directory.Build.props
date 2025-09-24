@@ -6,6 +6,7 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
 
     <!-- NuGet Packaging -->
+    <IsPackable>false</IsPackable>
     <PackageVersion>$(Version)</PackageVersion>
     <Company>Cysharp</Company>
     <Authors>Cysharp</Authors>
@@ -21,6 +22,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)Icon.png" Pack="true" PackagePath="\" />
     <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)LICENSE" />
   </ItemGroup>
 </Project>

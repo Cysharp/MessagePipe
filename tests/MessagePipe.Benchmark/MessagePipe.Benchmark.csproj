@@ -5,7 +5,6 @@
         <TargetFramework>net6.0</TargetFramework>
         <Configurations>Debug;Release;WinBenchmark</Configurations>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <IsPackable>false</IsPackable>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)' == 'WinBenchmark'">
         <DefineConstants>RELEASE;WinBenchmark</DefineConstants>
