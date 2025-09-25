@@ -1,4 +1,4 @@
-#pragma warning disable CS8602
+﻿#pragma warning disable CS8602
 #pragma warning disable CS8603
 #pragma warning disable CS8604
 
@@ -173,6 +173,12 @@ namespace MessagePipe
         {
             ThrowIfNotInitialized();
             return eventFactory.CreateBufferedAsyncEvent<T>(initialValue);
+        }
+
+        public static IStreamRequestHandler<TRequest, TResponse> GetStreamRequestHandler<TRequest, TResponse>()
+        {
+            ThrowIfNotInitialized();
+            return provider.GetRequiredService<IStreamRequestHandler<TRequest, TResponse>>();
         }
 
         // [MemberNotNull(nameof(provider), nameof(eventFactory), nameof(diagnosticsInfo))]
