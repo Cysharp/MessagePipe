@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -93,5 +93,12 @@ namespace MessagePipe
             }
             throw new InvalidOperationException($"IAsyncHandler<{requestType}, {responseType}> is not registered.");
         }
+    }
+
+    // Stream
+
+    public interface IStreamRequestHandler<in TRequest, out TResponse>
+    {
+        IAsyncEnumerable<TResponse> HandleAsync(TRequest request, CancellationToken cancellationToken = default);
     }
 }
