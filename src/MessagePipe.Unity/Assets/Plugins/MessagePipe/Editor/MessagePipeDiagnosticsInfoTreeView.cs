@@ -10,6 +10,11 @@ using UnityEditor.IMGUI.Controls;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
+#if UNITY_6000_2_OR_NEWER
+using TreeView = UnityEditor.IMGUI.Controls.TreeView<int>;
+using TreeViewItem = UnityEditor.IMGUI.Controls.TreeViewItem<int>;
+using TreeViewState = UnityEditor.IMGUI.Controls.TreeViewState<int>;
+#endif
 
 namespace MessagePipe.Editor
 {
