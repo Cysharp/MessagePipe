@@ -35,7 +35,7 @@ jobs:
     timeout-minutes: 10
     services:
       redis:
-        image: redis
+        image: redis:8.8.0
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -44,7 +44,7 @@ jobs:
         ports:
           - 6379:6379
       nats:
-        image: nats
+        image: nats:2.14.2
         ports:
           - 4222:4222
     steps:
