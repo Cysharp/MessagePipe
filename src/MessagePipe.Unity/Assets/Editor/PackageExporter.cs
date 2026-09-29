@@ -36,6 +36,8 @@ public static class PackageExporter
 
             UnityEngine.Debug.Log("Export complete: " + Path.GetFullPath(exportPath));
         }
+
+        UnityEngine.Debug.Log("Build succeeded! All export complete!");
     }
 
     static string GetVersion(string root)
