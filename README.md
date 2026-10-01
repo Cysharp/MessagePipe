@@ -473,7 +473,7 @@ Also, the `Func<TMessage, bool>` overload can filter messages by predicate (inte
 `FirstAsync` gets the first value of message. It is similar as `AsObservable().FirstAsync()`, `AsObservable().Where().FirstAsync()`. If uses `CancellationTokenSource(TimeSpan)` then similar as `AsObservable().Timeout().FirstAsync()`. Argument of `CancellationToken` is required to avoid task leak. 
 
 ```csharp
-// for Unity, use cts.CancelAfterSlim(TIimeSpan) instead.
+// for Unity, use cts.CancelAfterSlim(TimeSpan) instead.
 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
 var value = await subscriber.FirstAsync(cts.Token);
 ```
