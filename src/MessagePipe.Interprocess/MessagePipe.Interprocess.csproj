@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
     <WarningsAsErrors>true</WarningsAsErrors>
     <Configurations>Debug;Release;</Configurations>
 
@@ -14,13 +14,13 @@
 
   <ItemGroup>
     <PackageReference Include="MessagePack" Version="3.1.4" />
-    <PackageReference Include="System.IO.Pipelines" Version="6.0.3" />
+    <PackageReference Include="System.IO.Pipelines" Version="10.0.5" />
     <ProjectReference Include="..\MessagePipe\MessagePipe.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="$(TargetFramework) == 'netstandard2.0'">
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
-    <PackageReference Include="System.Threading.Channels" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.5" />
+    <PackageReference Include="System.Threading.Channels" Version="10.0.5" />
   </ItemGroup>
 
   <!-- Copy files for Unity -->
