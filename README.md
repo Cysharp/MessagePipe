@@ -770,7 +770,7 @@ void Configure(DiContainer container)
 }
 
 // builtin
-var prodiver = builder.BuildServiceProvider();
+var provider = builder.BuildServiceProvider();
 GlobalMessagePipe.SetProvider(provider);
 ```
 
@@ -968,6 +968,8 @@ async void A(IRemoteRequestHandler<int, string> remoteHandler)
 }
 ```
 
+For a server that only handles remote requests, registering the services does not instantiate the transport worker. After building the server's service provider, resolve `MessagePipe.Interprocess.Workers.TcpWorker` (or `MessagePipe.Interprocess.Workers.NamedPipeWorker` for named pipes) with `GetRequiredService<T>()` before clients send requests. With `HostAsServer = true`, the worker starts listening when it is instantiated. Let the service provider manage the worker's disposal.
+
 For Unity, requires to import MessagePack-CSharp package and needs slightly different configuration.
 
 ```csharp
@@ -977,7 +979,7 @@ var options = builder.RegisterMessagePipe(configure);
 
 var messagePipeBuilder = builder.ToMessagePipeBuilder(); // require to convert ServiceCollection to enable Intereprocess
 
-var interprocessOptions = messagePipeBuilder.AddTcpInterprocess();
+var interprocessOptions = messagePipeBuilder.AddTcpInterprocess("127.0.0.1", 3215);
 
 // register manually.
 // IDistributedPublisher/Subscriber
@@ -1274,7 +1276,7 @@ var builder = new BuiltinContainerBuilder();
 builder.AddMessagePipe(/* configure option */);
 
 // AddMessageBroker: Register for IPublisher<T>/ISubscriber<T>, includes async and buffered.
-builder.AddMessageBroker<int>(options);
+builder.AddMessageBroker<int>();
 
 // also exists AddMessageBroker<TKey, TMessage>, AddRequestHandler, AddAsyncRequestHandler
 
