@@ -140,8 +140,11 @@ namespace MessagePipe
                     isDisposed = true;
                     lock (core.gate)
                     {
-                        core.handlers.Remove(subscriptionKey, true);
-                        core.diagnotics.DecrementSubscribe(core, this);
+                        if (!core.isDisposed)
+                        {
+                            core.handlers.Remove(subscriptionKey, true);
+                            core.diagnotics.DecrementSubscribe(core, this);
+                        }
                     }
                 }
             }
