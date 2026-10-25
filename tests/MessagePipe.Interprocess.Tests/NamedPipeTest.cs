@@ -55,6 +55,25 @@ namespace MessagePipe.Interprocess.Tests
         }
 
         [Fact]
+        public async Task ResolveWithValidateScopes()
+        {
+            var sc = new ServiceCollection();
+            sc.AddMessagePipe()
+                .AddNamedPipeInterprocess("validate-scopes", x =>
+                {
+                    x.UnhandledErrorHandler = (msg, e) => helper.WriteLine(msg + e);
+                });
+
+            using (var provider = sc.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true }))
+            using (var scope = provider.CreateScope())
+            {
+                scope.ServiceProvider.GetRequiredService<IDistributedPublisher<int, int>>().Should().NotBeNull();
+                scope.ServiceProvider.GetRequiredService<IDistributedSubscriber<int, int>>().Should().NotBeNull();
+                await Task.Delay(TimeSpan.FromSeconds(1)); // let the worker start before disposing
+            }
+        }
+
+        [Fact]
         public async Task ConnectTwice()
         {
             var providerServer = TestHelper.BuildServiceProviderNamedPipe("zb", helper, asServer: false);
