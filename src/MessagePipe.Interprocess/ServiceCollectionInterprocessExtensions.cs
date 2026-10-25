@@ -82,8 +82,8 @@ namespace MessagePipe
             builder.Services.Add(typeof(NamedPipeWorker), options.InstanceLifetime);
 
 #if !UNITY_2018_3_OR_NEWER
-            builder.Services.Add(typeof(IDistributedPublisher<,>), typeof(NamedPipeDistributedPublisher<,>), InstanceLifetime.Singleton);
-            builder.Services.Add(typeof(IDistributedSubscriber<,>), typeof(NamedPipeDistributedSubscriber<,>), InstanceLifetime.Singleton);
+            builder.Services.Add(typeof(IDistributedPublisher<,>), typeof(NamedPipeDistributedPublisher<,>), options.InstanceLifetime);
+            builder.Services.Add(typeof(IDistributedSubscriber<,>), typeof(NamedPipeDistributedSubscriber<,>), options.InstanceLifetime);
             builder.Services.Add(typeof(IRemoteRequestHandler<,>), typeof(NamedPipeRemoteRequestHandler<,>), options.InstanceLifetime);
             return builder;
 #else
