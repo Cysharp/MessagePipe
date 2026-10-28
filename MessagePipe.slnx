@@ -1,0 +1,60 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+    <BuildType Name="WinBenchmark" />
+  </Configurations>
+  <Folder Name="/sandbox/">
+    <Project Path="sandbox/InterprocessServer/InterprocessServer.csproj">
+      <BuildType Solution="WinBenchmark|*" Project="Debug" />
+    </Project>
+    <Project Path="sandbox/MessagePipe.AnalyzerTestApp/MessagePipe.AnalyzerTestApp.csproj">
+      <BuildType Solution="WinBenchmark|*" Project="Debug" />
+    </Project>
+    <Project Path="sandbox/MessagePipe.Sandbox.ConsoleApp/MessagePipe.Sandbox.ConsoleApp.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/MessagePipe.Analyzer/MessagePipe.Analyzer.csproj">
+      <BuildType Solution="WinBenchmark|*" Project="Debug" />
+    </Project>
+    <Project Path="src/MessagePipe.Interprocess/MessagePipe.Interprocess.csproj">
+      <BuildType Solution="WinBenchmark|*" Project="Debug" />
+    </Project>
+    <Project Path="src/MessagePipe.Nats/MessagePipe.Nats.csproj">
+      <BuildType Solution="WinBenchmark|*" Project="Debug" />
+    </Project>
+    <Project Path="src/MessagePipe.Redis/MessagePipe.Redis.csproj" />
+    <Project Path="src/MessagePipe/MessagePipe.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MessagePipe.Analyzer.Tests/MessagePipe.Analyzer.Tests.csproj">
+      <BuildType Solution="WinBenchmark|*" Project="Debug" />
+    </Project>
+    <Project Path="tests/MessagePipe.Benchmark/MessagePipe.Benchmark.csproj" />
+    <Project Path="tests/MessagePipe.Interprocess.Benchmark/MessagePipe.Interprocess.Benchmark.csproj">
+      <BuildType Solution="WinBenchmark|*" Project="Debug" />
+    </Project>
+    <Project Path="tests/MessagePipe.Interprocess.Tests/MessagePipe.Interprocess.Tests.csproj">
+      <BuildType Solution="WinBenchmark|*" Project="Debug" />
+    </Project>
+    <Project Path="tests/MessagePipe.Nats.Tests/MessagePipe.Nats.Tests.csproj">
+      <BuildType Solution="WinBenchmark|*" Project="Debug" />
+    </Project>
+    <Project Path="tests/MessagePipe.Redis.Tests/MessagePipe.Redis.Tests.csproj">
+      <BuildType Solution="WinBenchmark|*" Project="Debug" />
+    </Project>
+    <Project Path="tests/MessagePipe.Tests/MessagePipe.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/PostBuildUtility/PostBuildUtility.csproj" />
+  </Folder>
+  <Folder Name="/_items/">
+    <File Path=".dockerignore" />
+    <File Path=".gitignore" />
+    <File Path="docker-compose.yml" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/_items/.github/">
+    <File Path=".github/workflows/build-debug.yaml" />
+  </Folder>
+</Solution>
