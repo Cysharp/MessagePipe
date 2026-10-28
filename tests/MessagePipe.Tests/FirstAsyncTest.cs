@@ -48,7 +48,8 @@ namespace MessagePipe.Tests
 
             cts.Cancel();
 
-            Assert.Equal(cts.Token, (await Assert.ThrowsAsync<OperationCanceledException>(async () => await task)).CancellationToken);
+            var ex = await Assert.ThrowsAsync<OperationCanceledException>(async () => await task);
+            Assert.Equal(cts.Token, ex.CancellationToken);
 
             Assert.Equal(0, monitor.SubscribeCount);
         }
@@ -69,7 +70,8 @@ namespace MessagePipe.Tests
 
             cts.Cancel();
 
-            Assert.Equal(cts.Token, (await Assert.ThrowsAsync<OperationCanceledException>(async () => await task)).CancellationToken);
+            var ex = await Assert.ThrowsAsync<OperationCanceledException>(async () => await task);
+            Assert.Equal(cts.Token, ex.CancellationToken);
 
             Assert.Equal(0, monitor.SubscribeCount);
         }

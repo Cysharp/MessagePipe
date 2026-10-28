@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using MessagePipe.Tests;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,7 +26,7 @@ public class ConnectionMultiplexerFactoryTest
 
         await publisher.PublishAsync("Foo", "Bar");
         await Task.Delay(250);
-        Assert.Equal("Bar", results.FirstOrDefault());
+        Assert.Equal("Bar", Assert.Single(results));
     }
 
     [Fact]
@@ -48,7 +47,7 @@ public class ConnectionMultiplexerFactoryTest
 
         await publisher.PublishAsync("Foo", "Bar");
         await Task.Delay(250);
-        Assert.Equal("Bar", results.FirstOrDefault());
+        Assert.Equal("Bar", Assert.Single(results));
     }
 
     public class TestConnectionMultiplexerFactory : IConnectionMultiplexerFactory

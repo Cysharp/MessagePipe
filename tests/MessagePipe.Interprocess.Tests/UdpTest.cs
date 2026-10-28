@@ -77,11 +77,7 @@ namespace MessagePipe.Interprocess.Tests
         [Fact]
         public async Task SimpleStringStringUds()
         {
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-            {
-                helper.WriteLine("Currently, windows's unix domain socket does not support UDP, so skipped");
-                return;
-            }
+            Assert.SkipWhen(Environment.OSVersion.Platform == PlatformID.Win32NT, "Currently, windows's unix domain socket does not support UDP");
             var filePath = System.IO.Path.GetTempFileName();
             if(System.IO.File.Exists(filePath))
             {

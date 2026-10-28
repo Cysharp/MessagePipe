@@ -34,7 +34,7 @@ namespace MessagePipe.Tests
             var d2 = await s.SubscribeAsync(Key2, (x) => result.Add("2:" + x));
             var d3 = await s.SubscribeAsync(Key1, (x) => result.Add("3:" + x));
 
-            // use BeEquivalentTo, allow different order
+            // use Assert.Equivalent, allow different order
 
             await p.PublishAsync(Key1, "one");
 

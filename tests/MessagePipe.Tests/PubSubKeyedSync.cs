@@ -28,7 +28,7 @@ namespace __MessagePipe.Tests
 
             Assert.Equal(3, info.SubscribeCount);
 
-            // use BeEquivalentTo, allow different order
+            // use Assert.Equivalent, allow different order
 
             p.Publish(Key1, "one");
             Assert.Equivalent(new[] { "1:one", "3:one" }, result, strict: true);
