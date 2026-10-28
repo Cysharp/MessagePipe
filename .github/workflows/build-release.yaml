@@ -68,6 +68,7 @@ jobs:
         with:
           dotnet-version: |
             6.0.x
+            10.0.x
       # build and pack nuget (.nupkg and .symbols.nupkg will be created)
       - run: dotnet build ./tools/PostBuildUtility/ -c Release
       - run: dotnet build -c Release -p:Version=${{ needs.validate-release.outputs.tag }}
