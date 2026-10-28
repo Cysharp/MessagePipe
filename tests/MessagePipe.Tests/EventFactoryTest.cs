@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,7 +35,7 @@ namespace MessagePipe.Tests
             
             publisher.Publish(40);
 
-            l.Should().Equal(10, 100, 20, 200, 300);
+            Assert.Equal(new[] { 10, 100, 20, 200, 300 }, l);
         }
 
         [Fact]
@@ -60,7 +59,7 @@ namespace MessagePipe.Tests
             publisher.Publish(30);
             publisher.Publish(40);
 
-            l.Should().Equal(10, 100, 20, 200);
+            Assert.Equal(new[] { 10, 100, 20, 200 }, l);
 
             d1.Dispose();
             d2.Dispose();
@@ -90,7 +89,7 @@ namespace MessagePipe.Tests
 
             await publisher.PublishAsync(40);
 
-            l.Should().Equal(100, 10, 200, 20, 300);
+            Assert.Equal(new[] { 100, 10, 200, 20, 300 }, l);
         }
 
         [Fact]
@@ -114,7 +113,7 @@ namespace MessagePipe.Tests
             await publisher.PublishAsync(30);
             await publisher.PublishAsync(40);
 
-            l.Should().Equal(100, 10, 200, 20);
+            Assert.Equal(new[] { 100, 10, 200, 20 }, l);
 
             d1.Dispose();
             d2.Dispose();

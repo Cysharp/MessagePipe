@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,18 +38,18 @@ namespace MessagePipe.Tests
 
             await p.PublishAsync(Key1, "one");
 
-            result.Should().BeEquivalentTo("1:one", "3:one");
+            Assert.Equivalent(new[] { "1:one", "3:one" }, result, strict: true);
             result.Clear();
 
             await p.PublishAsync(Key2, "one");
 
-            result.Should().BeEquivalentTo("2:one");
+            Assert.Equivalent(new[] { "2:one" }, result, strict: true);
             result.Clear();
 
             await d3.DisposeAsync();
 
             await p.PublishAsync(Key1, "two");
-            result.Should().BeEquivalentTo("1:two");
+            Assert.Equivalent(new[] { "1:two" }, result, strict: true);
             result.Clear();
 
             await d1.DisposeAsync();
@@ -59,7 +58,7 @@ namespace MessagePipe.Tests
             await p.PublishAsync(Key1, "zero");
             await p.PublishAsync(Key2, "zero");
 
-            result.Should().Equal();
+            Assert.Empty(result);
             result.Clear();
         }
 

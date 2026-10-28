@@ -1,7 +1,6 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
-using Microsoft.CodeAnalysis.Testing.Verifiers;
 using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Xunit;
@@ -13,7 +12,7 @@ namespace MessagePipe.Analyzer.Tests
         static async Task VerifyAsync(string testCode, int startLine, int startColumn, int endLine, int endColumn)
         {
 
-            await new CSharpAnalyzerTest<MessagePipeAnalyzer, XUnitVerifier>
+            await new CSharpAnalyzerTest<MessagePipeAnalyzer, DefaultVerifier>
             {
                 ReferenceAssemblies = ReferenceAssemblies.Default.WithPackages(ImmutableArray.Create(new PackageIdentity("MessagePipe", "1.4.0"))),
                 ExpectedDiagnostics = { new DiagnosticResult("MPA001", DiagnosticSeverity.Error).WithSpan(startLine, startColumn, endLine, endColumn) },
@@ -24,7 +23,7 @@ namespace MessagePipe.Analyzer.Tests
         static async Task VerifyAsync(string testCode)
         {
 
-            await new CSharpAnalyzerTest<MessagePipeAnalyzer, XUnitVerifier>
+            await new CSharpAnalyzerTest<MessagePipeAnalyzer, DefaultVerifier>
             {
                 ReferenceAssemblies = ReferenceAssemblies.Default.WithPackages(ImmutableArray.Create(new PackageIdentity("MessagePipe", "1.4.0"))),
                 ExpectedDiagnostics = { new DiagnosticResult("MPA001", DiagnosticSeverity.Error) },
@@ -35,7 +34,7 @@ namespace MessagePipe.Analyzer.Tests
         static async Task VerifyNoErrorAsync(string testCode)
         {
 
-            await new CSharpAnalyzerTest<MessagePipeAnalyzer, XUnitVerifier>
+            await new CSharpAnalyzerTest<MessagePipeAnalyzer, DefaultVerifier>
             {
                 ReferenceAssemblies = ReferenceAssemblies.Default.WithPackages(ImmutableArray.Create(new PackageIdentity("MessagePipe", "1.4.0"))),
                 ExpectedDiagnostics = { },

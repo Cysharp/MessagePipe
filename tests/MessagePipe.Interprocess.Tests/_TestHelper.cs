@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using Xunit.Abstractions;
+using Xunit;
 
 namespace MessagePipe.Interprocess.Tests
 {

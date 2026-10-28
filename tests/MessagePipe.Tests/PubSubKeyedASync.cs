@@ -1,6 +1,5 @@
 ﻿#pragma warning disable CS1998
 
-using FluentAssertions;
 using MessagePipe;
 using MessagePipe.Tests;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,22 +28,22 @@ namespace __MessagePipe.Tests
             var d2 = s.Subscribe(Key2, async (x, _) => result.Add("2:" + x));
             var d3 = s.Subscribe(Key1, async (x, _) => result.Add("3:" + x));
 
-            info.SubscribeCount.Should().Be(3);
+            Assert.Equal(3, info.SubscribeCount);
 
             // use BeEquivalentTo, allow different order
 
             p.Publish(Key1, "one");
-            result.Should().BeEquivalentTo("1:one", "3:one");
+            Assert.Equivalent(new[] { "1:one", "3:one" }, result, strict: true);
             result.Clear();
 
             p.Publish(Key2, "one");
-            result.Should().BeEquivalentTo("2:one");
+            Assert.Equivalent(new[] { "2:one" }, result, strict: true);
             result.Clear();
 
             d3.Dispose();
 
             p.Publish(Key1, "two");
-            result.Should().BeEquivalentTo("1:two");
+            Assert.Equivalent(new[] { "1:two" }, result, strict: true);
             result.Clear();
 
             d1.Dispose();
@@ -53,10 +52,10 @@ namespace __MessagePipe.Tests
             p.Publish(Key1, "zero");
             p.Publish(Key2, "zero");
 
-            result.Should().Equal();
+            Assert.Empty(result);
             result.Clear();
 
-            info.SubscribeCount.Should().Be(0);
+            Assert.Equal(0, info.SubscribeCount);
         }
     }
 }

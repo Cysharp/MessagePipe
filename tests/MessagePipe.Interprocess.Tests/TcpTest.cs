@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +6,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace MessagePipe.Interprocess.Tests
 {
@@ -49,8 +47,8 @@ namespace MessagePipe.Interprocess.Tests
                 await p1.PublishAsync(1, 4999);
                 await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
 
-                result.Should().Equal(9999, 4999);
-                result2.Should().Equal(888);
+                Assert.Equal(new[] { 9999, 4999 }, result);
+                Assert.Equal(new[] { 888 }, result2);
             }
         }
 
@@ -86,8 +84,8 @@ namespace MessagePipe.Interprocess.Tests
                 await p2.PublishAsync(1, 4999);
                 await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
 
-                result.Should().Equal(9999, 4999);
-                result2.Should().Equal(888);
+                Assert.Equal(new[] { 9999, 4999 }, result);
+                Assert.Equal(new[] { 888 }, result2);
             }
         }
 
@@ -121,7 +119,7 @@ namespace MessagePipe.Interprocess.Tests
             await p2.PublishAsync(1, 4999);
 
             await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
-            result.Should().Equal(9999, 4999);
+            Assert.Equal(new[] { 9999, 4999 }, result);
 
             (providerServer as IDisposable)?.Dispose();
             (providerClient2 as IDisposable)?.Dispose();
@@ -148,7 +146,7 @@ namespace MessagePipe.Interprocess.Tests
 
                 await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
 
-                result.Should().Equal("abidatoxurusika");
+                Assert.Equal(new[] { "abidatoxurusika" }, result);
             }
         }
 
@@ -173,7 +171,7 @@ namespace MessagePipe.Interprocess.Tests
 
                 await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
 
-                result.Should().Equal(ldata);
+                Assert.Equal(new[] { ldata }, result);
             }
         }
 
@@ -201,7 +199,7 @@ namespace MessagePipe.Interprocess.Tests
 
                 await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
 
-                result.Should().Equal(ldata);
+                Assert.Equal(new[] { ldata }, result);
             }
         }
 
@@ -217,16 +215,16 @@ namespace MessagePipe.Interprocess.Tests
                 var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
 
                 var v = await remoteHandler.InvokeAsync(9999, cts.Token);
-                v.Should().Be("ECHO:9999");
+                Assert.Equal("ECHO:9999", v);
 
                 var v2 = await remoteHandler.InvokeAsync(4444);
-                v2.Should().Be("ECHO:4444");
+                Assert.Equal("ECHO:4444", v2);
 
                 var ex = await Assert.ThrowsAsync<RemoteRequestException>(async () =>
                 {
                     var v3 = await remoteHandler.InvokeAsync(-1);
                 });
-                ex.Message.Should().Contain("NO -1");
+                Assert.Contains("NO -1", ex.Message);
             }
         }
 
@@ -261,7 +259,7 @@ namespace MessagePipe.Interprocess.Tests
 
                     await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
 
-                    result.Should().Equal(ldata);
+                    Assert.Equal(new[] { ldata }, result);
                 }
             }
             finally
@@ -290,16 +288,16 @@ namespace MessagePipe.Interprocess.Tests
                     var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
 
                     var v = await remoteHandler.InvokeAsync(9999, cts.Token);
-                    v.Should().Be("ECHO:9999");
+                    Assert.Equal("ECHO:9999", v);
 
                     var v2 = await remoteHandler.InvokeAsync(4444);
-                    v2.Should().Be("ECHO:4444");
+                    Assert.Equal("ECHO:4444", v2);
 
                     var ex = await Assert.ThrowsAsync<RemoteRequestException>(async () =>
                     {
                         var v3 = await remoteHandler.InvokeAsync(-1);
                     });
-                    ex.Message.Should().Contain("NO -1");
+                    Assert.Contains("NO -1", ex.Message);
                 }
             }
             finally

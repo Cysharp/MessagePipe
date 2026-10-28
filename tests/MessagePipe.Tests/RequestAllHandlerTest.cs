@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using MessagePipe;
+﻿using MessagePipe;
 using MessagePipe.Tests;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -19,7 +18,7 @@ namespace __MessagePipe.Tests
 
             var pongs = pingHandler.InvokeAll(new Ping("myon!"));
 
-            pongs.Should().BeEquivalentTo(new[] { new Pong("myon!"), new Pong("myon!myon!")});
+            Assert.Equivalent(new[] { new Pong("myon!"), new Pong("myon!myon!")}, pongs, strict: true);
 
         }
         [Fact]
@@ -30,7 +29,7 @@ namespace __MessagePipe.Tests
 
             var pongs = pingHandler.InvokeAllLazy(new Ping("myon!"));
 
-            pongs.Should().BeEquivalentTo(new[] { new Pong("myon!"), new Pong("myon!myon!")});
+            Assert.Equivalent(new[] { new Pong("myon!"), new Pong("myon!myon!")}, pongs, strict: true);
 
         }
         [Fact]
@@ -39,7 +38,7 @@ namespace __MessagePipe.Tests
             var provider = TestHelper.BuildServiceProvider();
             var pingHandler = provider.GetRequiredService<IRequestAllHandler<NotImplementedPing, NotImplementedPong>>();
 
-            pingHandler.Invoking(x => x.InvokeAll(new NotImplementedPing())).Should().Throw<NotImplementedException>();
+            Assert.Throws<NotImplementedException>(() => pingHandler.InvokeAll(new NotImplementedPing()));
         }
 
         class Ping

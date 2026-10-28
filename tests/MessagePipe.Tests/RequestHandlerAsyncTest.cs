@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using MessagePipe;
+﻿using MessagePipe;
 using MessagePipe.Tests;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -26,7 +25,7 @@ namespace __MessagePipe.Tests
         }
 
         [Fact]
-        public void TestCancellation()
+        public async Task TestCancellation()
         {
             var provider = TestHelper.BuildServiceProvider();
             var pingHandler = provider.GetRequiredService<IAsyncRequestHandler<Ping, Pong>>();
@@ -35,7 +34,7 @@ namespace __MessagePipe.Tests
             var token = source.Token;
 
             source.Cancel();
-            pingHandler.Awaiting(x => x.InvokeAsync(new Ping("hoge"), token)).Should().ThrowAsync<OperationCanceledException>();
+            await Assert.ThrowsAsync<OperationCanceledException>(async () => await pingHandler.InvokeAsync(new Ping("hoge"), token));
 
         }
 

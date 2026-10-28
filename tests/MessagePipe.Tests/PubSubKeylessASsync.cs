@@ -1,6 +1,5 @@
 ﻿#pragma warning disable CS1998
 
-using FluentAssertions;
 using MessagePipe;
 using MessagePipe.Tests;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,34 +28,34 @@ namespace __MessagePipe.Tests
             var d2 = s.Subscribe(async (x, _) => result.Add("2:" + x));
             var d3 = s.Subscribe(async (x, _) => result.Add("3:" + x));
 
-            info.SubscribeCount.Should().Be(3);
+            Assert.Equal(3, info.SubscribeCount);
 
             // use BeEquivalentTo, allow different order
 
             p.Publish("one");
-            result.Should().BeEquivalentTo("1:one", "2:one", "3:one");
+            Assert.Equivalent(new[] { "1:one", "2:one", "3:one" }, result, strict: true);
             result.Clear();
 
             p.Publish("one");
-            result.Should().BeEquivalentTo("1:one", "2:one", "3:one");
+            Assert.Equivalent(new[] { "1:one", "2:one", "3:one" }, result, strict: true);
             result.Clear();
 
             d2.Dispose();
 
             p.Publish("two");
-            result.Should().BeEquivalentTo("1:two", "3:two");
+            Assert.Equivalent(new[] { "1:two", "3:two" }, result, strict: true);
             result.Clear();
 
             d3.Dispose();
             p.Publish("three");
-            result.Should().BeEquivalentTo("1:three");
+            Assert.Equivalent(new[] { "1:three" }, result, strict: true);
             result.Clear();
 
             d1.Dispose();
-            result.Should().Equal();
+            Assert.Empty(result);
             result.Clear();
 
-            info.SubscribeCount.Should().Be(0);
+            Assert.Equal(0, info.SubscribeCount);
         }
 
         [Fact]

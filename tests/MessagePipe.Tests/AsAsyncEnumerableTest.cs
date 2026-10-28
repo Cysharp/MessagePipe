@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,9 +44,9 @@ namespace MessagePipe.Tests
             }
             catch (OperationCanceledException) { }
 
-            l.Should().Equal(0, 1, 2);
+            Assert.Equal(new[] { 0, 1, 2 }, l);
 
-            monitor.SubscribeCount.Should().Be(0);
+            Assert.Equal(0, monitor.SubscribeCount);
         }
 
         [Fact]
@@ -83,9 +82,9 @@ namespace MessagePipe.Tests
             }
             catch (OperationCanceledException) { }
 
-            l.Should().Equal(0, 1, 2);
+            Assert.Equal(new[] { 0, 1, 2 }, l);
 
-            monitor.SubscribeCount.Should().Be(0);
+            Assert.Equal(0, monitor.SubscribeCount);
         }
 
         [Fact]
@@ -122,9 +121,9 @@ namespace MessagePipe.Tests
             }
             catch (OperationCanceledException) { }
 
-            l.Should().Equal(99, 0, 1, 2);
+            Assert.Equal(new[] { 99, 0, 1, 2 }, l);
 
-            monitor.SubscribeCount.Should().Be(0);
+            Assert.Equal(0, monitor.SubscribeCount);
         }
     }
 }

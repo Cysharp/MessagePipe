@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FluentAssertions;
 using MessagePipe.Tests;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
@@ -28,7 +27,7 @@ public class ConnectionMultiplexerFactoryTest
 
         await publisher.PublishAsync("Foo", "Bar");
         await Task.Delay(250);
-        results.FirstOrDefault().Should().Be("Bar");
+        Assert.Equal("Bar", results.FirstOrDefault());
     }
 
     [Fact]
@@ -49,7 +48,7 @@ public class ConnectionMultiplexerFactoryTest
 
         await publisher.PublishAsync("Foo", "Bar");
         await Task.Delay(250);
-        results.FirstOrDefault().Should().Be("Bar");
+        Assert.Equal("Bar", results.FirstOrDefault());
     }
 
     public class TestConnectionMultiplexerFactory : IConnectionMultiplexerFactory
