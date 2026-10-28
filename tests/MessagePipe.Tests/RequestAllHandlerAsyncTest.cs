@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using MessagePipe;
+﻿using MessagePipe;
 using MessagePipe.Tests;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -24,8 +23,8 @@ namespace __MessagePipe.Tests
 
             var pongs = await pingHandler.InvokeAllAsync(new Ping("myon!"));
 
-            pongs.Should().ContainEquivalentOf(new Pong("myon!myon!"));
-            pongs.Should().ContainEquivalentOf(new Pong("myon!"));
+            Assert.Contains(pongs, x => x.AnyValue == "myon!myon!");
+            Assert.Contains(pongs, x => x.AnyValue == "myon!");
         }
         [Fact]
         public async Task TestLazyAsyncHandling()
@@ -36,11 +35,11 @@ namespace __MessagePipe.Tests
 
             var pongs = await pingHandler.InvokeAllLazyAsync(new Ping("myon!")).ToArrayAsync();
 
-            pongs.Should().ContainEquivalentOf(new Pong("myon!myon!"));
-            pongs.Should().ContainEquivalentOf(new Pong("myon!"));
+            Assert.Contains(pongs, x => x.AnyValue == "myon!myon!");
+            Assert.Contains(pongs, x => x.AnyValue == "myon!");
         }
         [Fact]
-        public void TestCancellation()
+        public async Task TestCancellation()
         {
             var provider = TestHelper.BuildServiceProvider();
             var pingHandler = provider.GetRequiredService<IAsyncRequestAllHandler<Ping, Pong>>();
@@ -49,8 +48,7 @@ namespace __MessagePipe.Tests
             var token = source.Token;
 
             source.Cancel();
-            var pongs = pingHandler.Awaiting(x => x.InvokeAllAsync(new Ping("hoge"), token)).Should()
-                .ThrowAsync<OperationCanceledException>();
+            await Assert.ThrowsAsync<OperationCanceledException>(async () => await pingHandler.InvokeAllAsync(new Ping("hoge"), token));
 
         }
 

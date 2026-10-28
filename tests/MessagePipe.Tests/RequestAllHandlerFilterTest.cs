@@ -1,6 +1,5 @@
 ﻿using System;
 using Xunit;
-using FluentAssertions;
 using MessagePipe;
 using MessagePipe.Tests;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,8 +19,8 @@ namespace __MessagePipe.Tests
             var validPong = handler.InvokeAll(nullPing);
             var nullPong = handler.InvokeAll(nullPing);
 
-            validPong.Should().ContainEquivalentOf(new Pong("ping was null."));
-            nullPong.Should().ContainEquivalentOf(new Pong("ping was null!"));
+            Assert.Contains(validPong, x => x.AnyValue == "ping was null.");
+            Assert.Contains(nullPong, x => x.AnyValue == "ping was null!");
         }
 
         public class PingPongHandlerFilter : RequestHandlerFilter<Ping, Pong>

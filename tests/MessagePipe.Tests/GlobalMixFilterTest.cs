@@ -2,7 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Generic;
 using Xunit;
-using FluentAssertions;
 
 namespace MessagePipe.Tests
 {
@@ -33,12 +32,16 @@ namespace MessagePipe.Tests
 
             pub.Publish(9999);
 
-            store.Logs.Should().Equal(
-                "Order:-10",
-                "Order:999",
-                "Order:1099",
-                "Order:1200",
-                "Handle:9999");
+            Assert.Equal(
+                new[]
+                {
+                    "Order:-10",
+                    "Order:999",
+                    "Order:1099",
+                    "Order:1200",
+                    "Handle:9999",
+                },
+                store.Logs);
         }
 
 
@@ -60,13 +63,17 @@ namespace MessagePipe.Tests
             var handler = provider.GetRequiredService<IRequestHandler<int, int>>();
 
             var result = handler.Invoke(1999);
-            result.Should().Be(19990);
+            Assert.Equal(19990, result);
 
-            store.Logs.Should().Equal(
-                "Order:-1799",
-                "Order:999",
-                "Order:1099",
-                "Invoke:1999");
+            Assert.Equal(
+                new[]
+                {
+                    "Order:-1799",
+                    "Order:999",
+                    "Order:1099",
+                    "Invoke:1999",
+                },
+                store.Logs);
         }
 
         [Fact]
@@ -88,15 +95,19 @@ namespace MessagePipe.Tests
             var handler = provider.GetRequiredService<IRequestAllHandler<int, int>>();
 
             var result = handler.InvokeAll(1999);
-            result.Should().Equal(19990, 199900);
+            Assert.Equal(new[] { 19990, 199900 }, result);
 
-            store.Logs.Should().Equal(
-                "Order:-1799",
-                "Order:999",
-                "Order:1099",
-                "Invoke:1999",
-                "Order:-1799",
-                "Invoke2:1999");
+            Assert.Equal(
+                new[]
+                {
+                    "Order:-1799",
+                    "Order:999",
+                    "Order:1099",
+                    "Invoke:1999",
+                    "Order:-1799",
+                    "Invoke2:1999",
+                },
+                store.Logs);
         }
     }
 

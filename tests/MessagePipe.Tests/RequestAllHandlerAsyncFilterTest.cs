@@ -4,7 +4,6 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
-using FluentAssertions;
 using MessagePipe;
 using MessagePipe.Tests;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,8 +21,8 @@ namespace __MessagePipe.Tests
 
             var nullPongs = await handler.InvokeAllAsync(new Ping(null));
 
-            nullPongs.Should().ContainEquivalentOf(new Pong("ping was null."));
-            nullPongs.Should().ContainEquivalentOf(new Pong("ping was null!"));
+            Assert.Contains(nullPongs, x => x.AnyValue == "ping was null.");
+            Assert.Contains(nullPongs, x => x.AnyValue == "ping was null!");
         }
 
         [Fact]
@@ -34,8 +33,8 @@ namespace __MessagePipe.Tests
 
             var nullPongs = await handler.InvokeAllLazyAsync(new Ping(null)).ToArrayAsync();
 
-            nullPongs.Should().ContainEquivalentOf(new Pong("ping was null."));
-            nullPongs.Should().ContainEquivalentOf(new Pong("ping was null!"));
+            Assert.Contains(nullPongs, x => x.AnyValue == "ping was null.");
+            Assert.Contains(nullPongs, x => x.AnyValue == "ping was null!");
         }
 
         public class PingPongHandlerAsyncFilter : AsyncRequestHandlerFilter<Ping, Pong>

@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using MessagePipe;
+﻿using MessagePipe;
 using MessagePipe.Tests;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -20,7 +19,7 @@ namespace __MessagePipe.Tests
 
             var pong = pingHandler.Invoke(new Ping("myon!"));
 
-            pong.Value.Should().Be("myon!");
+            Assert.Equal("myon!", pong.Value);
         }
         [Fact]
         public void TestCancellation()
@@ -28,7 +27,7 @@ namespace __MessagePipe.Tests
             var provider = TestHelper.BuildServiceProvider();
             var pingHandler = provider.GetRequiredService<IRequestHandler<NotImplementedPing, NotImplementedPong>>();
 
-            pingHandler.Invoking(x => x.Invoke(new NotImplementedPing())).Should().Throw<NotImplementedException>();
+            Assert.Throws<NotImplementedException>(() => pingHandler.Invoke(new NotImplementedPing()));
         }
 
         class Ping

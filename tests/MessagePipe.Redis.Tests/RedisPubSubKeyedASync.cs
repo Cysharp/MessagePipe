@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using MessagePipe;
+﻿using MessagePipe;
 using MessagePipe.Tests;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -35,25 +34,25 @@ namespace __MessagePipe.Tests
             var d2 = await s.SubscribeAsync(Key2, (x) => result.Add("2:" + x));
             var d3 = await s.SubscribeAsync(Key1, (x) => result.Add("3:" + x));
 
-            // use BeEquivalentTo, allow different order
+            // use Assert.Equivalent, allow different order
 
             await p.PublishAsync(Key1, "one");
             await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
 
-            result.Should().BeEquivalentTo("1:one", "3:one");
+            Assert.Equivalent(new[] { "1:one", "3:one" }, result, strict: true);
             result.Clear();
 
             await p.PublishAsync(Key2, "one");
             await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
 
-            result.Should().BeEquivalentTo("2:one");
+            Assert.Equivalent(new[] { "2:one" }, result, strict: true);
             result.Clear();
 
             await d3.DisposeAsync();
 
             await p.PublishAsync(Key1, "two");
             await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
-            result.Should().BeEquivalentTo("1:two");
+            Assert.Equivalent(new[] { "1:two" }, result, strict: true);
             result.Clear();
 
             await d1.DisposeAsync();
@@ -63,7 +62,7 @@ namespace __MessagePipe.Tests
             await p.PublishAsync(Key2, "zero");
             await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
 
-            result.Should().Equal();
+            Assert.Empty(result);
             result.Clear();
         }
 

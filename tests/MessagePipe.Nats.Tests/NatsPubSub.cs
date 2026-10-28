@@ -46,7 +46,7 @@ public class NatsPubSub
 
     static readonly int[] seed1 = { 24, 45, 99, 41, 98, 7, 81, 8, 26, 56 };
 
-    static object[][] BasicTestData()
+    public static object[][] BasicTestData()
     {
         return new[]
         {

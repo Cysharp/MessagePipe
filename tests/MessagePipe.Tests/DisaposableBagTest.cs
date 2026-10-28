@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -19,24 +18,24 @@ namespace MessagePipe.Tests
 
             var bag = DisposableBag.Create(d1, d2, d3, d4);
 
-            d1.DisposeCalled.Should().Be(0);
-            d2.DisposeCalled.Should().Be(0);
-            d3.DisposeCalled.Should().Be(0);
-            d4.DisposeCalled.Should().Be(0);
+            Assert.Equal(0, d1.DisposeCalled);
+            Assert.Equal(0, d2.DisposeCalled);
+            Assert.Equal(0, d3.DisposeCalled);
+            Assert.Equal(0, d4.DisposeCalled);
 
             bag.Dispose();
 
-            d1.DisposeCalled.Should().Be(1);
-            d2.DisposeCalled.Should().Be(1);
-            d3.DisposeCalled.Should().Be(1);
-            d4.DisposeCalled.Should().Be(1);
+            Assert.Equal(1, d1.DisposeCalled);
+            Assert.Equal(1, d2.DisposeCalled);
+            Assert.Equal(1, d3.DisposeCalled);
+            Assert.Equal(1, d4.DisposeCalled);
 
             bag.Dispose();
 
-            d1.DisposeCalled.Should().Be(1);
-            d2.DisposeCalled.Should().Be(1);
-            d3.DisposeCalled.Should().Be(1);
-            d4.DisposeCalled.Should().Be(1);
+            Assert.Equal(1, d1.DisposeCalled);
+            Assert.Equal(1, d2.DisposeCalled);
+            Assert.Equal(1, d3.DisposeCalled);
+            Assert.Equal(1, d4.DisposeCalled);
         }
 
         [Fact]
@@ -48,21 +47,21 @@ namespace MessagePipe.Tests
 
             foreach (var item in d)
             {
-                item.DisposeCalled.Should().Be(0);
+                Assert.Equal(0, item.DisposeCalled);
             }
 
             bag.Dispose();
 
             foreach (var item in d)
             {
-                item.DisposeCalled.Should().Be(1);
+                Assert.Equal(1, item.DisposeCalled);
             }
 
             bag.Dispose();
 
             foreach (var item in d)
             {
-                item.DisposeCalled.Should().Be(1);
+                Assert.Equal(1, item.DisposeCalled);
             }
         }
 
@@ -87,10 +86,10 @@ namespace MessagePipe.Tests
 
             builder.Build().Dispose();
 
-            d1.DisposeCalled.Should().Be(1);
-            d2.DisposeCalled.Should().Be(1);
-            d3.DisposeCalled.Should().Be(1);
-            d4.DisposeCalled.Should().Be(1);
+            Assert.Equal(1, d1.DisposeCalled);
+            Assert.Equal(1, d2.DisposeCalled);
+            Assert.Equal(1, d3.DisposeCalled);
+            Assert.Equal(1, d4.DisposeCalled);
 
             var d = Enumerable.Range(1, 100).Select(x => new Disposable(x)).ToArray();
 
@@ -103,7 +102,7 @@ namespace MessagePipe.Tests
             builder.Build().Dispose();
             foreach (var item in d)
             {
-                item.DisposeCalled.Should().Be(1);
+                Assert.Equal(1, item.DisposeCalled);
             }
         }
 
@@ -114,9 +113,9 @@ namespace MessagePipe.Tests
                 var si = DisposableBag.CreateSingleAssignment();
                 var d = new Disposable(100);
                 si.Disposable = d;
-                d.DisposeCalled.Should().Be(0);
+                Assert.Equal(0, d.DisposeCalled);
                 si.Dispose();
-                d.DisposeCalled.Should().Be(1);
+                Assert.Equal(1, d.DisposeCalled);
             }
             {
                 var si = DisposableBag.CreateSingleAssignment();
@@ -129,7 +128,7 @@ namespace MessagePipe.Tests
                 si.Dispose();
                 var d = new Disposable(100);
                 si.Disposable = d;
-                d.DisposeCalled.Should().Be(1);
+                Assert.Equal(1, d.DisposeCalled);
             }
 
             {
@@ -137,9 +136,9 @@ namespace MessagePipe.Tests
                 var si = DisposableBag.CreateSingleAssignment();
                 var d = new Disposable(100);
                 d.SetTo(si).AddTo(bag);
-                d.DisposeCalled.Should().Be(0);
+                Assert.Equal(0, d.DisposeCalled);
                 bag.Build().Dispose();
-                d.DisposeCalled.Should().Be(1);
+                Assert.Equal(1, d.DisposeCalled);
             }
         }
 
@@ -164,7 +163,7 @@ namespace MessagePipe.Tests
             p.Publish(200);
             p.Publish(300);
 
-            list.Should().Equal(100);
+            Assert.Equal(new[] { 100 }, list);
         }
 
         public class Disposable : IDisposable

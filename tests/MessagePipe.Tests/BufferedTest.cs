@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,24 +22,24 @@ namespace MessagePipe.Tests
             var l = new List<int>();
             using (s.Subscribe(x => l.Add(x.Value)))
             {
-                l.Count.Should().Be(0);
+                Assert.Empty(l);
             }
 
             p.Publish(new IntClass { Value = 9999 }); // set initial value
 
             using var d2 = s.Subscribe(x => l.Add(x.Value));
 
-            l.Should().Equal(9999);
+            Assert.Equal(new[] { 9999 }, l);
             p.Publish(new IntClass { Value = 333 });
-            l.Should().Equal(9999, 333);
+            Assert.Equal(new[] { 9999, 333 }, l);
 
             using var d3 = s.Subscribe(x => l.Add(x.Value));
-            l.Should().Equal(9999, 333, 333);
+            Assert.Equal(new[] { 9999, 333, 333 }, l);
             p.Publish(new IntClass { Value = 11 });
-            l.Should().Equal(9999, 333, 333, 11, 11);
+            Assert.Equal(new[] { 9999, 333, 333, 11, 11 }, l);
             d3.Dispose();
             p.Publish(new IntClass { Value = 4 });
-            l.Should().Equal(9999, 333, 333, 11, 11, 4);
+            Assert.Equal(new[] { 9999, 333, 333, 11, 11, 4 }, l);
         }
 
         [Fact]
@@ -54,24 +53,24 @@ namespace MessagePipe.Tests
             var l = new List<int>();
             using (await s.SubscribeAsync(async (x, _) => { await Task.Yield(); lock (l) { l.Add(x.Value); } }))
             {
-                l.Count.Should().Be(0);
+                Assert.Empty(l);
             }
 
             await p.PublishAsync(new IntClass { Value = 9999 }); // set initial value
 
             using var d2 = await s.SubscribeAsync(async (x, _) => { await Task.Yield(); lock (l) { l.Add(x.Value); } });
 
-            l.Should().Equal(9999);
+            Assert.Equal(new[] { 9999 }, l);
             await p.PublishAsync(new IntClass { Value = 333 });
-            l.Should().Equal(9999, 333);
+            Assert.Equal(new[] { 9999, 333 }, l);
 
             using var d3 = await s.SubscribeAsync(async (x, _) => { await Task.Yield(); lock (l) { l.Add(x.Value); } });
-            l.Should().Equal(9999, 333, 333);
+            Assert.Equal(new[] { 9999, 333, 333 }, l);
             await p.PublishAsync(new IntClass { Value = 11 });
-            l.Should().Equal(9999, 333, 333, 11, 11);
+            Assert.Equal(new[] { 9999, 333, 333, 11, 11 }, l);
             d3.Dispose();
             await p.PublishAsync(new IntClass { Value = 4 });
-            l.Should().Equal(9999, 333, 333, 11, 11, 4);
+            Assert.Equal(new[] { 9999, 333, 333, 11, 11, 4 }, l);
         }
 
         [Fact]
@@ -91,7 +90,7 @@ namespace MessagePipe.Tests
                 p.Publish(new IntClass { Value = 9999 });
 
 
-                filter.Capture.Should().Equal(100, 9999);
+                Assert.Equal(new[] { 100, 9999 }, filter.Capture);
             }
             {
                 var provider = TestHelper.BuildServiceProvider();
@@ -109,7 +108,7 @@ namespace MessagePipe.Tests
                 p.Publish(new IntClass { Value = 9999 });
 
 
-                filter.Capture.Should().Equal(100, 9999);
+                Assert.Equal(new[] { 100, 9999 }, filter.Capture);
             }
         }
 
@@ -125,7 +124,7 @@ namespace MessagePipe.Tests
             var d1 = subscriber.Subscribe(x => l.Add(x));
             var d2 = subscriber.Subscribe(x => l.Add(x * 10));
 
-            l.Should().Equal(9999, 99990);
+            Assert.Equal(new[] { 9999, 99990 }, l);
 
             publisher.Publish(10);
             publisher.Publish(20);
@@ -137,7 +136,7 @@ namespace MessagePipe.Tests
             publisher.Publish(30);
             publisher.Publish(40);
 
-            l.Should().Equal(9999, 99990, 10, 100, 20, 200, 2000);
+            Assert.Equal(new[] { 9999, 99990, 10, 100, 20, 200, 2000 }, l);
 
             d1.Dispose();
             d2.Dispose();
@@ -157,7 +156,7 @@ namespace MessagePipe.Tests
             var d1 = await subscriber.SubscribeAsync(async (x, _) => l.Add(x));
             var d2 = await subscriber.SubscribeAsync(async (x, _) => l.Add(x * 10));
 
-            l.Should().Equal(9999, 99990);
+            Assert.Equal(new[] { 9999, 99990 }, l);
 
             await publisher.PublishAsync(10);
             await publisher.PublishAsync(20);
@@ -169,7 +168,7 @@ namespace MessagePipe.Tests
             await publisher.PublishAsync(30);
             await publisher.PublishAsync(40);
 
-            l.Should().Equal(9999, 99990, 10, 100, 20, 200, 2000);
+            Assert.Equal(new[] { 9999, 99990, 10, 100, 20, 200, 2000 }, l);
 
             d1.Dispose();
             d2.Dispose();

@@ -4,7 +4,6 @@
 using System;
 using System.Threading.Tasks;
 using Xunit;
-using FluentAssertions;
 using MessagePipe;
 using MessagePipe.Tests;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,8 +25,8 @@ namespace __MessagePipe.Tests
             var validPong = await handler.InvokeAsync(validPing);
             var nullPong = await handler.InvokeAsync(nullPing);
 
-            validPong.AnyValue.Should().Be("ping");
-            nullPong.AnyValue.Should().Be("ping was null.");
+            Assert.Equal("ping", validPong.AnyValue);
+            Assert.Equal("ping was null.", nullPong.AnyValue);
         }
 
         class AsyncPingPongHandlerFilter : AsyncRequestHandlerFilter<Ping, Pong>

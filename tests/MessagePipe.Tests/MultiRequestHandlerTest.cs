@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using MessagePipe;
+﻿using MessagePipe;
 using MessagePipe.Tests;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -29,10 +28,10 @@ namespace __MessagePipe.Tests
             var handler2 = provider.GetRequiredService<IRequestHandler<Request2, Response2>>();
 
             var req1 = new Request1();
-            handler1.Invoke(req1).Request.Should().Be(req1);
+            Assert.Same(req1, handler1.Invoke(req1).Request);
 
             var req2 = new Request2();
-            handler2.Invoke(req2).Request.Should().Be(req2);
+            Assert.Same(req2, handler2.Invoke(req2).Request);
         }
 
         [Fact]
@@ -50,10 +49,10 @@ namespace __MessagePipe.Tests
             var handler2 = provider.GetRequiredService<IAsyncRequestHandler<Request2, Response2>>();
 
             var req1 = new Request1();
-            (await handler1.InvokeAsync(req1)).Request.Should().Be(req1);
+            Assert.Same(req1, (await handler1.InvokeAsync(req1)).Request);
 
             var req2 = new Request2();
-            (await handler2.InvokeAsync(req2)).Request.Should().Be(req2);
+            Assert.Same(req2, (await handler2.InvokeAsync(req2)).Request);
         }
 
         class MultiHandler :

@@ -1,12 +1,10 @@
-﻿using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace MessagePipe.Interprocess.Tests
 {
@@ -48,8 +46,8 @@ namespace MessagePipe.Interprocess.Tests
                 await p1.PublishAsync(1, 4999);
                 await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
 
-                result.Should().Equal(9999, 4999);
-                result2.Should().Equal(888);
+                Assert.Equal(new[] { 9999, 4999 }, result);
+                Assert.Equal(new[] { 888 }, result2);
             }
         }
 
@@ -73,17 +71,13 @@ namespace MessagePipe.Interprocess.Tests
 
                 await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
 
-                result.Should().Equal("abidatoxurusika");
+                Assert.Equal(new[] { "abidatoxurusika" }, result);
             }
         }
         [Fact]
         public async Task SimpleStringStringUds()
         {
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-            {
-                helper.WriteLine("Currently, windows's unix domain socket does not support UDP, so skipped");
-                return;
-            }
+            Assert.SkipWhen(Environment.OSVersion.Platform == PlatformID.Win32NT, "Currently, windows's unix domain socket does not support UDP");
             var filePath = System.IO.Path.GetTempFileName();
             if(System.IO.File.Exists(filePath))
             {
@@ -108,7 +102,7 @@ namespace MessagePipe.Interprocess.Tests
 
                     await Task.Delay(TimeSpan.FromSeconds(1)); // wait for receive data...
 
-                    result.Should().Equal("abidatoxurusika");
+                    Assert.Equal(new[] { "abidatoxurusika" }, result);
                 }
             }
             finally

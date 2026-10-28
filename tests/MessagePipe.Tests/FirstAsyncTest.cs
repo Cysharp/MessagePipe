@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,15 +21,15 @@ namespace MessagePipe.Tests
 
             var task = subscriber.FirstAsync(CancellationToken.None);
 
-            monitor.SubscribeCount.Should().Be(1);
+            Assert.Equal(1, monitor.SubscribeCount);
 
             publisher.Publish(100);
 
             var r = await task;
 
-            r.Should().Be(100);
+            Assert.Equal(100, r);
 
-            monitor.SubscribeCount.Should().Be(0);
+            Assert.Equal(0, monitor.SubscribeCount);
         }
 
         [Fact]
@@ -45,13 +44,14 @@ namespace MessagePipe.Tests
 
             var task = subscriber.FirstAsync(cts.Token);
 
-            monitor.SubscribeCount.Should().Be(1);
+            Assert.Equal(1, monitor.SubscribeCount);
 
             cts.Cancel();
 
-            (await Assert.ThrowsAsync<OperationCanceledException>(async () => await task)).CancellationToken.Should().Be(cts.Token);
+            var ex = await Assert.ThrowsAsync<OperationCanceledException>(async () => await task);
+            Assert.Equal(cts.Token, ex.CancellationToken);
 
-            monitor.SubscribeCount.Should().Be(0);
+            Assert.Equal(0, monitor.SubscribeCount);
         }
 
         [Fact]
@@ -66,13 +66,14 @@ namespace MessagePipe.Tests
             cts.Cancel();
             var task = subscriber.FirstAsync(cts.Token);
 
-            monitor.SubscribeCount.Should().Be(0);
+            Assert.Equal(0, monitor.SubscribeCount);
 
             cts.Cancel();
 
-            (await Assert.ThrowsAsync<OperationCanceledException>(async () => await task)).CancellationToken.Should().Be(cts.Token);
+            var ex = await Assert.ThrowsAsync<OperationCanceledException>(async () => await task);
+            Assert.Equal(cts.Token, ex.CancellationToken);
 
-            monitor.SubscribeCount.Should().Be(0);
+            Assert.Equal(0, monitor.SubscribeCount);
         }
 
         [Fact]
@@ -86,15 +87,15 @@ namespace MessagePipe.Tests
 
                 var task = subscriber.FirstAsync(CancellationToken.None);
 
-                monitor.SubscribeCount.Should().Be(1);
+                Assert.Equal(1, monitor.SubscribeCount);
 
                 publisher.Publish(new IntValue(100));
 
                 var r = await task;
 
-                r.Value.Should().Be(100);
+                Assert.Equal(100, r.Value);
 
-                monitor.SubscribeCount.Should().Be(0);
+                Assert.Equal(0, monitor.SubscribeCount);
             }
             {
                 var p = TestHelper.BuildServiceProvider();
@@ -106,15 +107,15 @@ namespace MessagePipe.Tests
 
                 var task = subscriber.FirstAsync(CancellationToken.None);
 
-                monitor.SubscribeCount.Should().Be(0);
+                Assert.Equal(0, monitor.SubscribeCount);
 
                 publisher.Publish(new IntValue(100));
 
                 var r = await task;
 
-                r.Value.Should().Be(9999);
+                Assert.Equal(9999, r.Value);
 
-                monitor.SubscribeCount.Should().Be(0);
+                Assert.Equal(0, monitor.SubscribeCount);
             }
         }
 
@@ -128,17 +129,17 @@ namespace MessagePipe.Tests
 
             var task = subscriber.FirstAsync(9, CancellationToken.None);
 
-            monitor.SubscribeCount.Should().Be(1);
+            Assert.Equal(1, monitor.SubscribeCount);
 
             publisher.Publish(4, 55);
-            monitor.SubscribeCount.Should().Be(1);
+            Assert.Equal(1, monitor.SubscribeCount);
             publisher.Publish(9, 100);
 
             var r = await task;
 
-            r.Should().Be(100);
+            Assert.Equal(100, r);
 
-            monitor.SubscribeCount.Should().Be(0);
+            Assert.Equal(0, monitor.SubscribeCount);
         }
 
         [Fact]
@@ -153,15 +154,15 @@ namespace MessagePipe.Tests
 
             var task = subscriber.FirstAsync(cts.Token);
 
-            monitor.SubscribeCount.Should().Be(1);
+            Assert.Equal(1, monitor.SubscribeCount);
 
             await publisher.PublishAsync(100);
 
             var r = await task;
 
-            r.Should().Be(100);
+            Assert.Equal(100, r);
 
-            monitor.SubscribeCount.Should().Be(0);
+            Assert.Equal(0, monitor.SubscribeCount);
         }
 
         class IntValue
